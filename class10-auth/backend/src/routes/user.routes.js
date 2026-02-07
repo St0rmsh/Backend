@@ -6,6 +6,7 @@ const authRoutes = express()
 
 const jwt_secret = process.env.JWT_SECRET
 
+
 authRoutes.post("/register", async(req,res)=>{
     const {username,email,password} = req.body
 
