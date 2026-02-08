@@ -14,7 +14,7 @@ useEffect(() => {
 }, [])
 
 const [editId, seteditId] = useState(null)
-
+// https://backend-3-egjc.onrender.com/
 
 function Get(){
 axios.get("http://localhost:3000/api/notes")
