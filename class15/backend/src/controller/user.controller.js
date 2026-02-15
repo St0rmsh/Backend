@@ -7,7 +7,8 @@ const JWT_SECRET = process.env.JWT_SECRET
 
 async function registerController(req,res){
      
-    const {username,email,password,bio,profileImg} = req.body
+   try {
+     const {username,email,password,bio,profileImg} = req.body
 
     const isUserAlreadyExists = await userModel.findOne({
         $or:[
@@ -47,12 +48,19 @@ async function registerController(req,res){
             profileImg:user.profileImg
         }
     })
+   } catch (error) {
+     return res.status(500).json({
+        message:"User creation Failed",
+        error: "Internal server error"
+     })
+   }
 }
 
 
 async function loginController(req,res){
 
-    const {username, email,password} = req.body
+  try {
+      const {username, email,password} = req.body
 
     const isUserAlreadyExists = await userModel.findOne({
         $or:[
@@ -92,6 +100,12 @@ async function loginController(req,res){
         },
         token
     })
+  } catch (error) {
+    return res.status(500).json({
+        message:"User login Failed",
+        error:"Internal server error"
+    })
+  }
 
 }
 
@@ -102,6 +116,7 @@ function logoutController(req,res){
         message:"User logged out Successfully"
     })
 }
+
 
 
 
