@@ -13,6 +13,6 @@ export const router = createBrowserRouter([
     },
     {
         path:"/",
-        element:<main><h1>Home</h1></main>
+        element:<main className=" bg-[#2a2a2a] flex items-center justify-center" ><h1 className="text-4xl text-white">Home</h1></main>
     }
 ])

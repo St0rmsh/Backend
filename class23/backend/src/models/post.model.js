@@ -15,6 +15,8 @@ const postSchema = new mongoose.Schema({
         ref:"users",
         required:[true, "User is required to create post"]
     }
+},{
+    timestamps:true
 })
 
 

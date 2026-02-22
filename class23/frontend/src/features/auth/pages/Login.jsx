@@ -2,6 +2,8 @@ import React from 'react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
+import { useNavigate } from 'react-router'
+
 
 const Login = () => {
 
@@ -9,13 +11,14 @@ const Login = () => {
     const [password, setpassword] = useState("")
 
     const {user,loading,handleLogin} = useAuth()
+    const navigate = useNavigate()
 
    async function handleSubmit(e){
         e.preventDefault()
 
        await handleLogin(username,password)
        console.log("user loggedIn Successfully");
-       
+       navigate("/")
     }
 
     if (loading) {

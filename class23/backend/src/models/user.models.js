@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema({
         type:String,
         default:"https://ik.imagekit.io/p7b10nfhs/default.png?updatedAt=1770739987572"
     }
+},{
+    timestamps:true
 })
 
 
