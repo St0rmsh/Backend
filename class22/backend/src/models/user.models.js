@@ -14,12 +14,15 @@ const userSchema = new mongoose.Schema({
      password:{
         type:String,
         required:[true, "password is required"],
+        select:false
     },
     bio:String,
     profileImg:{
         type:String,
         default:"https://ik.imagekit.io/p7b10nfhs/default.png?updatedAt=1770739987572"
     }
+},{
+    timestamps:true
 })
 
 const userModel = mongoose.model("users", userSchema)

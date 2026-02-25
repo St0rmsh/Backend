@@ -4,6 +4,7 @@ const ImageKit = require("@imagekit/nodejs")
 const {toFile} = require("@imagekit/nodejs")
 const mongoose = require("mongoose")
 const LikeModel = require("../models/Likes.models")
+const likeModel = require("../models/Likes.models")
 const imagekit = new ImageKit({
     privateKey:process.env.IMAGEKIT_PRIVATE_KEY
 })
@@ -189,10 +190,36 @@ async function dislikePost(req,res){
 
 }
 
+
+async function getFeed(req,res){
+    const user = req.user
+
+    const post = await Promise.all((await postModel.find().populate("user").lean())
+    .map(async(post)=>{
+        const isLiked = await likeModel.findOne({
+            user:user.username,
+            post:post._id
+        })
+
+        post.isLiked = Boolean(isLiked)
+        
+        return post
+    }))
+
+
+    res.status(200).json({
+        message:"Post fetched Successfully",
+        post
+    })
+
+
+}
+
 module.exports = {
     createPost,
     fetchPosts,
     fetchOnePost,
     likePost,
-    dislikePost
+    dislikePost,
+    getFeed
 }

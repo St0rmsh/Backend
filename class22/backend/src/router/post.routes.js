@@ -29,7 +29,7 @@ postRoutes.get("/",authMiddleware,postController.fetchPosts)
 // /api/get/
 // @ description fetch one post when user is loggedIn
 
-postRoutes.get("/:id", authMiddleware,postController.fetchOnePost)
+postRoutes.get("/user/:id", authMiddleware,postController.fetchOnePost)
 
 
 
@@ -37,6 +37,9 @@ postRoutes.post("/like/:id",authMiddleware,postController.likePost)
 
 
 postRoutes.post("/dislike/:id", authMiddleware,postController.dislikePost)
+
+
+postRoutes.get("/feed",authMiddleware,postController.getFeed)
 
 
 module.exports = postRoutes

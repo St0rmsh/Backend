@@ -20,6 +20,7 @@ const Register = () => {
 
        await handleRegister(username,email,password)
        console.log("user registered Successfully");
+       navigate("/login")
 
        
     }
