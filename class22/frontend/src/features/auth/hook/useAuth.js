@@ -66,8 +66,9 @@ const handleGetUser = async()=>{
 
 }
 
+
 return{
-    user,loading,handlelogin,handleRegister
+    user,loading,handlelogin,handleRegister,handleGetUser
 }
 
 }

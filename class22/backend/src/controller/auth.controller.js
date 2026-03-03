@@ -1,7 +1,7 @@
 const userModel = require("../models/user.models")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
-
+const redis = require("../config/cache")
 
 const JWT_SECRET = process.env.JWT_SECRET
 
@@ -118,6 +118,26 @@ async function getMe(req,res){
 
 
 
+async function logout(req,res){
+
+    const token = req.cookies.token
+
+    if (!token) {
+        return res.status(401).json({
+            message:"Token is required"
+        })
+    }
+
+    res.clearCookie("token")
+
+    await redis.set(token,Date.now().toString(), "EX", 60*60)
+
+    return res.status(200).json({
+        message:"User Logout Succesfully"
+    })
+
+}
+
 
 
 
@@ -127,5 +147,6 @@ async function getMe(req,res){
 module.exports = {
     registerController,
     loginController,
-    getMe
+    getMe,
+    logout
 }
