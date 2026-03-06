@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState } from 'react'
 import { useAuth } from '../hook/useAuth'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router-dom'
 
 
 const Login = () => {
@@ -18,13 +18,13 @@ const Login = () => {
   async function HandleSubmit(e) {
     e.preventDefault()
 
-    await handleLogin(username,password)
+    await handleLogin({username,password})
     navigate("/")
   }
 
    if (loading) {
     return(
-      <main><h1>Loading...</h1></main>
+      <main><h1>Loading...</h1>  </main>
     )
   }
 

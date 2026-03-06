@@ -19,10 +19,10 @@ const Feed = () => {
 
   return (
     <>
-    <main className='h-full bg-[#3a3a3a] flex flex-col items-center pt-6'>
+    <main className='min-h-screen bg-[#3a3a3a] flex flex-col items-center pt-6'>
         <Nav/>
-        <div className="feed min-w-[400px]">
-            <div className="posts w-full flex flex-col gap-4">
+        <div className="feed w-full flex justify-center mt-6">
+            <div className="posts w-full max-w-[600px] flex flex-col gap-6 px-2">
                 {feed.map((postItem)=>{
                    return  <Post key={postItem._id} user={postItem.user} post={postItem} loading={loading} handleLike={handleLike} handleDislikePost={handleDislikePost} />
                 })}

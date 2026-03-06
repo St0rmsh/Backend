@@ -1,37 +1,46 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  initFaceLandmarker,
-  detectEmotionFromVideo
-} from "../utils/utils";
+import { useEffect, useRef, useState } from "react";
+import { detect, init } from "../utils/utils";
 
-export default function FullEmotionDetector() {
-  const videoRef = useRef(null);
-  const faceLandmarkerRef = useRef(null);
 
-  const [emotion, setEmotion] = useState("Loading...");
-  const [scores, setScores] = useState({});
+export default function FaceExpression({ onClick = () => { } }) {
+    const videoRef = useRef(null);
+    const landmarkerRef = useRef(null);
+    const streamRef = useRef(null);
 
-  useEffect(() => {
-    initFaceLandmarker(faceLandmarkerRef, videoRef);
-  }, []);
+    const [ expression, setExpression ] = useState("Detecting...");
 
-  const handleDetect = () => {
-    const result = detectEmotionFromVideo(
-      faceLandmarkerRef,
-      videoRef
+    useEffect(() => {
+        init({ landmarkerRef, videoRef, streamRef });
+
+        return () => {
+            if (landmarkerRef.current) {
+                landmarkerRef.current.close();
+            }
+
+            if (videoRef.current?.srcObject) {
+                videoRef.current.srcObject
+                    .getTracks()
+                    .forEach((track) => track.stop());
+            }
+        };
+    }, []);
+
+    async function handleClick() {
+        const expression = await detect({ landmarkerRef, videoRef, setExpression })
+        console.log(expression)
+        onClick(expression)
+    }
+
+
+    return (
+        <div style={{ textAlign: "center" }}>
+            <video
+                ref={videoRef}
+                style={{ width: "400px", borderRadius: "12px" }}
+                playsInline
+            />
+            <h2>{expression}</h2>
+            <button onClick={handleClick} >Detect expression</button>
+        </div>
     );
-
-    if (!result) return;
-
-    setEmotion(result.emotion);
-    setScores(result.scores);
-  };
-
-  return (
-    <div>
-      <video ref={videoRef} width="400" autoPlay muted />
-      <h2>Dominant Emotion: {emotion}</h2>
-      <button onClick={handleDetect}>Get Emotion</button>
-    </div>
-  );
 }

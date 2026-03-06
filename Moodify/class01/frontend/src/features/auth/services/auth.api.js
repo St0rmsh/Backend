@@ -30,7 +30,7 @@ export const login = async({username,password})=>{
 }
 
 
-export const getMe = async()=>{
+export const getUser = async()=>{
     const response = await api.get("/getMe")
     return response.data
 }

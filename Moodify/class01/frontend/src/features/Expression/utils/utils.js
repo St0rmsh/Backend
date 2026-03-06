@@ -1,87 +1,87 @@
-import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import {
+    FaceLandmarker,
+    FilesetResolver
+} from "@mediapipe/tasks-vision";
 
-export const initFaceLandmarker = async (
-  faceLandmarkerRef,
-  videoRef
-) => {
-  const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
-  );
 
-  faceLandmarkerRef.current =
-    await FaceLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-      },
-      outputFaceBlendshapes: true,
-      runningMode: "VIDEO",
-      numFaces: 1
-    });
+export const init = async ({ landmarkerRef, videoRef, streamRef }) => {
+    const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+    );
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: true
-  });
+    landmarkerRef.current = await FaceLandmarker.createFromOptions(
+        vision,
+        {
+            baseOptions: {
+                modelAssetPath:
+                    "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task"
+            },
+            outputFaceBlendshapes: true,
+            runningMode: "VIDEO",
+            numFaces: 1
+        }
+    );
 
-  videoRef.current.srcObject = stream;
-  await videoRef.current.play();
+    streamRef.current = await navigator.mediaDevices.getUserMedia({ video: true });
+    videoRef.current.srcObject = streamRef.current;
+    await videoRef.current.play();
 };
 
-const getScore = (blendshapes, name) => {
-  if (!Array.isArray(blendshapes)) return 0;
-  return blendshapes.find((b) => b.categoryName === name)?.score || 0;
-};
+export const detect = ({ landmarkerRef, videoRef, setExpression }) => {
+    if (!landmarkerRef.current || !videoRef.current) return;
 
-export const detectEmotionFromVideo = (
-  faceLandmarkerRef,
-  videoRef
-) => {
-  if (!faceLandmarkerRef.current || !videoRef.current) return null;
+    const results = landmarkerRef.current.detectForVideo(
+        videoRef.current,
+        performance.now()
+    );
 
-  const now = Date.now();
-  const results = faceLandmarkerRef.current.detectForVideo(
-    videoRef.current,
-    now
-  );
+    if (results.faceBlendshapes?.length > 0) {
+        const blendshapes = results.faceBlendshapes[ 0 ].categories;
 
-  if (!results.faceBlendshapes?.length) {
-    return {
-      emotion: "No Face Detected",
-      scores: {}
-    };
-  }
+        const getScore = (name) =>
+            blendshapes.find((b) => b.categoryName === name)?.score || 0;
 
-  const blendshapes = results.faceBlendshapes[0].categories;
+        const smileLeft = getScore("mouthSmileLeft");
+        const smileRight = getScore("mouthSmileRight");
+        const jawOpen = getScore("jawOpen");
+        const browUp = getScore("browInnerUp");
+        const frownLeft = getScore("mouthFrownLeft");
+        const frownRight = getScore("mouthFrownRight");
+        const browDownLeft = getScore("browDownLeft");
+        const browDownRight = getScore("browDownRight");
 
-  const smile =
-    (getScore(blendshapes, "mouthSmileLeft") +
-      getScore(blendshapes, "mouthSmileRight")) / 2;
+        console.log(getScore("mouthFrownLeft"))
 
-  const frown =
-    (getScore(blendshapes, "mouthFrownLeft") +
-      getScore(blendshapes, "mouthFrownRight")) / 2;
+        let currentExpression = "Neutral";
 
-  const surprise =
-    (getScore(blendshapes, "browInnerUp") +
-      getScore(blendshapes, "jawOpen")) / 2;
+        // Compose some boolean helpers for clearer rules
+       const isSmiling = smileLeft > 0.45 && smileRight > 0.45;
 
-  const angry =
-    (getScore(blendshapes, "browDownLeft") +
-      getScore(blendshapes, "browDownRight")) / 2;
+       const isSurprised = jawOpen > 0.30 && browUp > 0.15;
 
-  const emotionScores = {
-    Happy: smile,
-    Sad: frown,
-    Surprised: surprise,
-    Angry: angry
-  };
+      const isAngry =
+    (browDownLeft > 0.01 || browDownRight > 0.01) &&
+    (frownLeft > 0.02 || frownRight > 0.02);
 
-  const dominant = Object.entries(emotionScores).reduce((a, b) =>
-    a[1] > b[1] ? a : b
-  );
+     const isSad =
+      (browUp > 0.01) &&
+      (frownLeft > 0.02 || frownRight > 0.02);
 
-  return {
-    emotion: dominant[0],
-    scores: emotionScores
-  };
+        if (isSmiling) {
+    currentExpression = "happy";
+}
+else if (isSurprised) {
+    currentExpression = "surprised";
+}
+else if (isAngry) {
+    currentExpression = "angry";
+}
+else if (isSad) {
+    currentExpression = "sad";
+}
+
+        setExpression(currentExpression);
+
+        return currentExpression;
+    }
 };
