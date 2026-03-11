@@ -23,6 +23,8 @@ export const createPost = async(imageFile,caption)=>{
 
 
     const response = await api.post("/post",formData)
+
+    return response.data
 } 
 
 
@@ -35,5 +37,16 @@ export const likePost = async(postId)=>{
 
 export const dislikePost = async(postId)=>{
     const response = await api.post("/post/dislike/"+postId)
+    return response.data
+}
+
+export const follow = async(username)=>{
+    const response = await api.post("/user/follow/"+username)
+    return response.data
+}
+
+
+export const unFollow = async(username)=>{
+    const response = await api.post("/user/unfollow/"+username)
     return response.data
 }

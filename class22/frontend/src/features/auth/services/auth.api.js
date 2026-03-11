@@ -30,5 +30,5 @@ export async function getUser() {
     
     const response = await api.get("/getMe")
 
-    return register.data
+    return response.data
 }

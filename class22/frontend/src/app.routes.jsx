@@ -1,8 +1,10 @@
-import {createBrowserRouter} from "react-router"
+import {createBrowserRouter} from "react-router-dom"
 import Login from "./features/auth/pages/Login"
 import Register from "./features/auth/pages/Register"
 import Feed from "./features/post/pages/Feed"
 import CreatePosts from "./features/post/pages/CreatePosts"
+import Protected from "./features/auth/components/Protected"
+import UserPage from "./features/post/pages/UserPage"
 
 
 export const router = createBrowserRouter([
@@ -16,11 +18,15 @@ export const router = createBrowserRouter([
     },
     {
         path:"/",
-       element:<Feed/>
+       element:<Protected><Feed/></Protected>
 
     },
     {
-        path:"createPost",
+        path:"/createPost",
         element:<CreatePosts/>
+    },
+    {
+        path:"/profile",
+        element:<Protected><UserPage/></Protected>
     }
 ])

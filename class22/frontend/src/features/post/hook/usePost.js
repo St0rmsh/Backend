@@ -1,4 +1,4 @@
-import {getFeed,createPost,likePost,dislikePost} from "../services/poast.api"
+import {getFeed,createPost,likePost,dislikePost,follow,unFollow} from "../services/poast.api"
 import { useContext, useEffect } from "react"
 import { postContext } from "../post.context"
 
@@ -31,7 +31,7 @@ export const usePost = ()=>{
 
        try {
         const response = await createPost(imageFile,caption)
-        setfeed([response.post],...feed)
+        setfeed([response.post, ...feed])
        } catch (error) {
         throw error 
        } finally{
@@ -50,11 +50,32 @@ export const usePost = ()=>{
         await handleFeed()
     }
 
+
+    const handleFollow = async(username,isFollowing)=>{
+        try {
+
+            if (isFollowing) {
+                await unFollow(username)
+            }else{
+                await follow(username)
+            }
+
+           setfeed(feed.map(post =>post.user.username === username? { ...post, isFollowing: !isFollowing }:post ))
+        } catch (error) {
+            console.error(error);
+            
+        }
+
+    }
+
+
+   
+
     useEffect(()=>{
      handleFeed()
     },[])
 
 
-    return{ post,feed,loading,handleFeed,handleCreatePost,handleLike,handleDislikePost }
+    return{ post,feed,loading,handleFeed,handleCreatePost,handleLike,handleDislikePost,handleFollow }
 
 }

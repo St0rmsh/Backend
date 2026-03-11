@@ -4,7 +4,7 @@ const postController = require("../controller/post.controller")
 const multer = require("multer")
 const upload = multer({storage:multer.memoryStorage()})
 const postRoutes = express.Router()
-
+const CommentController = require("../controller/Comment.controller")
 
 
 // api -> post / http://localhost:3000/api/post/
@@ -40,6 +40,15 @@ postRoutes.post("/dislike/:id", authMiddleware,postController.dislikePost)
 
 
 postRoutes.get("/feed",authMiddleware,postController.getFeed)
+
+
+
+
+
+
+postRoutes.post("/comment/:postId",authMiddleware,CommentController.createComment)
+
+
 
 
 module.exports = postRoutes
