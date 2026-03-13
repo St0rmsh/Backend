@@ -49,7 +49,10 @@ export const validateRegister = [
         handleValidationErrors
 ]
 
+
+
 // Validation rules for user login
+
 export const validateLogin = [
     body("email")
         .trim()

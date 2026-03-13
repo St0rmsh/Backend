@@ -17,6 +17,10 @@ app.get("/", (req,res)=>{
     
 })
 
+app.get("/api/auth/login", (req,res)=>{
+    res.send(`<h1>Login Page</h1>`)
+})
+
 
 
 
