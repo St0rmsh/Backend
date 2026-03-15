@@ -1,0 +1,325 @@
+/* ========== Global Auth Container ========== */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Gradient Backgrounds */
+.login-bg {
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 25%, #0f3460 50%, #16213e 75%, #0a0e27 100%);
+  background-size: 400% 400%;
+  animation: gradientFlow 15s ease infinite;
+}
+
+.register-bg {
+  background: linear-gradient(135deg, #0a0e27 0%, #0f2847 25%, #1a4d6d 50%, #0d3b66 75%, #0a0e27 100%);
+  background-size: 400% 400%;
+  animation: gradientFlow 15s ease infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ========== Auth Card ========== */
+.auth-card {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(0, 200, 255, 0.3);
+  border-radius: 20px;
+  padding: 50px 40px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 20px 60px rgba(0, 200, 255, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.auth-card:hover {
+  border-color: rgba(0, 200, 255, 0.5);
+  box-shadow: 0 30px 80px rgba(0, 200, 255, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ========== Header ========== */
+.auth-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.auth-title {
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-subtitle {
+  color: rgba(200, 220, 255, 0.7);
+  font-size: 14px;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* ========== Form ========== */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ========== Form Group ========== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  color: rgba(200, 220, 255, 0.9);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.label-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* ========== Form Input ========== */
+.form-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(0, 200, 255, 0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: #ffffff;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: rgba(200, 220, 255, 0.4);
+}
+
+.form-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 200, 255, 0.6);
+  box-shadow: 0 0 20px rgba(0, 200, 255, 0.3);
+}
+
+/* ========== Password Input Wrapper ========== */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 45px;
+  width: 100%;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: rgba(200, 220, 255, 0.6);
+  transition: all 0.2s ease;
+  padding: 5px;
+}
+
+.toggle-password:hover {
+  color: rgba(0, 200, 255, 0.95);
+  transform: scale(1.1);
+}
+
+/* ========== Password Strength ========== */
+.password-strength {
+  margin-top: 8px;
+}
+
+.strength-label {
+  font-size: 12px;
+  color: rgba(200, 220, 255, 0.7);
+  margin: 0 0 6px 0;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(100, 100, 100, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* ========== Form Options ========== */
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.remember-me,
+.terms-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(200, 220, 255, 0.8);
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #00d4ff;
+  width: 16px;
+  height: 16px;
+}
+
+.forgot-password {
+  color: rgba(0, 200, 255, 0.8);
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.forgot-password:hover {
+  color: #00d4ff;
+  text-decoration: underline;
+}
+
+/* ========== Submit Button ========== */
+.auth-button {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 14px 24px;
+  color: #000;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 10px;
+  box-shadow: 0 10px 30px rgba(0, 200, 255, 0.3);
+}
+
+.auth-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(0, 200, 255, 0.5);
+}
+
+.auth-button:active {
+  transform: translateY(0);
+}
+
+.auth-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ========== Footer ========== */
+.auth-footer {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 200, 255, 0.2);
+}
+
+.auth-footer p {
+  color: rgba(200, 220, 255, 0.7);
+  font-size: 13px;
+  margin: 0;
+}
+
+.auth-link {
+  color: #00d4ff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.auth-link:hover {
+  color: #00ffff;
+  text-decoration: underline;
+}
+
+/* ========== Responsive Design ========== */
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 40px 25px;
+    border-radius: 16px;
+  }
+
+  .auth-title {
+    font-size: 26px;
+  }
+
+  .auth-subtitle {
+    font-size: 13px;
+  }
+
+  .form-input {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .auth-button {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .form-options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .forgot-password {
+    width: 100%;
+    text-align: right;
+  }
+}
+
+/* ========== Input Autofill Styling ========== */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.8) inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.form-input:-webkit-autofill::first-line {
+  font-size: 14px;
+}
