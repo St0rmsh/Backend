@@ -59,7 +59,6 @@ export const useChat = () => {
 
     async function handleOpenChat(chatId) {
 
-        console.log(chats[chatId]?.messages?.length);
 
         if (!chats[chatId]?.messages?.length) {
             

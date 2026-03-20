@@ -33,9 +33,23 @@ const searchInternetTool = tool(
 const agent = createAgent({
   model: MistralModel,
   tools:[searchInternetTool],
-  toolChoice: "required"
+  toolChoice: "auto"
 })
 
+
+function normalizeContent(content) {
+  if (typeof content === "string") return content;
+
+  if (Array.isArray(content)) {
+    return content.map(c => c.text || "").join("");
+  }
+
+  if (typeof content === "object") {
+    return JSON.stringify(content);
+  }
+
+  return String(content);
+}
 
 export async function generateResponse(messages) {
   const formattedMessages = [
@@ -62,21 +76,15 @@ Always call the tool first, then answer based on tool results.
       .filter(Boolean)
   ];
 
-  try {
-    const response = await agent.invoke({messages:formattedMessages});
+    try {
+    const response = await agent.invoke({ messages: formattedMessages });
 
     if (response?.messages?.length) {
-  const lastMessage = response.messages.at(-1);
-  return lastMessage.content;
-}
-
-return "No response from agent";
-
-    if (Array.isArray(response.content)) {
-      return response.content.map(c => c.text || "").join("");
+      const lastMessage = response.messages.at(-1);
+      return normalizeContent(lastMessage.content);
     }
 
-    return JSON.stringify(response.content);
+    return "No response from agent";
 
   } catch (error) {
     console.error("Gemini failed:", error.message);
