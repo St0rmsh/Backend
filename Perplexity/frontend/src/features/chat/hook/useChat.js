@@ -1,5 +1,5 @@
 import { initializeSocket } from "../service/chat.socket";
-import { sendMessages, fetchChats,fetchMessage} from "../service/chat.api";
+import { sendMessages, fetchChats,fetchMessage,createChat} from "../service/chat.api";
 import { setChats, setCurrentChatId, setError, setLoading, createNewChat, addNewMessage, addMessages } from "../chat.slice";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -80,11 +80,29 @@ export const useChat = () => {
         dispatch(setCurrentChatId(chatId))
     }
 
+    async function handleNewChat() {
+  try {
+    const data = await createChat();
+    const { chat } = data;
+
+    dispatch(createNewChat({
+      chatId: chat._id,
+      title: chat.title
+    }));
+
+    dispatch(setCurrentChatId(chat._id));
+
+  } catch (error) {
+    dispatch(setError(error.message));
+  }
+}
+
     return {
         initializeSocket,
         handleSendMessage,
         handleGetChats,
-        handleOpenChat
+        handleOpenChat,
+        handleNewChat
     }
 
 }

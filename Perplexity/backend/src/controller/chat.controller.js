@@ -133,3 +133,17 @@ await MessageModel.deleteMany({
         message: "Chat deleted successfully"
     })
 }
+
+export const createChat = async (req, res) => {
+  try {
+    const chat = await ChatModel.create({
+      user: req.user.id,  
+      title: "New Chat"
+    });
+
+    res.status(201).json({ chat });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

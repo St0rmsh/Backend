@@ -21,9 +21,12 @@ const Dashboard = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const handleNewChat = chat.handleNewChat;
+
   useEffect(() => {
     chat.initializeSocket()
     chat.handleGetChats()
+    
   }, [])
 
   useEffect(() => {
@@ -61,6 +64,11 @@ const Dashboard = () => {
   {/* Sidebar */}
   <aside className={`sidebar ${showSidebar ? 'open' : ''}`}>
     <h1 className="logo">Chat AI</h1>
+
+      {/* 🔥 NEW CHAT BUTTON */}
+  <button className="new-chat-btn"  onClick={handleNewChat}>
+    + New Chat
+  </button>
 
     <div className="chat-list">
       {Object.values(chats).map((chat, index) => (
