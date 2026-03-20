@@ -8,10 +8,11 @@ const chatSchema = new mongoose.Schema({
     },
     title:{
         type:String,
-        required:[true, "Title is required"]
+        default:"New Chat",
+        trim:true
     }
 },{
     timestamps:true
 })
 
-export const Chat = mongoose.model("Chat", chatSchema)
+export const ChatModel = mongoose.model("Chat", chatSchema)
