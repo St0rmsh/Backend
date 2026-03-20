@@ -1,106 +1,155 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useSelector } from 'react-redux'
 import { useChat } from '../hook/useChat'
-import { initializeSocket } from '../service/chat.socket'
+import './Dashboard.css'
+import remarkGfm from 'remark-gfm'
 
 const Dashboard = () => {
   const chat = useChat()
-  const [ chatInput, setChatInput ] = useState('')
+  const [chatInput, setChatInput] = useState('')
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+
+  const messagesEndRef = useRef(null)
+
   const chats = useSelector((state) => state.chat.chats)
   const currentChatId = useSelector((state) => state.chat.currentChatId)
 
+  // 🔥 Auto scroll
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   useEffect(() => {
     chat.initializeSocket()
+    chat.handleGetChats()
   }, [])
 
-  const handleSubmitMessage = (event) => {
-    event.preventDefault()
+  useEffect(() => {
+    scrollToBottom()
+  }, [chats, isTyping])
 
-    const trimmedMessage = chatInput.trim()
-    if (!trimmedMessage) {
-      return
-    }
+  const handleSubmitMessage = async (e) => {
+    e.preventDefault()
+    const trimmed = chatInput.trim()
+    if (!trimmed) return
 
-    chat.handleSendMessage({ message: trimmedMessage, chatId: currentChatId })
+    setIsTyping(true)
+
+    await chat.handleSendMessage({
+      message: trimmed,
+      chatId: currentChatId,
+    })
+
     setChatInput('')
+    setIsTyping(false)
   }
 
   const openChat = (chatId) => {
     chat.handleOpenChat(chatId)
+    setShowSidebar(false)
+  }
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
   }
 
   return (
-    <main className='min-h-screen w-full bg-[#07090f] p-3 text-white md:p-5'>
-      <section className='mx-auto flex h-[calc(100vh-1.5rem)] w-full gap-4 rounded-3xl border   p-1 md:h-[calc(100vh-2.5rem)] md:gap-6 md:p-1 border-none'>
-        <aside className='hidden h-full w-72 shrink-0 rounded-3xl border  bg-[#080b12] p-4 md:flex md:flex-col'>
-          <h1 className='mb-5 text-3xl font-semibold tracking-tight'>Perplexity</h1>
+   <main className="app">
 
-          <div className='space-y-2'>
-            {Object.values(chats).map((chat,index) => (
-              <button
-                onClick={()=>{openChat(chat.id)}}
-                key={index}
-                type='button'
-                className='w-full cursor-pointer rounded-xl border border-white/60 bg-transparent px-3 py-2 text-left text-base font-medium text-white/90 transition hover:border-white hover:text-white'
-              >
-                {chat.title}
-              </button>
-            ))}
-          </div>
-        </aside>
+  {/* Sidebar */}
+  <aside className={`sidebar ${showSidebar ? 'open' : ''}`}>
+    <h1 className="logo">Chat AI</h1>
 
-        <section className='relative max-w-3/5 mx-auto flex h-full min-w-0 flex-1 flex-col gap-4'>
+    <div className="chat-list">
+      {Object.values(chats).map((chat, index) => (
+        <button
+          key={index}
+          onClick={() => openChat(chat.id)}
+          className="chat-item"
+        >
+          {chat.title}
+        </button>
+      ))}
+    </div>
+  </aside>
 
-          <div className='messages flex-1 space-y-3 overflow-y-auto pr-1 pb-30'>
-            {chats[ currentChatId ]?.messages.map((message) => (
-              <div
-                key={message.id}
-                className={`max-w-[82%] w-fit rounded-2xl px-4 py-3 text-sm md:text-base ${message.role === 'user'
-                    ? 'ml-auto rounded-br-none bg-white/12 text-white'
-                    : 'mr-auto border border-white/25 bg-[#0f1626] text-white/90'
-                  }`}
-              >
-                {message.role === 'user' ? (
-                  <p>{message.content}</p>
-                ) : (
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => <p className='mb-2 last:mb-0'>{children}</p>,
-                      ul: ({ children }) => <ul className='mb-2 list-disc pl-5'>{children}</ul>,
-                      ol: ({ children }) => <ol className='mb-2 list-decimal pl-5'>{children}</ol>,
-                      code: ({ children }) => <code className='rounded bg-white/10 px-1 py-0.5'>{children}</code>,
-                      pre: ({ children }) => <pre className='mb-2 overflow-x-auto rounded-xl bg-black/30 p-3'>{children}</pre>
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
-                )}
+  {/* Overlay */}
+  {showSidebar && (
+    <div className="overlay" onClick={() => setShowSidebar(false)} />
+  )}
+
+  {/* Chat Section */}
+  <section className="chat-section">
+
+    {/* Header */}
+    <div className="chat-header">
+      <button className="menu-btn" onClick={() => setShowSidebar(true)}>
+        ☰
+      </button>
+      <h2>AI Chat</h2>
+    </div>
+
+    {/* Messages */}
+    <div className="messages">
+
+      {chats[currentChatId]?.messages.map((msg) => (
+
+        <div key={msg.id} className="message-wrapper">
+
+          {msg.role === 'user' ? (
+            <div className="message-row user">
+              <div className="message user-msg">
+                {msg.content}
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="message-row ai">
 
-          <footer className='rounded-3xl w-full absolute bottom-2 border border-white/60 bg-[#080b12] p-4 md:p-5'>
-            <form onSubmit={handleSubmitMessage} className='flex flex-col gap-3 md:flex-row'>
-              <input
-                type='text'
-                value={chatInput}
-                onChange={(event) => setChatInput(event.target.value)}
-                placeholder='Type your message...'
-                className='w-full rounded-2xl border border-white/50 bg-transparent px-4 py-3 text-lg text-white outline-none transition placeholder:text-white/45 focus:border-white/90'
-              />
-              <button
-                type='submit'
-                disabled={!chatInput.trim()}
-                className='rounded-2xl border border-white/60 px-6 py-3 text-lg font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50'
-              >
-                Send
-              </button>
-            </form>
-          </footer>
-        </section>
-      </section>
-    </main>
+              <div className="avatar">AI</div>
+
+              <div className="message ai-msg">
+                <ReactMarkdown remarkPlugins={remarkGfm}>{msg.content}</ReactMarkdown>
+
+                <div className="actions">
+                  <button onClick={() => copyToClipboard(msg.content)}>Copy</button>
+                  <button>Regenerate</button>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
+      ))}
+
+      {isTyping && (
+        <div className="message-row ai">
+          <div className="avatar">AI</div>
+          <div className="typing">Thinking...</div>
+        </div>
+      )}
+
+      <div ref={messagesEndRef} />
+    </div>
+
+    {/* Input */}
+    <div className="chat-input">
+      <form onSubmit={handleSubmitMessage}>
+        <input
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          placeholder="Ask anything..."
+        />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+
+  </section>
+</main>
+
   )
 }
 

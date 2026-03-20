@@ -10,7 +10,7 @@ export const sendMessages = async({message,chatId})=>{
 
    const response = await api.post("/api/chats/message",{
     message,
-    chatId
+    chat: chatId
    })
 
    return response.data
@@ -24,5 +24,11 @@ export const fetchChats = async()=>{
 export const fetchMessage = async(chatId)=>{
 
     const response = await api.get(`/api/chats/${chatId}/messages`)
+    return response.data
+}
+
+
+export const deleteChat = async(chatId)=>{
+    const response = await api.delete(`/api/chats/${chatId}`)
     return response.data
 }

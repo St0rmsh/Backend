@@ -3,54 +3,73 @@ import { ChatModel } from "../models/chat.model.js";
 import {MessageModel} from "../models/messages.model.js"
 
 
-export async function sendMessage(req,res) {
+export async function sendMessage(req, res) {
+  try {
+    console.log("REQ BODY:", req.body);
 
-    const {message, chat: chatId} = req.body
+    const { message, chat: chatId } = req.body;
 
-
-    let chat = null 
-    let title = null
-
-    if (!chatId) {
-
-        title = await generateChatTitle(message)
-
-        chat = await ChatModel.create({
-        user: req.user.id,
-        title,
-
-    })
+    if (!message) {
+      return res.status(400).json({ message: "Message is required" });
     }
 
-    const activeChatId = chatId || chat._id
+    let chat = null;
+    let title = null;
 
+  if (!chatId) {
+  try {
+    title = await generateChatTitle(message);
+  } catch (err) {
+    console.error("Title generation failed:", err.message);
+    title = "New Chat"; // ✅ fallback
+  }
+
+  chat = await ChatModel.create({
+    user: req.user.id,
+    title,
+  });
+}
+
+    const activeChatId = chatId || chat?._id;
+
+    if (!activeChatId) {
+      return res.status(400).json({ message: "Invalid chat ID" });
+    }
 
     const userMessage = await MessageModel.create({
-        chat: activeChatId,
-        content:message,
-        role:"user"
-    })
+      chat: activeChatId,
+      content: message,
+      role: "user",
+    });
 
-    const messages = await MessageModel.find({chat:activeChatId})
+    const messages = await MessageModel
+      .find({ chat: activeChatId })
+      .select("content role createdAt")
+      .sort({ createdAt: -1 })
+      .limit(15)
+      .lean();
 
+    messages.reverse();
 
     const result = await generateResponse(messages);
 
     const AIresponse = await MessageModel.create({
-        chat:activeChatId,
-        content:result,
-        role:"ai"
-    }) 
+      chat: activeChatId,
+      content: result,
+      role: "assistant",
+    });
 
     res.status(201).json({
-        chatId:activeChatId,
-        title,
-        chat,
-        AIresponse
-    })
-    
+      chatId: activeChatId,
+      title,
+      chat,
+      AIresponse,
+    });
 
-
+  } catch (error) {
+    console.error("SEND MESSAGE ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
 }
 
 
@@ -95,14 +114,14 @@ export async function deleteChat(req, res) {
 
      const { chatId } = req.params;
 
-    const chat = await chatModel.findOneAndDelete({
-        _id: chatId,
-        user: req.user.id
-    })
+  const chat = await ChatModel.findOneAndDelete({
+  _id: chatId,
+  user: req.user.id
+});
 
-    await messageModel.deleteMany({
-        chat: chatId
-    })
+await MessageModel.deleteMany({
+  chat: chatId
+});
 
     if (!chat) {
         return res.status(404).json({

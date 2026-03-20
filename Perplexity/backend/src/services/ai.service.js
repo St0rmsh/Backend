@@ -1,6 +1,9 @@
 import { HumanMessage ,SystemMessage,AIMessage} from "@langchain/core/messages";
+import {tool,createAgent} from "langchain"
 import {ChatGoogleGenerativeAI} from "@langchain/google-genai"
 import {ChatMistralAI} from "@langchain/mistralai"
+import { searchInternet } from "./internet.service.js";
+import * as z from "zod"
 
 
 const GeminiModel = new ChatGoogleGenerativeAI({
@@ -14,21 +17,79 @@ const MistralModel = new ChatMistralAI({
   apiKey:process.env.MISTRAL_API_KEY
 })
 
+
+const searchInternetTool = tool(
+  searchInternet,
+  {
+    name: "searchInternet",
+    description: "Use this tool to fetch the latest information from the internet.",
+    schema: z.object({
+      query: z.string().describe("The search query to look up on the internet.")
+    })
+  }
+)
+
+
+const agent = createAgent({
+  model: MistralModel,
+  tools:[searchInternetTool],
+  toolChoice: "required"
+})
+
+
 export async function generateResponse(messages) {
+  const formattedMessages = [
+    new SystemMessage(`You are a helpful AI assistant.
 
-    console.log(messages)
-    
-    const response = await GeminiModel.invoke(messages.map(msg => {
-        if (msg.role == "user") {
-            return new HumanMessage(msg.content)
-        } else if (msg.role == "ai") {
-            return new AIMessage(msg.content)
-        }
-    }));
+Use previous messages for context.
 
-    return response.text;
+You have access to a tool called "searchInternet" to fetch latest information from the web.
 
+You MUST call the tool in the following cases:
+- If the user asks about updates, new features, releases, or recent changes (e.g., React updates, Node.js updates)
+- If the query may have changed after your training data
+- If the user asks anything that could benefit from up-to-date or real-time information
+
+DO NOT answer from memory in these cases.
+Always call the tool first, then answer based on tool results.
+`),
+    ...messages
+      .map((msg) => {
+        if (msg.role === "user") return new HumanMessage(msg.content);
+        if (msg.role === "assistant") return new AIMessage(msg.content);
+        return null;
+      })
+      .filter(Boolean)
+  ];
+
+  try {
+    const response = await agent.invoke({messages:formattedMessages});
+
+    if (response?.messages?.length) {
+  const lastMessage = response.messages.at(-1);
+  return lastMessage.content;
 }
+
+return "No response from agent";
+
+    if (Array.isArray(response.content)) {
+      return response.content.map(c => c.text || "").join("");
+    }
+
+    return JSON.stringify(response.content);
+
+  } catch (error) {
+    console.error("Gemini failed:", error.message);
+
+      console.error("Mistral also failed:", err.message);
+      return "AI is currently unavailable.";
+    
+  }
+}
+
+
+
+
 
 
 export async function generateChatTitle(message) {
@@ -43,7 +104,7 @@ export async function generateChatTitle(message) {
   ])
 
 
-  return response.text
+  return response.text || response.content || "New Chat";
 }
 
 
