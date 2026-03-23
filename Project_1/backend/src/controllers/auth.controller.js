@@ -1,10 +1,16 @@
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import config from "../config/config.js";
+import redis from "../config/cache.js";
+import { success } from "zod";
+
 
 export async function registerController(req, res) {
     try {
         const { name, username, email, password } = req.body;
+
+        console.log("Checking user:", { email, username });
+
 
         const isAlreadyExists = await userModel.findOne({
             $or: [
@@ -12,6 +18,8 @@ export async function registerController(req, res) {
                 { username }
             ]
         });
+        console.log("Found user:", isAlreadyExists);
+
 
         if (isAlreadyExists) {
             return res.status(409).json({
@@ -80,6 +88,18 @@ export async function loginController(req,res){
                 {username}
             ]
         })
+        if (!email && !username) {
+    return res.status(400).json({
+        message: "Email or Username required"
+    })
+}
+
+if (!password) {
+    return res.status(400).json({
+        message: "Password required"
+    })
+}
+
 
         if (!user) {
             return res.status(404).json({
@@ -131,6 +151,87 @@ export async function loginController(req,res){
 
     } catch (error) {
         console.error("Login Error:", error);
+        return res.status(500).json({
+            message:"Internal Server Error",
+            success:false,
+            err:error.message
+        })
+    }
+}
+
+
+export async function getMeController(req,res) {
+
+    try {
+
+        const userId = req.user.id
+
+        if (!userId) {
+            return res.status(401).json({
+                message:"Unauthorized",
+                success:false,
+                err:"Unauthorized"
+            })
+        }
+
+        const user = await userModel.findById(userId).select("-password")
+
+        if (!user) {
+            return res.status(404).json({
+                message:"User not Found",
+                success:false,
+                err:"User not found"
+            })
+        }
+
+        return res.status(200).json({
+            message:"User fetched Successfully",
+            success:true,
+            user
+        })
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        return res.status(500).json({
+            message:"Internal Server Error",
+            success:false,
+            err:error.message
+        })
+    }
+}
+
+
+
+export async function logoutController(req,res) {
+
+    try {
+        
+        const token = req.cookies.token
+
+        if (!token) {
+            return res.status(401).json({
+                message:"Token not Found",
+                success:false,
+                err:"Token not Found"
+            })
+        }
+
+        res.clearCookie("token",{
+            httpOnly:true,
+            secure:true,
+            sameSite:"strict",
+            maxAge:0
+        })
+
+        await redis.set(token,Date.now().toString(),"EX",60*60)
+
+        return res.status(200).json({
+            message:"User loggedOut Successfully",
+            success:true,
+        })
+
+    } catch (error) {
+        console.error("Logout Error:", error);
         return res.status(500).json({
             message:"Internal Server Error",
             success:false,

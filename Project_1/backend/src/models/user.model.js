@@ -17,7 +17,9 @@ const userSchema = new mongoose.Schema({
         type:String,
         required:[true, "email is required"],
         unique:[true, "email is alreay registered"],
-        trim:true
+        trim:true,
+        lowercase: true  
+
     },
     password:{
         type:String,
@@ -29,6 +31,11 @@ const userSchema = new mongoose.Schema({
 
 
     },
+    channel: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Channel",
+    default: null
+},
     isVerified:{
         type:Boolean,
         default:false
@@ -40,14 +47,6 @@ const userSchema = new mongoose.Schema({
     banner:{
         type:String,
         default:"https://ik.imagekit.io/p7b10nfhs/banner%20default.avif"
-    },
-    subscribersCount:{
-        type:Number,
-        default:0
-    },
-    subscribingCount:{
-        type:Number,
-        default:0
     },
     videosCount:{
         type:Number,
@@ -65,17 +64,18 @@ const userSchema = new mongoose.Schema({
         type:String,
         default:""
     },
-
-    subscribersPreview:[
-        {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"User"
-        }
-    ],
     provider:{
         type:String,
-        enum:["local", "google"]
+        enum:["local", "google"],
+        default:"local"
+
+    },
+    subscribedChannels: [
+    {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Channel"
     }
+]
 
 
 

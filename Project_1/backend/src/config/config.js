@@ -11,7 +11,9 @@ const config = {
     REDIS_PORT:process.env.REDIS_PORT,
     IMAGEKIT_PRIVATE_KEY:process.env.IMAGE_KIT_PRIVATE_KEY,
     IMAGEKIT_PUBLIC_KEY:process.env.IMAGE_KIT_PUBLIC_KEY,
-    JWT_SECRET:process.env.JWT_SECRET
+    JWT_SECRET:process.env.JWT_SECRET,
+    TAVILY_API_KEY:process.env.TAVILY_API_KEY,
+    MISTRAL_API_KEY:process.env.MISTRAL_API_KEY,
 }
 
 
