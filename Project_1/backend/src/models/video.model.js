@@ -45,14 +45,14 @@ const videoSchema = new mongoose.Schema({
         default: 0
     },
 
-    likes: {
+    likesCount: {
         type: Number,
-        default: 0
+        default: 0,
     },
 
-    dislikes: {
+    dislikesCount: {
         type: Number,
-        default: 0
+        default: 0,
     },
     commentsCount: {
     type: Number,
@@ -119,7 +119,24 @@ const videoSchema = new mongoose.Schema({
     flagReason: {
         type: String,
         default: ""
-    }
+    },
+    transcript: {
+    type: String,
+    default: ""
+},totalWatchTime: {
+    type: Number,
+    default: 0
+},
+
+averageWatchTime: {
+    type: Number,
+    default: 0
+},
+
+trustScore: {
+    type: Number,
+    default: 0
+},
 
 }, { timestamps: true });
 

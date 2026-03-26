@@ -14,6 +14,7 @@ const config = {
     JWT_SECRET:process.env.JWT_SECRET,
     TAVILY_API_KEY:process.env.TAVILY_API_KEY,
     MISTRAL_API_KEY:process.env.MISTRAL_API_KEY,
+    ASSEMBLY_API_KEY:process.env.ASSEMBLY_API_KEY,
 }
 
 

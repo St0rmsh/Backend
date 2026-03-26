@@ -18,8 +18,8 @@ const likeSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// ❗ one user → one reaction per video
 likeSchema.index({ user: 1, video: 1 }, { unique: true });
 
+likeSchema.index({ video: 1, type: 1 });
 const likeModel = mongoose.model("Like", likeSchema);
 export default likeModel;

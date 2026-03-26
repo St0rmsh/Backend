@@ -7,7 +7,8 @@ import { timeAgo } from "../utils/time.js";
 export const addComment = async (req, res) => {
     try {
         const userId = req.user?._id;
-        const { videoId, text } = req.body;
+        const { videoId } = req.params;
+        const { text } = req.body;
 
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });

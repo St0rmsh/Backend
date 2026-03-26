@@ -1,26 +1,30 @@
 import { uploadFile, deleteFile } from "../services/storage.service.js";
 import videoModel from "../models/video.model.js";
+import { SearchAndAskAI } from "../services/ai.service.js";
+import channelModel from "../models/channel.model.js";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegpath from "ffmpeg-static";
-import { SearchAndAskAI } from "../services/ai.service.js";
-import fs from "fs";
-import channelModel from "../models/channel.model.js";
 import ffprobePath from "ffprobe-static";
+import { saveTempFile } from "../utils/save.temp.js";
+import {transcribeVideo} from "../services/transcription.service.js"
+import fs from "fs";
+
 
 ffmpeg.setFfmpegPath(ffmpegpath);
-ffmpeg.setFfprobePath(ffprobePath.path); 
+ffmpeg.setFfprobePath(ffprobePath.path);
+
+
 
 export const videoUpload = async (req, res) => {
     let uploadedVideo = null;
     let uploadedThumbnail = null;
-    let thumbnailPath = null;
-
-    const file = req.file;
+    let tempVideoPath = null;
+    let tempThumbPath = null;
 
     try {
         const { title, description } = req.body;
+        const file = req.file;
 
-        // ✅ AUTH
         if (!req.user?._id) {
             return res.status(401).json({ message: "Unauthorized" });
         }
@@ -29,60 +33,59 @@ export const videoUpload = async (req, res) => {
             return res.status(400).json({ message: "Create a channel first" });
         }
 
-        // ✅ VALIDATION
-        if (!file) return res.status(400).json({ message: "Video required" });
+        if (!file) {
+            return res.status(400).json({ message: "Video required" });
+        }
+
         if (!title || !description) {
             return res.status(400).json({ message: "All fields required" });
         }
 
-        // ✅ READ FILE BUFFER
+        const safeName = file.originalname.replace(/\s+/g, "_");
+        const fileName = `${Date.now()}-${safeName}`;
 
+        // ✅ TEMP SAVE
+        tempVideoPath = await saveTempFile(file.buffer, fileName);
+
+        // ✅ UPLOAD VIDEO
         uploadedVideo = await uploadFile({
-           filePath: file.path,
-    filename: file.filename
-
+            buffer: file.buffer,
+            filename: fileName,
+            folder: "videos"
         });
-
-        if (!uploadedVideo?.url) throw new Error("Video upload failed");
 
         // ✅ GET DURATION
         const duration = await new Promise((resolve, reject) => {
-            ffmpeg.ffprobe(file.path, (err, meta) => {
+            ffmpeg.ffprobe(tempVideoPath, (err, meta) => {
                 if (err) return reject(err);
                 resolve(Math.floor(meta?.format?.duration || 0));
             });
         });
 
-        // ✅ CREATE THUMBNAIL
-        await fs.promises.mkdir("uploads/thumbnails", { recursive: true });
+        // ✅ THUMBNAIL
+        await fs.promises.mkdir("temp", { recursive: true });
 
-        const fileName = `${Date.now()}.png`;
-        thumbnailPath = `uploads/thumbnails/${fileName}`;
+        const thumbName = `thumb-${Date.now()}.png`;
+        tempThumbPath = `temp/${thumbName}`;
 
-        try {
-            await new Promise((resolve, reject) => {
-                ffmpeg(file.path)
-                    .screenshots({
-                        count: 1,
-                        filename: fileName,
-                        folder: "uploads/thumbnails"
-                    })
-                    .on("end", resolve)
-                    .on("error", reject);
-            });
+        await new Promise((resolve, reject) => {
+            ffmpeg(tempVideoPath)
+                .screenshots({
+                    count: 1,
+                    filename: thumbName,
+                    folder: "temp"
+                })
+                .on("end", resolve)
+                .on("error", reject);
+        });
 
-     uploadedThumbnail = await uploadFile({
-    filePath: thumbnailPath, 
-    filename: fileName
-});
+        const thumbBuffer = await fs.promises.readFile(tempThumbPath);
 
-        } catch (err) {
-            console.log("Thumbnail failed:", err);
-            uploadedThumbnail = {
-                url: "https://via.placeholder.com/1280x720.png",
-                fileId: null
-            };
-        }
+        uploadedThumbnail = await uploadFile({
+            buffer: thumbBuffer,
+            filename: thumbName,
+            folder: "thumbnails"
+        });
 
         // ✅ SAVE VIDEO
         const video = await videoModel.create({
@@ -94,74 +97,118 @@ export const videoUpload = async (req, res) => {
             channel: req.user.channel,
             uploader: req.user._id,
             views: 0,
-            likes: 0,
-            dislikes: 0,
+            likesCount: 0,
+            dislikesCount: 0,
+            transcript: "",
+            trustScore: 0,
             tags: [],
             category: "general",
             visibility: "public",
             isPublished: true,
             verification: {
-                verdict: "UNKNOWN",
-                confidence: 0,
                 summary: "",
+                claims: [],
+                finalVerdict: "UNKNOWN",
+                confidence: 0,
                 sources: []
             }
         });
 
-        // ✅ UPDATE CHANNEL COUNT (SAFE)
+        // ✅ update channel
         await channelModel.findByIdAndUpdate(
             req.user.channel,
-            { $inc: { videosCount: 1 } },
-            { new: true }
+            { $inc: { videosCount: 1 } }
         );
 
-        // ✅ BACKGROUND AI
-        SearchAndAskAI({ query: `${title} ${description}` })
-            .then(async (ai) => {
-               if (ai?.success && ai.data) {
-                await videoModel.findByIdAndUpdate(video._id, {
-                    verification: {
-                    summary: ai.data.summary || "",
-                    claims: ai.data.claims || [],
-                    finalVerdict: ai.data.finalVerdict || "UNKNOWN",
-                    confidence: ai.data.confidence || 0,
-                    truth: ai.data.truth || "",
-                    issues: ai.data.issues || [],
-                    sources: ai.data.sources || [],
-                    checkedAt: new Date()
+        // 🔥 BACKGROUND AI (NON-BLOCKING)
+        setImmediate(async () => {
+            try {
+                console.log("🚀 AI started...");
+
+                const transcript = await transcribeVideo(uploadedVideo.url);
+
+                const urls =
+                    description.match(/https?:\/\/[^\s]+/g) || [];
+
+                const result = await SearchAndAskAI({
+                    query: `
+Video Title: ${title}
+
+Description: ${description}
+
+Transcript:
+${transcript || "No transcript"}
+
+Sources:
+${urls.join("\n")}
+`
+                });
+
+                if (result.success && result.data) {
+
+                    const isFlagged =
+                        result.data.finalVerdict === "FALSE" &&
+                        result.data.confidence > 70;
+
+                    const trustScore =
+                        result.data.finalVerdict === "TRUE" ? 100 :
+                        result.data.finalVerdict === "PARTIALLY TRUE" ? 60 :
+                        result.data.finalVerdict === "FALSE" ? 20 : 0;
+
+                    await videoModel.findByIdAndUpdate(video._id, {
+                        transcript,
+                        trustScore,
+                        verification: {
+                            ...result.data,
+                            checkedAt: new Date()
+                        },
+                        isFlagged,
+                        flagReason: isFlagged
+                            ? "Potential misinformation"
+                            : ""
+                    });
+
+                    console.log("✅ AI verification saved");
                 }
-            });
-        }
 
-            })
-            .catch(() => {});
+            } catch (err) {
+                console.log("❌ AI failed:", err.message);
+            }
+        });
 
-      return res.status(201).json({
-    success: true,
-    video,
-    message: "Video uploaded. Verification in progress..."
-});
+        return res.status(201).json({
+            success: true,
+            video,
+            message: "Uploaded successfully"
+        });
 
     } catch (err) {
         console.error("Upload error:", err);
 
-        if (uploadedVideo?.fileId) await deleteFile(uploadedVideo.fileId);
-        if (uploadedThumbnail?.fileId) await deleteFile(uploadedThumbnail.fileId);
+        if (uploadedVideo?.fileId)
+            await deleteFile(uploadedVideo.fileId);
 
-        return res.status(500).json({ message: "Internal Server Error" });
+        if (uploadedThumbnail?.fileId)
+            await deleteFile(uploadedThumbnail.fileId);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
 
     } finally {
-        try {
-            if (file?.path && fs.existsSync(file.path)) {
-                await fs.promises.unlink(file.path);
-            }
+        if (tempVideoPath && fs.existsSync(tempVideoPath)) {
+            await fs.promises.unlink(tempVideoPath);
+        }
 
-            if (thumbnailPath && fs.existsSync(thumbnailPath)) {
-                await fs.promises.unlink(thumbnailPath);
-            }
-        } catch {}
+        if (tempThumbPath && fs.existsSync(tempThumbPath)) {
+            await fs.promises.unlink(tempThumbPath);
+        }
     }
 };
+
+
+
+
 
 
 
@@ -230,7 +277,7 @@ export const getTrendingVideos = async (req, res) => {
                     score: {
                         $add: [
                             "$views",
-                            { $multiply: ["$likes", 2] }
+                            { $multiply: ["$likesCount", 2] }
                         ]
                     }
                 }
@@ -239,15 +286,13 @@ export const getTrendingVideos = async (req, res) => {
             { $limit: 20 }
         ]);
 
-        return res.status(200).json({
-            success: true,
-            videos
-        });
+        return res.json({ success: true, videos });
 
-    } catch (err) {
+    } catch {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
 
 export const searchVideos = async (req, res) => {
     try {

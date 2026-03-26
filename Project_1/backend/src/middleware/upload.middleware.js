@@ -1,21 +1,6 @@
 import multer from "multer";
-import fs from "fs";
-import path from "path";
 
-const uploadDir = "uploads/videos";
-
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (_, __, cb) => cb(null, uploadDir),
-    filename: (_, file, cb) => {
-        const ext = path.extname(file.originalname) || ".mp4";
-        const name = Date.now() + "-" + Math.random().toString(36).slice(2);
-        cb(null, name + ext);
-    }
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage,

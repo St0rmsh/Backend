@@ -1,38 +1,39 @@
-import {ImageKit} from "@imagekit/nodejs";
+import { ImageKit } from "@imagekit/nodejs";
 import config from "../config/config.js";
-import fs from "fs";
+import {Readable} from "stream"
 
 const imageKit = new ImageKit({
-    privateKey: config.IMAGEKIT_PRIVATE_KEY,
     publicKey: config.IMAGEKIT_PUBLIC_KEY,
+    privateKey: config.IMAGEKIT_PRIVATE_KEY,
+    urlEndpoint: config.IMAGEKIT_URL_ENDPOINT
 });
 
-export const uploadFile = async ({ filePath, filename, folder = "YtCl" }) => {
+export const uploadFile = async ({ buffer, filename, folder = "YtCl" }) => {
     try {
+
+        const stream = Readable.from(buffer);
+        
         const file = await imageKit.files.upload({
-            file:  fs.createReadStream(filePath), 
+            file: stream,
             fileName: filename,
             folder
         });
 
         return file;
+
     } catch (error) {
-        console.error("Upload error FULL:", error);
-        console.error("Upload error MESSAGE:", error.message);
-        console.error("Upload error STACK:", error.stack);
+        console.error("Upload error:", error.message);
         throw new Error("Upload failed");
     }
 };
 
+
 export const deleteFile = async (fileId) => {
     try {
         if (!fileId) return null;
-
-        return await imageKit.delete(fileId); 
-
+        return await imageKit.files.deleteFile(fileId);
     } catch (error) {
         console.error("Delete error:", error);
         return null;
     }
 };
-

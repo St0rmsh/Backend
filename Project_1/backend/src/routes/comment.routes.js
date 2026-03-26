@@ -10,7 +10,7 @@ const router = Router();
 
 // /api/comment/add
 // POST
-router.post("/add", authMiddleware, addComment);
+router.post("/:videoId/comment", authMiddleware, addComment);
 
 
 // /api/comment/:videoId
