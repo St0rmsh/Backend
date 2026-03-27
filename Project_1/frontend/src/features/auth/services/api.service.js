@@ -16,14 +16,18 @@ export const registerUser = async ({username,email,password}) => {
     }
 }
 
-export const loginUser = async ({username,password}) => {
+export const loginUser = async ({ email, password }) => {
     try {
-        const response = await api.post("/api/auth/login", {username,password});
+        const response = await api.post("/api/auth/login", {
+            email,
+            username: email, // 🔥 fallback
+            password
+        });
         return response.data;
     } catch (error) {
         throw error;
     }
-}
+};
 
 
 export const getMe = async () => {

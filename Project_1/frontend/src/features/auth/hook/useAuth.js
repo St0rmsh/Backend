@@ -23,14 +23,14 @@ export const useAuth = ()=>{
     }
 }
 
-    const handleLogin = async ({username,password})=>{
+    const handleLogin = async ({email,password})=>{
         try {
             dispatch(setLoading(true));
-            const response = await loginUser({username,password});
+            const response = await loginUser({email,password});
             dispatch(setUser(response.user));
             return response;
         } catch (error) {
-            dispatch(setError(error));
+            dispatch(setError(error.response?.data?.message || "Login failed"));
             throw error;
         } finally{
             dispatch(setLoading(false));
@@ -53,13 +53,18 @@ export const useAuth = ()=>{
 
     const handleGetMe = async ()=>{
         try {
+
             dispatch(setLoading(true));
+
             const response = await getMe();
+
             dispatch(setUser(response.user));
-            return response;
         } catch (error) {
+
             dispatch(setError(error));
+
             throw error;
+
         } finally{
             dispatch(setLoading(false));
         }

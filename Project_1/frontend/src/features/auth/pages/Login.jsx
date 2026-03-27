@@ -1,9 +1,43 @@
 import { useNavigate } from "react-router-dom";
+import {useAuth} from "../hook/useAuth.js"
+import { useState } from "react";
 
 const Login = () => {
   
  const navigate = useNavigate();
+ const {handleLogin} = useAuth();
 
+ const [form,setForm] = useState({
+  email:"",
+  password:""
+ });    
+
+ const handleChange = (e) => {
+  setForm({
+    ...form,
+    [e.target.name]:e.target.value
+  })
+ }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!form.email || !form.password) {
+    alert("All fields are required");
+    return;
+  }
+
+  try {
+    await handleLogin({
+      email: form.email,
+      password: form.password
+    });
+
+    navigate("/");
+
+  } catch (error) {
+    console.log(error);
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-4 font-sans">
       {/* Container */}
@@ -15,7 +49,7 @@ const Login = () => {
             <h3 className="text-3xl font-bold text-white mb-2">Welcome back</h3>
             <p className="text-gray-400 mb-6 text-sm">Please enter your details to sign in.</p>
 
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               
               {/* Email Input */}
               <div>
@@ -24,6 +58,8 @@ const Login = () => {
                   id="email"
                   name="email"
                   type="email"
+                  value={form.email}
+                  onChange={handleChange}
                   placeholder="john@example.com"
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-white placeholder-gray-500 transition-all"
                   required
@@ -37,6 +73,8 @@ const Login = () => {
                   id="password"
                   name="password"
                   type="password"
+                  value={form.password}
+                  onChange={handleChange}
                   placeholder="••••••••"
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-white placeholder-gray-500 transition-all"
                   required
