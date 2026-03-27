@@ -1,8 +1,9 @@
 import otpModel from "../models/otp.model.js";
 import { generateOTP } from "../utils/otp.js";
 import { sendOTP } from "../services/email.service.js";
-
-
+import userModel from "../models/user.model.js";
+import jwt from "jsonwebtoken";
+import config from "../config/config.js";
 
 
 
@@ -10,7 +11,8 @@ import { sendOTP } from "../services/email.service.js";
 
 export const sendOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+
 
     let record = await otpModel.findOne({ email });
     const now = Date.now();
@@ -68,47 +70,55 @@ export const sendOtp = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+    const otp = req.body.otp;
 
     const record = await otpModel.findOne({ email });
 
     if (!record) {
-      return res.status(400).json({
-        message: "OTP not found"
-      });
+      return res.status(400).json({ message: "OTP not found" });
     }
 
-    // ⏱ Expiry check
     if (record.expiresAt < new Date()) {
-      return res.status(400).json({
-        message: "OTP expired"
-      });
+      return res.status(400).json({ message: "OTP expired" });
     }
 
-    // 🚫 Max attempts (5)
-    if (record.attempts >= 5) {
-      return res.status(429).json({
-        message: "Too many attempts. Request new OTP"
-      });
-    }
-
-    // ❌ Wrong OTP
     if (record.otp !== otp) {
-      record.attempts += 1;
-      await record.save();
-
-      return res.status(400).json({
-        message: `Invalid OTP (${record.attempts}/5)`
-      });
+      return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // ✅ SUCCESS
-    record.isVerified = true;
-    await record.save();
+    // 🔥 CREATE USER HERE
+    const { name, username, password } = record.tempUser;
+
+    const user = await userModel.create({
+      name,
+      username,
+      email,
+      password,
+      isVerified: true
+    });
+
+    // 🔥 delete OTP record
+    await otpModel.deleteOne({ email });
+
+    // 🔥 login user
+    const token = jwt.sign(
+      { id: user._id },
+      config.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
 
     return res.json({
       success: true,
-      message: "OTP verified"
+      message: "Account created",
+      user
     });
 
   } catch (err) {
@@ -118,4 +128,5 @@ export const verifyOtp = async (req, res) => {
     });
   }
 };
+
 

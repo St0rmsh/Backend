@@ -3,89 +3,72 @@ import jwt from "jsonwebtoken";
 import config from "../config/config.js";
 import redis from "../config/cache.js";
 import otpModel from "../models/otp.model.js";
+import { generateOTP } from "../utils/otp.js";
+import { sendOTP } from "../services/email.service.js";
 
 export async function registerController(req, res) {
     try {
-        const { name, username, password } = req.body;
+        const name = req.body.name;
+        const username = req.body.username?.toLowerCase().trim();
         const email = req.body.email?.toLowerCase().trim();
+        const password = req.body.password;
 
-        if (!email) {
+        if (!email || !username || !password) {
             return res.status(400).json({
-                message: "Email is required"
+                message: "All fields required"
             });
         }
 
-        if (!username) {
-            return res.status(400).json({
-                message: "Username required"
-            });
-        }
-
-        if (!password) {
-            return res.status(400).json({
-                message: "Password required"
-            });
-        }
-
-        const otpRecord = await otpModel.findOne({ email });
-
-        if (
-            !otpRecord ||
-            !otpRecord.isVerified ||
-            otpRecord.expiresAt < new Date()
-        ) {
-            return res.status(400).json({
-                message: "OTP not verified or expired",
-                success: false
-            });
-        }
-
+        // ❌ check existing user
         const exists = await userModel.findOne({
             $or: [{ email }, { username }]
         });
 
         if (exists) {
             return res.status(409).json({
-                message: "User already exists",
-                success: false
+                message: "User already exists"
             });
         }
 
-        const user = await userModel.create({
+        // 🔥 generate OTP
+        const otp = generateOTP();
+
+        const now = Date.now();
+
+        let record = await otpModel.findOne({ email });
+
+        if (!record) {
+            record = new otpModel({ email });
+        }
+
+        record.otp = otp;
+        record.expiresAt = new Date(now + 5 * 60 * 1000);
+        record.isVerified = false;
+
+        // 🔥 store temp user data
+        record.tempUser = {
             name,
             username,
-            email,
-            password,
-            isVerified: true
-        });
+            password
+        };
 
-        await otpModel.deleteOne({ email });
+        await record.save();
 
-        const token = jwt.sign(
-            { id: user._id },
-            config.JWT_SECRET,
-            { expiresIn: "7d" }
-        );
+        await sendOTP(email, otp);
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-
-        return res.status(201).json({
+        return res.json({
             success: true,
-            user
+            message: "OTP sent to email"
         });
 
     } catch (error) {
+        console.error(error);
         return res.status(500).json({
-            message: "Internal Server Error",
-            success: false
+            message: "Internal Server Error"
         });
     }
 }
+
 
 
 
@@ -257,7 +240,8 @@ export async function logoutController(req, res) {
         const isBlacklisted = await redis.get(token);
 
         if (!isBlacklisted) {
-            const decoded = jwt.decode(token);
+           const decoded = jwt.verify(token, config.JWT_SECRET);
+
 
             if (decoded?.exp) {
                 const expiry = Math.max(

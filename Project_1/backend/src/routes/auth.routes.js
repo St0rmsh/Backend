@@ -3,7 +3,7 @@ import { registerController,loginController,getMeController, logoutController } 
 import { registerValidation, loginValidation } from "../Validation/auth.validation.js"
 import { authMiddleware } from "../middleware/auth.middleware.js"
 import { authLimiter } from "../middleware/rateLimiter.middleware.js";
-
+import { verifyOtp } from "../controllers/OTP.controller.js";
 
 const authRoutes = Router()
 
@@ -12,6 +12,9 @@ const authRoutes = Router()
 // POST 
 // /api/auth/register
 authRoutes.post("/register", authLimiter, registerValidation, registerController);
+
+
+authRoutes.post("/verify-otp", verifyOtp);
 
 // Login
 // POST 

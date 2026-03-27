@@ -4,24 +4,20 @@ const otpSchema = new mongoose.Schema({
   email: String,
   otp: String,
   expiresAt: Date,
+  isVerified: Boolean,
 
-  attempts: {
-    type: Number,
-    default: 0
+  // 🔥 NEW: store user data temporarily
+  tempUser: {
+    name: String,
+    username: String,
+    password: String
   },
 
-  requestCount: {
-    type: Number,
-    default: 0
-  },
-
-  firstRequestTime: Date,
-
-  isVerified: {
-    type: Boolean,
-    default: false
-  }
+  attempts: Number,
+  requestCount: Number,
+  firstRequestTime: Number
 });
+
 
 otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 

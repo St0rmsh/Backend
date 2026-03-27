@@ -15,6 +15,9 @@ const config = {
     TAVILY_API_KEY:process.env.TAVILY_API_KEY,
     MISTRAL_API_KEY:process.env.MISTRAL_API_KEY,
     ASSEMBLY_API_KEY:process.env.ASSEMBLY_API_KEY,
+    GOOGLE_USER:process.env.GOOGLE_USER,
+    GOOGLE_PASS:process.env.GOOGLE_PASS,
+    
 }
 
 
