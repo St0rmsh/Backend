@@ -13,7 +13,9 @@ export const registerValidation = [
         .trim()
         .notEmpty().withMessage("Username is required")
         .isString().withMessage("Username must be a text string")
-        .isLength({ min: 3, max: 30 }).withMessage("Username must be between 3 and 30 characters"),
+        .isLength({ min: 3, max: 30 }).withMessage("Username must be between 3 and 30 characters")
+        .matches(/^[a-zA-Z0-9_]+$/)
+        .withMessage("Username can only contain letters, numbers, and underscores"),
     
     body("email")
         .trim()
@@ -25,9 +27,7 @@ export const registerValidation = [
     body("password")
         .notEmpty().withMessage("Password is required")
         .isString().withMessage("Password must be a text string")
-        .isLength({ min: 6 }).withMessage("Password must be at least 6 characters long")
-        .matches(/^[a-zA-Z0-9_]+$/)
-        .withMessage("Username can only contain letters, numbers, and underscores"),
+        .isLength({ min: 6 }).withMessage("Password must be at least 6 characters long"),
     
     handleValidationErrors
 ];

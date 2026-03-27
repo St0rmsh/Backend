@@ -72,38 +72,38 @@ export async function registerController(req, res) {
 
 
 
-export async function loginController(req,res){
+export async function loginController(req, res) {
 
     try {
-        
-        const {username,password} = req.body
+
+        const { username, password } = req.body
 
         const email = req.body.email?.toLowerCase().trim();
 
         const user = await userModel.findOne({
-            $or:[
-                {email},
-                {username}
+            $or: [
+                { email },
+                { username }
             ]
         })
         if (!email && !username) {
-    return res.status(400).json({
-        message: "Email or Username required"
-    })
-}
+            return res.status(400).json({
+                message: "Email or Username required"
+            })
+        }
 
-if (!password) {
-    return res.status(400).json({
-        message: "Password required"
-    })
-}
+        if (!password) {
+            return res.status(400).json({
+                message: "Password required"
+            })
+        }
 
 
         if (!user) {
             return res.status(404).json({
-                message:"User not found",
-                success:false,
-                err:"user not found"
+                message: "User not found",
+                success: false,
+                err: "user not found"
             })
         }
 
@@ -111,72 +111,72 @@ if (!password) {
 
         if (!isMatched) {
             return res.status(401).json({
-                message:"Invalid credentials",
-                success:false,
-                err:"Invalid credentials"
+                message: "Invalid credentials",
+                success: false,
+                err: "Invalid credentials"
             })
         }
 
         if (user.isSuspended) {
-    return res.status(403).json({
-        message: "Account suspended",
-        success: false
-    });
-}
+            return res.status(403).json({
+                message: "Account suspended",
+                success: false
+            });
+        }
 
         if (!user.isVerified) {
-    return res.status(403).json({
-        message: "Please verify your account",
-        success: false
-    });
-}
+            return res.status(403).json({
+                message: "Please verify your account",
+                success: false
+            });
+        }
 
 
 
 
         const token = jwt.sign({
-            id:user._id
-        },config.JWT_SECRET,{expiresIn:"7d"})
+            id: user._id
+        }, config.JWT_SECRET, { expiresIn: "7d" })
 
-        res.cookie("token",token,{
-            httpOnly:true,
-            secure:true,
-            sameSite:"strict",
-            maxAge:7*24*60*60*1000
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
         return res.status(200).json({
-            message:"User loggedIn Successfully",
-            success:true,
-            user:{
-                name:user.name,
-                username:user.username,
-                email:user.email,
-                avatar:user.avatar,
-                isVerified:user.isVerified,
-                subscribersCount:user.subscribersCount,
-                subscribingCount:user.subscribingCount,
-                videosCount:user.videosCount,
-                totalViews:user.totalViews,
-                isSuspended:user.isSuspended,
-                suspendReason:user.suspendReason,
-                subscribersPreview:user.subscribersPreview,
-                provider:user.provider,
+            message: "User loggedIn Successfully",
+            success: true,
+            user: {
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                isVerified: user.isVerified,
+                subscribersCount: user.subscribersCount,
+                subscribingCount: user.subscribingCount,
+                videosCount: user.videosCount,
+                totalViews: user.totalViews,
+                isSuspended: user.isSuspended,
+                suspendReason: user.suspendReason,
+                subscribersPreview: user.subscribersPreview,
+                provider: user.provider,
             }
         })
 
     } catch (error) {
         console.error("Login Error:", error);
         return res.status(500).json({
-            message:"Internal Server Error",
-            success:false,
-            err:error.message
+            message: "Internal Server Error",
+            success: false,
+            err: error.message
         })
     }
 }
 
 
-export async function getMeController(req,res) {
+export async function getMeController(req, res) {
 
     try {
 
@@ -184,9 +184,9 @@ export async function getMeController(req,res) {
 
         if (!userId) {
             return res.status(401).json({
-                message:"Unauthorized",
-                success:false,
-                err:"Unauthorized"
+                message: "Unauthorized",
+                success: false,
+                err: "Unauthorized"
             })
         }
 
@@ -194,24 +194,24 @@ export async function getMeController(req,res) {
 
         if (!user) {
             return res.status(404).json({
-                message:"User not Found",
-                success:false,
-                err:"User not found"
+                message: "User not Found",
+                success: false,
+                err: "User not found"
             })
         }
 
         return res.status(200).json({
-            message:"User fetched Successfully",
-            success:true,
+            message: "User fetched Successfully",
+            success: true,
             user
         })
 
     } catch (error) {
         console.error("Login Error:", error);
         return res.status(500).json({
-            message:"Internal Server Error",
-            success:false,
-            err:error.message
+            message: "Internal Server Error",
+            success: false,
+            err: error.message
         })
     }
 }
@@ -240,7 +240,7 @@ export async function logoutController(req, res) {
         const isBlacklisted = await redis.get(token);
 
         if (!isBlacklisted) {
-           const decoded = jwt.verify(token, config.JWT_SECRET);
+            const decoded = jwt.verify(token, config.JWT_SECRET);
 
 
             if (decoded?.exp) {
