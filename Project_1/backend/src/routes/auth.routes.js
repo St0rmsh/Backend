@@ -2,6 +2,7 @@ import {Router} from "express"
 import { registerController,loginController,getMeController, logoutController } from "../controllers/auth.controller.js"
 import { registerValidation, loginValidation } from "../Validation/auth.validation.js"
 import { authMiddleware } from "../middleware/auth.middleware.js"
+import { authLimiter } from "../middleware/rateLimiter.middleware.js";
 
 
 const authRoutes = Router()
@@ -10,12 +11,12 @@ const authRoutes = Router()
 // Register
 // POST 
 // /api/auth/register
-authRoutes.post("/register", registerValidation, registerController)
+authRoutes.post("/register", authLimiter, registerValidation, registerController);
 
 // Login
 // POST 
 // /api/auth/login
-authRoutes.post("/login", loginValidation, loginController)
+authRoutes.post("/login", authLimiter, loginValidation, loginController);
 
 
 // Get Me

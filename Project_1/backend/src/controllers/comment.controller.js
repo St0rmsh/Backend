@@ -1,47 +1,40 @@
 import commentModel from "../models/comment.model.js";
 import videoModel from "../models/video.model.js";
-import { timeAgo } from "../utils/time.js";
+import { getIO } from "../socket/connect.socket.js";
 
-
-// ➤ Add Comment
 export const addComment = async (req, res) => {
-    try {
-        const userId = req.user?._id;
-        const { videoId } = req.params;
-        const { text } = req.body;
+  try {
+    const userId = req.user._id;
+    const { videoId } = req.params;
+    const { text } = req.body;
 
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized" });
-        }
+    const comment = await commentModel.create({
+      video: videoId,
+      user: userId,
+      text
+    });
 
-        if (!videoId || !text) {
-            return res.status(400).json({ message: "All fields required" });
-        }
+    await videoModel.findByIdAndUpdate(videoId, {
+      $inc: { commentsCount: 1 }
+    });
 
-        const video = await videoModel.findById(videoId);
-        if (!video) {
-            return res.status(404).json({ message: "Video not found" });
-        }
+    // 🔥 REAL-TIME EMIT
+    const io = getIO();
+    io.to(videoId).emit("comment:new", {
+      comment
+    });
 
-        const comment = await commentModel.create({
-            video: videoId,
-            user: userId,
-            text
-        });
-        await videoModel.findByIdAndUpdate(videoId, {
-            $inc: { commentsCount: 1 }
-        });
+    return res.status(201).json({
+      success: true,
+      comment
+    });
 
-        return res.status(201).json({
-            success: true,
-            comment
-        });
-
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 };
+
 
 
 // ➤ Get Comments for Video

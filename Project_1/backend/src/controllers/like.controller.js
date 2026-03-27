@@ -3,107 +3,106 @@ import videoModel from "../models/video.model.js";
 import { getIO } from "../socket/connect.socket.js";
 
 
+
 export const toggleReaction = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { videoId } = req.params;
-        const { type } = req.body;
+  try {
+    const userId = req.user._id;
+    const { videoId } = req.params;
+    const { type } = req.body;
 
-        // ✅ validate
-        if (!["LIKE", "DISLIKE"].includes(type)) {
-            return res.status(400).json({ message: "Invalid type" });
-        }
-
-        // ✅ check video
-        const video = await videoModel.findById(videoId);
-        if (!video) {
-            return res.status(404).json({ message: "Video not found" });
-        }
-
-        const existing = await likeModel.findOne({
-            user: userId,
-            video: videoId
-        });
-
-        let update = {};            // ✅ clean increment object
-        let message = "";
-        let userReaction = null;    // ✅ correct state tracking
-
-        // ❌ REMOVE (same click again)
-      if (existing && existing.type === type) {
-    await likeModel.deleteOne({ _id: existing._id });
-
-    if (type === "LIKE" && video.likesCount > 0) {
-        update.likesCount = -1;
+    if (!["LIKE", "DISLIKE"].includes(type)) {
+      return res.status(400).json({ message: "Invalid type" });
     }
 
-    if (type === "DISLIKE" && video.dislikesCount > 0) {
-        update.dislikesCount = -1;
+    const video = await videoModel.findById(videoId);
+    if (!video) {
+      return res.status(404).json({ message: "Video not found" });
     }
 
-    userReaction = null;
-    message = "Reaction removed";
-}
+    const existing = await likeModel.findOne({
+      user: userId,
+      video: videoId
+    });
 
-        // 🔄 SWITCH (like → dislike OR dislike → like)
-        else if (existing && existing.type !== type) {
-            existing.type = type;
-            await existing.save();
+    const inc = {
+      likesCount: 0,
+      dislikesCount: 0
+    };
 
-            if (type === "LIKE") {
-                update = { likesCount: 1, dislikesCount: -1 };
-            } else {
-                update = { likesCount: -1, dislikesCount: 1 };
-            }
+    let message = "";
+    let userReaction = null;
 
-            userReaction = type;
-            message = "Reaction switched";
-        }
+    // ❌ Remove reaction
+    if (existing && existing.type === type) {
+      await likeModel.deleteOne({ _id: existing._id });
 
-        // ✅ NEW reaction
-        else {
-            await likeModel.create({
-                user: userId,
-                video: videoId,
-                type
-            });
+      if (type === "LIKE") inc.likesCount = -1;
+      else inc.dislikesCount = -1;
 
-            if (type === "LIKE") update.likesCount = 1;
-            else update.dislikesCount = 1;
-
-            userReaction = type;
-            message = "Reaction added";
-        }
-
-        // ✅ update counts atomically
-        const updatedVideo = await videoModel.findByIdAndUpdate(
-            videoId,
-            { $inc: update },
-            { new: true }
-        );
-
-        // 🔌 socket emit (real-time)
-        const io = getIO();
-        io.to(videoId).emit("reaction:update", {
-            videoId,
-            likes: updatedVideo.likesCount,
-            dislikes: updatedVideo.dislikesCount
-        });
-
-        // ✅ response
-        return res.json({
-            success: true,
-            message,
-            likes: updatedVideo.likesCount,
-            dislikes: updatedVideo.dislikesCount,
-            userReaction
-        });
-
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Internal Server Error" });
+      message = "Reaction removed";
     }
+
+    // 🔄 Switch reaction
+    else if (existing && existing.type !== type) {
+      existing.type = type;
+      await existing.save();
+
+      if (type === "LIKE") {
+        inc.likesCount = 1;
+        inc.dislikesCount = -1;
+      } else {
+        inc.likesCount = -1;
+        inc.dislikesCount = 1;
+      }
+
+      userReaction = type;
+      message = "Reaction switched";
+    }
+
+    // ✅ New reaction
+    else {
+      await likeModel.create({
+        user: userId,
+        video: videoId,
+        type
+      });
+
+      if (type === "LIKE") inc.likesCount = 1;
+      else inc.dislikesCount = 1;
+
+      userReaction = type;
+      message = "Reaction added";
+    }
+
+    // ✅ Atomic update
+    const updatedVideo = await videoModel.findByIdAndUpdate(
+      videoId,
+      { $inc: inc },
+      { new: true }
+    );
+
+    // 🔌 Emit real-time update
+    const io = getIO();
+    io.to(videoId).emit("reaction:update", {
+      videoId,
+      likes: updatedVideo.likesCount,
+      dislikes: updatedVideo.dislikesCount
+    });
+
+    return res.json({
+      success: true,
+      message,
+      likes: updatedVideo.likesCount,
+      dislikes: updatedVideo.dislikesCount,
+      userReaction
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 };
+
 
 
 

@@ -2,30 +2,52 @@ import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import config from "../config/config.js";
 import redis from "../config/cache.js";
-import { success } from "zod";
-
+import otpModel from "../models/otp.model.js";
 
 export async function registerController(req, res) {
     try {
-        const { name, username, email, password } = req.body;
+        const { name, username, password } = req.body;
+        const email = req.body.email?.toLowerCase().trim();
 
-        console.log("Checking user:", { email, username });
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required"
+            });
+        }
 
+        if (!username) {
+            return res.status(400).json({
+                message: "Username required"
+            });
+        }
 
-        const isAlreadyExists = await userModel.findOne({
-            $or: [
-                { email },
-                { username }
-            ]
+        if (!password) {
+            return res.status(400).json({
+                message: "Password required"
+            });
+        }
+
+        const otpRecord = await otpModel.findOne({ email });
+
+        if (
+            !otpRecord ||
+            !otpRecord.isVerified ||
+            otpRecord.expiresAt < new Date()
+        ) {
+            return res.status(400).json({
+                message: "OTP not verified or expired",
+                success: false
+            });
+        }
+
+        const exists = await userModel.findOne({
+            $or: [{ email }, { username }]
         });
-        console.log("Found user:", isAlreadyExists);
 
-
-        if (isAlreadyExists) {
+        if (exists) {
             return res.status(409).json({
-                message: "User is Already registered",
-                success: false,
-                err: "User Already Exists"
+                message: "User already exists",
+                success: false
             });
         }
 
@@ -33,12 +55,17 @@ export async function registerController(req, res) {
             name,
             username,
             email,
-            password
+            password,
+            isVerified: true
         });
 
-        const token = jwt.sign({
-            id: user._id
-        }, config.JWT_SECRET, { expiresIn: "7d" });
+        await otpModel.deleteOne({ email });
+
+        const token = jwt.sign(
+            { id: user._id },
+            config.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
 
         res.cookie("token", token, {
             httpOnly: true,
@@ -48,39 +75,27 @@ export async function registerController(req, res) {
         });
 
         return res.status(201).json({
-            message: "User registered Successfully",
             success: true,
-            user: {
-                name: user.name,
-                username: user.username,
-                email: user.email,
-                avatar: user.avatar,
-                isVerified: user.isVerified,
-                subscribersCount: user.subscribersCount,
-                subscribingCount: user.subscribingCount,
-                videosCount: user.videosCount,
-                totalViews: user.totalViews,
-                isSuspended: user.isSuspended,
-                suspendReason: user.suspendReason,
-                subscribersPreview: user.subscribersPreview,
-                provider: user.provider,
-            }
+            user
         });
+
     } catch (error) {
-        console.error("Registration Error:", error);
         return res.status(500).json({
             message: "Internal Server Error",
-            success: false,
-            err: error.message
+            success: false
         });
     }
 }
+
+
 
 export async function loginController(req,res){
 
     try {
         
-        const {username,email,password} = req.body
+        const {username,password} = req.body
+
+        const email = req.body.email?.toLowerCase().trim();
 
         const user = await userModel.findOne({
             $or:[
@@ -118,6 +133,24 @@ if (!password) {
                 err:"Invalid credentials"
             })
         }
+
+        if (user.isSuspended) {
+    return res.status(403).json({
+        message: "Account suspended",
+        success: false
+    });
+}
+
+        if (!user.isVerified) {
+    return res.status(403).json({
+        message: "Please verify your account",
+        success: false
+    });
+}
+
+
+
+
         const token = jwt.sign({
             id:user._id
         },config.JWT_SECRET,{expiresIn:"7d"})
@@ -202,40 +235,53 @@ export async function getMeController(req,res) {
 
 
 
-export async function logoutController(req,res) {
-
+export async function logoutController(req, res) {
     try {
-        
-        const token = req.cookies.token
+        const token = req.cookies.token;
 
         if (!token) {
-            return res.status(401).json({
-                message:"Token not Found",
-                success:false,
-                err:"Token not Found"
-            })
+            return res.status(200).json({
+                message: "Already logged out",
+                success: true
+            });
         }
 
-        res.clearCookie("token",{
-            httpOnly:true,
-            secure:true,
-            sameSite:"strict",
-            maxAge:0
-        })
+        // ✅ clear cookie
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict"
+        });
 
-        await redis.set(token,Date.now().toString(),"EX",60*60)
+        // ✅ check if already blacklisted (optional)
+        const isBlacklisted = await redis.get(token);
+
+        if (!isBlacklisted) {
+            const decoded = jwt.decode(token);
+
+            if (decoded?.exp) {
+                const expiry = Math.max(
+                    decoded.exp - Math.floor(Date.now() / 1000),
+                    0
+                );
+
+                if (expiry > 0) {
+                    await redis.set(token, "blacklisted", "EX", expiry);
+                }
+            }
+        }
 
         return res.status(200).json({
-            message:"User loggedOut Successfully",
-            success:true,
-        })
+            message: "Logged out successfully",
+            success: true
+        });
 
     } catch (error) {
         console.error("Logout Error:", error);
+
         return res.status(500).json({
-            message:"Internal Server Error",
-            success:false,
-            err:error.message
-        })
+            message: "Internal Server Error",
+            success: false
+        });
     }
 }

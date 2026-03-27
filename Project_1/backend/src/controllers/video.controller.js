@@ -9,7 +9,6 @@ import { saveTempFile } from "../utils/save.temp.js";
 import {transcribeVideo} from "../services/transcription.service.js"
 import fs from "fs";
 
-
 ffmpeg.setFfmpegPath(ffmpegpath);
 ffmpeg.setFfprobePath(ffprobePath.path);
 
@@ -221,11 +220,6 @@ export const getVideo = async (req, res) => {
         if (!video) {
             return res.status(404).json({ message: "Video not found" });
         }
-
-        // ✅ increment views
-        await videoModel.findByIdAndUpdate(video._id, {
-            $inc: { views: 1 }
-        });
 
         return res.status(200).json({
             success: true,

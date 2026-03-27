@@ -6,31 +6,25 @@ export const toggleSubscribe = async (req, res) => {
         const userId = req.user._id;
         const { channelId } = req.params;
 
-        const channel = await channelModel.findById(channelId);
-        if (!channel) {
-            return res.status(404).json({ message: "Channel not found" });
-        }
-
         const existing = await subscriberModel.findOne({
             user: userId,
             channel: channelId
         });
 
         if (existing) {
-            // ❌ Unsubscribe
             await subscriberModel.deleteOne({ _id: existing._id });
 
             await channelModel.findByIdAndUpdate(channelId, {
                 $inc: { subscribersCount: -1 }
             });
 
-            return res.json({
-                success: true,
-                message: "Unsubscribed"
+            await userModel.findByIdAndUpdate(userId, {
+                $pull: { subscribedChannels: channelId }
             });
+
+            return res.json({ success: true, message: "Unsubscribed" });
         }
 
-        // ✅ Subscribe
         await subscriberModel.create({
             user: userId,
             channel: channelId
@@ -40,18 +34,17 @@ export const toggleSubscribe = async (req, res) => {
             $inc: { subscribersCount: 1 }
         });
 
-        return res.json({
-            success: true,
-            message: "Subscribed"
+        await userModel.findByIdAndUpdate(userId, {
+            $addToSet: { subscribedChannels: channelId }
         });
 
+        return res.json({ success: true, message: "Subscribed" });
+
     } catch (err) {
-        if (err.code === 11000) {
-            return res.json({ success: true, message: "Already subscribed" });
-        }
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
 
 
 export const getSubscribersCount = async (req, res) => {
