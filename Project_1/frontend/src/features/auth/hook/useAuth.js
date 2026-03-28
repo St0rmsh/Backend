@@ -16,9 +16,13 @@ export const useAuth = ()=>{
 
         return response;
     } catch (error) {
-        dispatch(setError(error.response?.data?.message || "Registration failed"));
-        throw error;
-    } finally{
+        const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Something went wrong";
+
+        dispatch(setError(message)); // ✅ serializable
+}    finally{
         dispatch(setLoading(false));
     }
 }
@@ -30,8 +34,12 @@ export const useAuth = ()=>{
             dispatch(setUser(response.user));
             return response;
         } catch (error) {
-            dispatch(setError(error.response?.data?.message || "Login failed"));
-            throw error;
+            const message =
+                error?.response?.data?.message ||
+                error?.message ||
+                "Something went wrong";
+
+            dispatch(setError(message)); // ✅ serializable
         } finally{
             dispatch(setLoading(false));
         }

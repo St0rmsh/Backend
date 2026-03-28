@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: white;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+
+
+* {
+  transition: background-color 0.2s, color 0.2s;
+}
+
+
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 10px;
+}

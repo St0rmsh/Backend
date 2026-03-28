@@ -8,23 +8,26 @@ import { useSelector } from "react-redux";
 
 function App() {
 
-   const { handleGetMe } = useAuth();
-  const { loading } = useSelector((state) => state.auth);
+const { handleGetMe } = useAuth();
+const { loading } = useSelector((state) => state.auth);
 
+useEffect(() => {
+  const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.classList.toggle("dark", dark);
+}, []);
  
-
-    useEffect(() => {
-    handleGetMe();
-  }, []);
+useEffect(() => {
+  handleGetMe();
+}, []);
 
   // ⏳ Global loader during hydration
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Loading app...
-      </div>
-    );
-  }
+ if (loading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white text-xl">
+      Loading app...
+    </div>
+  );
+}
   
 
   return (
