@@ -4,33 +4,57 @@ import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
 import VerifyOTP from "../features/auth/pages/VerifyOTP";
 
-import Protected from "../features/auth/components/Protected";
-
-// Layout + Pages
 import Layout from "../features/Yt_Clone/components/layout/Layout";
 import Home from "../features/Yt_Clone/pages/Home";
 import VideoPages from "../features/Yt_Clone/pages/VideoPages";
 import Dashboard from "../features/Yt_Clone/pages/Dashboard";
+import ChannelPage from "../features/Yt_Clone/pages/ChannelPage";
 
-
-
-// {
-//     path: "/verify-otp",
-//     element: <VerifyOTP />
-//   }
+import Protected from "../features/auth/components/Protected"; // ✅ IMPORTANT
 
 export const router = createBrowserRouter([
-  // Public
-  { path: "/", element: <Layout />, children: [
+
+  // 🔓 PUBLIC AUTH ROUTES
+  {
+    path: "/login",
+    element: <Login />
+  },
+  {
+    path: "/register",
+    element: <Register />
+  },
+  {
+    path: "/verify-otp",
+    element: <VerifyOTP />
+  },
+
+  // 🌐 MAIN APP
+  {
+    path: "/",
+    element: <Layout />,
+    children: [
       { index: true, element: <Home /> },
       { path: "video/:id", element: <VideoPages /> },
-     { path: "/verify-otp", element: <VerifyOTP /> },
-  ]},
-   
+    ],
+  },
 
-  // Creator Studio (Protected)
-   { path: "/studio", element: <Layout />, children: [
-      { index: true, element: <Dashboard /> },
-  ]},
+  // 🔒 PROTECTED ROUTE (Studio)
+  {
+    path: "/studio",
+    element: (
+      <Protected>
+        <Layout />
+      </Protected>
+    ),
+    children: [
+      { index: true, element: <Dashboard /> }
+    ],
+  },
+
+  // 📺 CHANNEL
+  {
+    path: "/channel/:handle",
+    element: <ChannelPage />
+  }
+
 ]);
-

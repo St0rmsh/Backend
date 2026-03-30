@@ -59,24 +59,20 @@ export const useAuth = ()=>{
         }
     }
 
-    const handleGetMe = async ()=>{
-        try {
+    const handleGetMe = async () => {
+  try {
+    dispatch(setLoading(true));
 
-            dispatch(setLoading(true));
+    const response = await getMe();
+    dispatch(setUser(response.data.user));
 
-            const response = await getMe();
-
-            dispatch(setUser(response.user));
-        } catch (error) {
-
-            dispatch(setError(error));
-
-            throw error;
-
-        } finally{
-            dispatch(setLoading(false));
-        }
-    }
+  } catch (error) {
+    // ✅ ONLY SEND STRING
+    dispatch(setError(error.response?.data?.message || "Unauthorized"));
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
 
     const handleVerifyOTP = async ({email,otp})=>{
         try {

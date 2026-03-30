@@ -1,5 +1,6 @@
 import subscriberModel from "../models/subscribe.model.js";
 import channelModel from "../models/channel.model.js";
+import userModel from "../models/user.model.js"; // ❗ YOU FORGOT THIS
 
 export const toggleSubscribe = async (req, res) => {
     try {
@@ -12,7 +13,8 @@ export const toggleSubscribe = async (req, res) => {
         });
 
         if (existing) {
-            await subscriberModel.deleteOne({ _id: existing._id });
+            // ❌ UNSUBSCRIBE
+            await existing.deleteOne();
 
             await channelModel.findByIdAndUpdate(channelId, {
                 $inc: { subscribersCount: -1 }
@@ -22,9 +24,13 @@ export const toggleSubscribe = async (req, res) => {
                 $pull: { subscribedChannels: channelId }
             });
 
-            return res.json({ success: true, message: "Unsubscribed" });
+            return res.json({
+                success: true,
+                subscribed: false   // 🔥 IMPORTANT FIX
+            });
         }
 
+        // ✅ SUBSCRIBE
         await subscriberModel.create({
             user: userId,
             channel: channelId
@@ -38,9 +44,13 @@ export const toggleSubscribe = async (req, res) => {
             $addToSet: { subscribedChannels: channelId }
         });
 
-        return res.json({ success: true, message: "Subscribed" });
+        return res.json({
+            success: true,
+            subscribed: true   // 🔥 IMPORTANT FIX
+        });
 
     } catch (err) {
+        console.error(err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };

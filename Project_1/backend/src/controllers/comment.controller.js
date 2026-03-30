@@ -39,32 +39,28 @@ export const addComment = async (req, res) => {
 
 // ➤ Get Comments for Video
 export const getComments = async (req, res) => {
-    try {
-        const { videoId } = req.params;
+  try {
+    const { videoId } = req.params;
 
-        const comments = await commentModel
-            .find({ video: videoId })
-            .sort({ createdAt: -1 })
-            .populate("user", "username avatar");
-
-        // 🔥 add timeAgo
-        const formatted = comments.map(c => ({
-            _id: c._id,
-            text: c.text,
-            user: c.user,
-            createdAt: c.createdAt,
-            timeAgo: timeAgo(c.createdAt)
-        }));
-
-        return res.status(200).json({
-            success: true,
-            comments: formatted
-        });
-
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Internal Server Error" });
+    if (!videoId) {
+      return res.status(400).json({ message: "Video ID missing" });
     }
+
+    const videoExists = await videoModel.findById(videoId);
+    if (!videoExists) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    const comments = await commentModel
+      .find({ video: videoId })
+      .populate("user", "username avatar")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ comments });
+  } catch (error) {
+    console.error("GET COMMENTS ERROR:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 
