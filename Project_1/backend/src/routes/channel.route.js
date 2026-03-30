@@ -5,6 +5,7 @@ import {
     getChannelByHandle,
     updateChannel,
     getChannelVideos
+
 } from "../controllers/channel.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 

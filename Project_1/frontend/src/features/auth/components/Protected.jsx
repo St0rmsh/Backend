@@ -3,25 +3,24 @@ import { useSelector } from "react-redux";
 import { Navigate, useLocation } from "react-router-dom";
 
 const Protected = ({ children }) => {
-  const { user, loading } = useSelector((state) => state.auth);
-  const location = useLocation();
+  const { user, isAuthChecked } = useSelector((state) => state.auth);
 
-  // ⏳ While checking auth
-  if (loading) {
+  // ⏳ Wait until auth is checked
+  if (!isAuthChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Loading...
+      <div className="min-h-screen flex items-center justify-center">
+        Checking auth...
       </div>
     );
   }
 
-  // 🔒 If not logged in → redirect to login
+  // ❌ Only redirect AFTER check
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
 
-  // ✅ Authorized
   return children;
 };
+
 
 export default Protected;

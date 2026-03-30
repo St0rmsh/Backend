@@ -140,15 +140,23 @@ export const getChannelVideos = async (req, res) => {
     try {
         const handle = req.params.handle.toLowerCase();
 
+        const userId = req.user?._id;
+
+
         const channel = await channelModel.findOne({ handle });
 
         if (!channel) {
             return res.status(404).json({ message: "Channel not found" });
         }
 
-        const videos = await videoModel
-            .find({ channel: channel._id })
-            .sort({ createdAt: -1 });
+       
+     const videos = await videoModel.find({
+       channel: channel._id,
+         $or: [
+           { isPublished: true },
+           { uploader: userId } 
+        ]
+      }).sort({ createdAt: -1 });
 
         return res.status(200).json({ success: true, videos });
 

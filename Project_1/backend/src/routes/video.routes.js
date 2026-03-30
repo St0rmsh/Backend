@@ -1,11 +1,15 @@
 import { Router } from "express";
 import upload from "../middleware/upload.middleware.js";
-import { videoUpload,getAllVideos,getVideo } from "../controllers/video.controller.js";
+import { videoUpload,getAllVideos,getVideo,getMyVideos,deleteVideo } from "../controllers/video.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { addView } from "../controllers/view.controller.js";
 import { updateWatchTime } from "../controllers/watch.controller.js";
 
 const router = Router()
+
+// /api/video/me
+// GET
+router.get("/me", authMiddleware, getMyVideos); 
 
 // /api/video/upload
 // POST
@@ -16,8 +20,14 @@ router.post("/upload",authMiddleware,upload.single("video"),videoUpload);
 router.get("/", getAllVideos);
 
 // /api/video/:id
+// DELETE
+router.delete("/:id", authMiddleware, deleteVideo);
+
+// /api/video/:id
 // GET
 router.get("/:id",getVideo);
+
+
 
 
 // /api/video/:videoId/view

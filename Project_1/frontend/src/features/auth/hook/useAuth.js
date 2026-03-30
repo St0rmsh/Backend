@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { setUser,setLoading,setError } from "../authSlice";
+import { setUser,setLoading,setError,setAuthChecked } from "../authSlice";
 import { loginUser,registerUser,getMe,logoutUser,verifyOTP } from "../services/api.service";
 
 
@@ -59,21 +59,20 @@ export const useAuth = ()=>{
         }
     }
 
-    const handleGetMe = async () => {
-  try {
-    dispatch(setLoading(true));
-
-    const response = await getMe();
-    dispatch(setUser(response.data.user));
-
-  } catch (error) {
-    // ✅ ONLY SEND STRING
-    dispatch(setError(error.response?.data?.message || "Unauthorized"));
-  } finally {
-    dispatch(setLoading(false));
-  }
-};
-
+   const handleGetMe = async () => {
+    try {
+      dispatch(setLoading(true));
+  
+      const res = await getMe();
+  
+      dispatch(setUser(res.user));
+    } catch (err) {
+      dispatch(setUser(null));
+    } finally {
+      dispatch(setLoading(false));
+      dispatch(setAuthChecked(true)); // 🔥 IMPORTANT
+    }
+  };
     const handleVerifyOTP = async ({email,otp})=>{
         try {
             dispatch(setLoading(true));

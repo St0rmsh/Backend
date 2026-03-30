@@ -210,9 +210,10 @@ ${urls.join("\n")}
 
 
 
-
 export const getVideo = async (req, res) => {
     try {
+        const userId = req.user?._id;
+
         const video = await videoModel
             .findById(req.params.id)
             .populate("channel", "name handle avatar");
@@ -221,16 +222,45 @@ export const getVideo = async (req, res) => {
             return res.status(404).json({ message: "Video not found" });
         }
 
+        // 🔥 SECURITY CHECK
+        const isOwner =
+            video.uploader?.toString() === userId?.toString();
+
+        if (!video.isPublished && !isOwner) {
+            return res.status(403).json({
+                message: "This video is private"
+            });
+        }
+
         return res.status(200).json({
             success: true,
             video
         });
 
     } catch (err) {
-        console.error(err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
+
+export const getMyVideos = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const videos = await videoModel
+            .find({ uploader: userId })
+            .sort({ createdAt: -1 });
+
+        return res.json({
+            success: true,
+            videos
+        });
+
+    } catch {
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
 
 
 export const getAllVideos = async (req, res) => {
@@ -305,3 +335,21 @@ export const searchVideos = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
+
+export const deleteVideo = async (req, res) => {
+  const userId = req.user._id;
+
+  const video = await videoModel.findById(req.params.id);
+
+  if (!video) return res.status(404).json({ message: "Not found" });
+
+  if (video.uploader.toString() !== userId.toString()) {
+    return res.status(403).json({ message: "Not allowed" });
+  }
+
+  await video.deleteOne();
+
+  res.json({ success: true });
+};
+

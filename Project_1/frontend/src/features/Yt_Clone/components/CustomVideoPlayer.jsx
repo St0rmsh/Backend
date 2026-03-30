@@ -6,15 +6,22 @@ import {
   VolumeX,
   Maximize,
   SkipForward,
-  SkipBack
+  SkipBack,
+  Settings
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const CustomPlayer = ({ src, onEnd, onWatchTime }) => {
+const CustomPlayer = ({
+  sources, // 🔥 multiple quality sources
+  autoPlay = false,
+  onEnd,
+  onWatchTime
+}) => {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const progressRef = useRef(null);
 
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(autoPlay);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -22,18 +29,27 @@ const CustomPlayer = ({ src, onEnd, onWatchTime }) => {
   const [buffer, setBuffer] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
+  const [quality, setQuality] = useState("720p");
+  const [showSettings, setShowSettings] = useState(false);
 
-  // 🔥 reload on src change
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !src) return;
+  const src = sources?.[quality];
 
-    video.load();
-    setPlaying(false);
-    setProgress(0);
-  }, [src]);
+  // 🔥 AUTOPLAY
+useEffect(() => {
+  const v = videoRef.current;
+  if (!v) return;
 
-  // 🔥 WATCH TIME TRACKING
+  if (autoPlay) {
+    v.muted = true; // 🔥 important
+    v.play()
+      .then(() => setPlaying(true))
+      .catch(() => {
+        console.log("Autoplay blocked");
+      });
+  }
+}, [src, autoPlay]);
+
+  // 🔥 WATCH TIME
   useEffect(() => {
     const interval = setInterval(() => {
       if (videoRef.current && playing) {
@@ -44,13 +60,13 @@ const CustomPlayer = ({ src, onEnd, onWatchTime }) => {
     return () => clearInterval(interval);
   }, [playing]);
 
-  // AUTO HIDE
+  // 🔥 AUTO HIDE
   useEffect(() => {
     let timeout;
     const handleMove = () => {
       setShowControls(true);
       clearTimeout(timeout);
-      timeout = setTimeout(() => setShowControls(false), 3000);
+      timeout = setTimeout(() => setShowControls(false), 2500);
     };
 
     const el = containerRef.current;
@@ -72,8 +88,7 @@ const CustomPlayer = ({ src, onEnd, onWatchTime }) => {
   };
 
   const skip = (time) => {
-    const v = videoRef.current;
-    v.currentTime += time;
+    videoRef.current.currentTime += time;
   };
 
   const toggleMute = () => {
@@ -129,8 +144,9 @@ const CustomPlayer = ({ src, onEnd, onWatchTime }) => {
   };
 
   return (
-    <div ref={containerRef} className="relative bg-black rounded-xl">
+    <div ref={containerRef} className="relative bg-black rounded-xl overflow-hidden">
 
+      {/* VIDEO */}
       <video
         key={src}
         ref={videoRef}
@@ -140,52 +156,112 @@ const CustomPlayer = ({ src, onEnd, onWatchTime }) => {
         onProgress={handleProgress}
         onEnded={onEnd}
         onLoadedMetadata={() => setDuration(videoRef.current.duration)}
-        className="w-full max-h-[70vh]"
+        className="w-full max-h-[75vh]"
       />
 
-      {!playing && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <button onClick={togglePlay} className="bg-black/50 p-4 rounded-full">
-            <Play size={40} className="text-white" />
-          </button>
-        </div>
-      )}
+      {/* CENTER PLAY */}
+      <AnimatePresence>
+        {!playing && (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button
+              onClick={togglePlay}
+              className="bg-black/60 p-5 rounded-full"
+            >
+              <Play size={40} className="text-white" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className={`absolute bottom-0 w-full p-3 ${showControls ? "opacity-100" : "opacity-0"} transition`}>
+      {/* CONTROLS */}
+      <motion.div
+        animate={{ opacity: showControls ? 1 : 0 }}
+        className="absolute bottom-0 w-full p-3 bg-gradient-to-t from-black/80"
+      >
 
-        <div ref={progressRef} onClick={handleSeek} className="h-1 bg-gray-600 mb-3 cursor-pointer">
+        {/* PROGRESS */}
+        <div
+          ref={progressRef}
+          onClick={handleSeek}
+          className="h-1 bg-gray-600 mb-3 cursor-pointer relative"
+        >
           <div className="bg-gray-400 h-full" style={{ width: `${buffer}%` }} />
-          <div className="bg-red-500 h-full" style={{ width: `${progress}%` }} />
+          <div className="bg-red-500 h-full absolute top-0" style={{ width: `${progress}%` }} />
         </div>
 
-        <div className="flex justify-between text-white">
+        {/* CONTROLS ROW */}
+        <div className="flex justify-between items-center text-white text-sm">
 
-          <div className="flex gap-3 items-center">
+          {/* LEFT */}
+          <div className="flex items-center gap-3">
             <button onClick={() => skip(-5)}><SkipBack /></button>
-            <button onClick={togglePlay}>{playing ? <Pause /> : <Play />}</button>
+            <button onClick={togglePlay}>
+              {playing ? <Pause /> : <Play />}
+            </button>
             <button onClick={() => skip(5)}><SkipForward /></button>
 
             <button onClick={toggleMute}>
               {isMuted ? <VolumeX /> : <Volume2 />}
             </button>
 
-            <input type="range" min="0" max="1" step="0.05" value={volume} onChange={handleVolume} />
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={volume}
+              onChange={handleVolume}
+            />
 
-            <span>{formatTime(videoRef.current?.currentTime)} / {formatTime(duration)}</span>
+            <span>
+              {formatTime(videoRef.current?.currentTime)} / {formatTime(duration)}
+            </span>
           </div>
 
-          <div className="flex gap-3">
-            <select value={speed} onChange={(e) => changeSpeed(Number(e.target.value))}>
-              <option value={1}>1x</option>
-              <option value={1.5}>1.5x</option>
-              <option value={2}>2x</option>
-            </select>
+          {/* RIGHT */}
+          <div className="flex items-center gap-3 relative">
 
-            <button onClick={goFullscreen}><Maximize /></button>
+            {/* SETTINGS */}
+            <button onClick={() => setShowSettings(!showSettings)}>
+              <Settings />
+            </button>
+
+            <AnimatePresence>
+              {showSettings && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute bottom-10 right-0 bg-black p-3 rounded-xl text-white"
+                >
+                  <p className="text-xs mb-1">Speed</p>
+                  {[0.5, 1, 1.5, 2].map((s) => (
+                    <div key={s} onClick={() => changeSpeed(s)} className="cursor-pointer">
+                      {s}x
+                    </div>
+                  ))}
+
+                  <p className="text-xs mt-2 mb-1">Quality</p>
+                  {Object.keys(sources || {}).map((q) => (
+                    <div key={q} onClick={() => setQuality(q)} className="cursor-pointer">
+                      {q}
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <button onClick={goFullscreen}>
+              <Maximize />
+            </button>
           </div>
 
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

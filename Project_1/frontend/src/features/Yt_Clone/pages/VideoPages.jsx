@@ -67,12 +67,36 @@ useEffect(() => {
       await fetchVideo(id);
     });
 
+    
+
     return () => {
       socket.emit("leave_video", id);
       socket.off("comment:new");
       socket.off("reaction:update");
     };
   }, [id]);
+
+  const formatTimeAgo = (date) => {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    day: 86400,
+    hour: 3600,
+    minute: 60
+  };
+
+  for (let key in intervals) {
+    const value = Math.floor(seconds / intervals[key]);
+    if (value >= 1) {
+      return `${value} ${key}${value > 1 ? "s" : ""} ago`;
+    }
+  }
+
+  return "just now";
+};
+
 
   // 🔔 SUBSCRIBE
   useEffect(() => {
@@ -131,18 +155,33 @@ const handleSubscribe = async () => {
     <div className="flex flex-col lg:flex-row gap-6">
 
       <div className="w-full lg:w-[70%]">
-
-        <CustomPlayer
-          src={video.videoUrl}
-          onEnd={handleAutoNext}
-          onWatchTime={handleWatchTime}
-        />
+<CustomPlayer
+  autoPlay
+  sources={{
+    "720p": video.videoUrl   // ✅ minimum fix
+  }}
+  onEnd={handleAutoNext}
+  onWatchTime={handleWatchTime}
+/>
 
         <h1 className="mt-4 text-xl font-semibold">{video.title}</h1>
 
-        <p className="text-sm text-gray-500">
-          {video.views} views
-        </p>
+<p className="text-sm text-gray-500">
+  {video.views} views • {formatTimeAgo(video.createdAt)}
+</p>
+
+{/* 🔥 DESCRIPTION */}
+<div className="mt-3 bg-gray-100 dark:bg-gray-800 p-3 rounded-xl">
+  <p className="text-sm whitespace-pre-line">
+    {video.description?.slice(0, 120)}
+  </p>
+
+  {video.description?.length > 120 && (
+    <button className="text-indigo-500 text-sm mt-1">
+      Show more
+    </button>
+  )}
+</div>
 
         <div className="flex justify-between mt-4 items-center">
 
@@ -193,32 +232,83 @@ const handleSubscribe = async () => {
           </div>
         </div>
 
-        {/* COMMENTS */}
-        <div className="mt-6">
-          <h2>{comments.length} Comments</h2>
+       {/* COMMENTS */}
+<div className="mt-8">
 
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="w-full border p-2"
-          />
+  <h2 className="text-lg font-semibold mb-4">
+    {comments.length} Comments
+  </h2>
 
-          <button onClick={handleComment} className="bg-indigo-500 text-white px-4 py-2 mt-2">
-            Comment
-          </button>
+  {/* ADD COMMENT */}
+  <div className="flex gap-3 mb-6">
+    <div className="w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center font-semibold">
+      U
+    </div>
 
-          {comments.map((c) => (
-            <div key={c._id} className="flex gap-3 mt-4">
-              <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white">
-                {c.user?.username?.charAt(0)}
-              </div>
-              <div>
-                <p>{c.user?.username}</p>
-                <p>{c.text}</p>
-              </div>
-            </div>
-          ))}
+    <div className="flex-1">
+      <textarea
+        value={newComment}
+        onChange={(e) => setNewComment(e.target.value)}
+        placeholder="Add a comment..."
+        className="w-full border-b border-gray-400 focus:outline-none focus:border-indigo-500 resize-none p-2 bg-transparent"
+        rows={2}
+      />
+
+      <div className="flex justify-end mt-2 gap-2">
+        <button
+          onClick={() => setNewComment("")}
+          className="px-4 py-1 rounded-full text-sm text-gray-500 cursor-pointer hover:bg-gray-200 hover:text-gray-800"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleComment}
+          className="bg-indigo-500 cursor-pointer hover:bg-indigo-900 text-white px-4 py-1 rounded-full text-sm hover:text-gray-200"
+        >
+          Comment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* COMMENTS LIST */}
+  {comments.length === 0 ? (
+    <p className="text-gray-500">No comments yet</p>
+  ) : (
+    comments.map((c) => (
+      <div key={c._id} className="flex gap-3 mb-6">
+
+        {/* Avatar */}
+        <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-semibold">
+          {c.user?.username?.charAt(0)?.toUpperCase() || "U"}
         </div>
+
+        {/* Content */}
+        <div className="flex-1">
+
+          {/* Header */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold">
+              {c.user?.username || "User"}
+            </span>
+
+            <span className="text-gray-500">
+              {formatTimeAgo(c.createdAt)}
+            </span>
+          </div>
+
+          {/* Text */}
+          <p className="mt-1 text-sm leading-relaxed">
+            {c.text}
+          </p>
+
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
       </div>
 
       {/* RIGHT SIDE */}

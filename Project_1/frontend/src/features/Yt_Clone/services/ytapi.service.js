@@ -11,11 +11,18 @@ const api = axios.create({
 // =======================
 
 // Upload video
-export const uploadVideo = (formData) => {
+export const uploadVideo = (formData, config = {}) => {
     return api.post("/api/video/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data" },
+        ...config   // ✅ THIS FIXES PROGRESS
     });
 };
+
+
+export const getMyVideos = () => {
+  return api.get("/api/video/me");
+};
+
 
 // Get all videos
 export const getAllVideos = () => {
@@ -33,8 +40,10 @@ export const addView = (videoId) => {
 };
 
 // Update watch time
-export const updateWatchTime = (videoId, watchTime) => {
-    return api.post(`/api/video/${videoId}/watch`, { watchTime });
+export const updateWatchTime = async (videoId, watchTime) => {
+  return api.post(`/api/video/${videoId}/watch`, {
+    watchTime // ✅ MUST MATCH BACKEND
+  });
 };
 
 

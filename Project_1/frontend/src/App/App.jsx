@@ -3,6 +3,7 @@ import { router } from "./app.routes.jsx";
 import { useEffect } from "react";
 import { useAuth } from "../features/auth/hook/useAuth";
 import { useSelector } from "react-redux";
+import { Loader } from "lucide-react";
 
 
 
@@ -21,13 +22,7 @@ useEffect(() => {
 }, []);
 
   // ⏳ Global loader during hydration
- if (loading) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white text-xl">
-      Loading app...
-    </div>
-  );
-}
+if (loading) return <Loader />
   
 
   return (

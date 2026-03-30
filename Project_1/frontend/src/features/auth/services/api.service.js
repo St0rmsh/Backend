@@ -35,7 +35,7 @@ export const getMe = async () => {
         const response = await api.get("/api/auth/getMe");
         return response.data;
     } catch (error) {
-        throw error;
+        return { success: false, user: null };
     }
 }
 
