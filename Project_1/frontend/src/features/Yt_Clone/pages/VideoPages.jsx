@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { motion } from "framer-motion";
 import VideoCard from "../components/video/VideoCard";
 import CustomPlayer from "../components/CustomVideoPlayer";
 import { useYT } from "../hook/useYT.js";
@@ -8,8 +9,11 @@ import {
   toggleSubscribe,
   isSubscribed,
   addView,
-  updateWatchTime
+  updateWatchTime,
+  getSubscribersCount
 } from "../services/ytapi.service";
+import SubscribeButton from "../components/SubscribeButton";
+import CommentItem from "../components/CommentItem";
 
 const VideoPages = () => {
   const { id } = useParams();
@@ -31,21 +35,14 @@ const VideoPages = () => {
 
   const [newComment, setNewComment] = useState("");
   const [subscribed, setSubscribed] = useState(false);
-const [loadingSub, setLoadingSub] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState(null); // ✅ FIX
+  const [loadingSub, setLoadingSub] = useState(false);
 
-// GET STATUS
-useEffect(() => {
-  if (!video?.channel?._id) return;
+  const socketRef = useRef(connectSocket());
 
-  const loadSub = async () => {
-    const res = await isSubscribed(video.channel._id);
-    setSubscribed(res.data.subscribed);
-  };
-
-  loadSub();
-}, [video]);
-
-  // 🔥 LOAD DATA
+  // =========================
+  // LOAD VIDEO DATA
+  // =========================
   useEffect(() => {
     if (!id) return;
 
@@ -54,65 +51,135 @@ useEffect(() => {
       fetchVideos();
       fetchComments(id);
       fetchUserReaction(id);
-      addView(id); // 🔥 VIEW COUNT
+      addView(id);
     };
 
     load();
 
-    const socket = connectSocket();
-    socket.emit("join_video", id);
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    socket.emit("join-video", id);
 
     socket.on("comment:new", () => fetchComments(id));
     socket.on("reaction:update", async () => {
       await fetchVideo(id);
     });
 
-    
-
     return () => {
-      socket.emit("leave_video", id);
+      socket.emit("leave-video", id);
       socket.off("comment:new");
       socket.off("reaction:update");
     };
   }, [id]);
 
-  const formatTimeAgo = (date) => {
-  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  // =========================
+  // SUBSCRIBE STATUS + COUNT
+  // =========================
+useEffect(() => {
+  if (!video?.channel?._id) return;
 
-  const intervals = {
-    year: 31536000,
-    month: 2592000,
-    day: 86400,
-    hour: 3600,
-    minute: 60
+  const loadSubData = async () => {
+    try {
+      const [subRes, countRes] = await Promise.all([
+        isSubscribed(video.channel._id),
+        getSubscribersCount(video.channel._id)
+      ]);
+
+      setSubscribed(subRes.data.subscribed);
+
+      // ✅ FIXED HERE
+      setSubscriberCount(countRes.data.subscribers);
+
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  for (let key in intervals) {
-    const value = Math.floor(seconds / intervals[key]);
-    if (value >= 1) {
-      return `${value} ${key}${value > 1 ? "s" : ""} ago`;
-    }
-  }
-
-  return "just now";
-};
+  loadSubData();
+}, [video?.channel?._id]);
 
 
-  // 🔔 SUBSCRIBE
+  // =========================
+  // REALTIME SUBSCRIBERS
+  // =========================
   useEffect(() => {
     if (!video?.channel?._id) return;
 
-    isSubscribed(video.channel._id).then((res) => {
-      setSubscribed(res.data.subscribed);
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    socket.emit("join-channel", video.channel._id);
+
+    socket.on("channel:subscribers:update", (data) => {
+      if (data.channelId === video.channel._id) {
+        setSubscriberCount(data.count); // ✅ always correct
+      }
     });
-  }, [video]);
+
+    return () => {
+      socket.emit("leave-channel", video.channel._id);
+      socket.off("channel:subscribers:update");
+    };
+  }, [video?.channel?._id]);
+
+  // =========================
+  // TIME FORMAT
+  // =========================
+  const formatTimeAgo = (date) => {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+
+    const intervals = {
+      year: 31536000,
+      month: 2592000,
+      day: 86400,
+      hour: 3600,
+      minute: 60
+    };
+
+    for (let key in intervals) {
+      const value = Math.floor(seconds / intervals[key]);
+      if (value >= 1) {
+        return `${value} ${key}${value > 1 ? "s" : ""} ago`;
+      }
+    }
+
+    return "just now";
+  };
+
+  // =========================
+  // SUBSCRIBE ACTION
+  // =========================
+const handleSubscribe = async () => {
+  if (!video?.channel?._id || loadingSub) return;
+
+  setLoadingSub(true);
+
+  try {
+    const res = await toggleSubscribe(video.channel._id);
+
+    // ✅ ONLY update subscription state
+    setSubscribed(res.data.subscribed);
+
+    // ❌ DO NOT update subscriberCount here
+    // Let socket or API control it
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoadingSub(false);
+  }
+};
 
 
-  // ▶️ AUTO NEXT FIXED
+
+  // =========================
+  // AUTO NEXT
+  // =========================
   const handleAutoNext = () => {
     if (!videos.length) return;
 
-    const index = videos.findIndex(v => v._id === video._id);
+    const index = videos.findIndex((v) => v._id === video._id);
     const next = videos[index + 1];
 
     if (next?._id) {
@@ -120,7 +187,6 @@ useEffect(() => {
     }
   };
 
-  // ⏱ WATCH TIME
   const handleWatchTime = (time) => {
     if (!video?._id) return;
     updateWatchTime(video._id, time);
@@ -136,183 +202,143 @@ useEffect(() => {
     return <p className="text-center mt-10">Loading...</p>;
   }
 
-  // TOGGLE
-const handleSubscribe = async () => {
-  if (!video?.channel?._id || loadingSub) return;
-
-  setLoadingSub(true);
-  try {
-    const res = await toggleSubscribe(video.channel._id);
-    setSubscribed(res.data.subscribed); // ✅ REAL VALUE
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoadingSub(false);
-  }
-};
-
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
+    <div className="px-2 sm:px-4 lg:px-6 flex flex-col xl:flex-row gap-6">
 
-      <div className="w-full lg:w-[70%]">
-<CustomPlayer
-  autoPlay
-  sources={{
-    "720p": video.videoUrl   // ✅ minimum fix
-  }}
-  onEnd={handleAutoNext}
-  onWatchTime={handleWatchTime}
-/>
+      {/* LEFT SIDE */}
+      <div className="w-full xl:w-[70%]">
 
-        <h1 className="mt-4 text-xl font-semibold">{video.title}</h1>
+        <div className="w-full aspect-video">
+          <CustomPlayer
+            autoPlay
+            sources={{ "720p": video.videoUrl }}
+            onEnd={handleAutoNext}
+            onWatchTime={handleWatchTime}
+          />
+        </div>
 
-<p className="text-sm text-gray-500">
-  {video.views} views • {formatTimeAgo(video.createdAt)}
-</p>
+        <h1 className="mt-3 sm:mt-4 text-lg sm:text-xl lg:text-2xl font-semibold">
+          {video.title}
+        </h1>
 
-{/* 🔥 DESCRIPTION */}
-<div className="mt-3 bg-gray-100 dark:bg-gray-800 p-3 rounded-xl">
-  <p className="text-sm whitespace-pre-line">
-    {video.description?.slice(0, 120)}
-  </p>
+        <p className="text-xs sm:text-sm text-gray-500">
+          {video.views} views • {formatTimeAgo(video.createdAt)}
+        </p>
 
-  {video.description?.length > 120 && (
-    <button className="text-indigo-500 text-sm mt-1">
-      Show more
-    </button>
-  )}
-</div>
+        {/* DESCRIPTION */}
+        <div className="mt-3 bg-gray-100 dark:bg-gray-800 p-3 rounded-xl text-sm">
+          {video.description?.slice(0, 120)}
+        </div>
 
-        <div className="flex justify-between mt-4 items-center">
+        {/* CHANNEL */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-4">
 
           <Link to={`/channel/${video.channel?.handle}`}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center">
                 {video.channel?.name?.charAt(0)}
               </div>
-              <p>{video.channel?.name}</p>
+              <p className="text-sm sm:text-base font-medium">
+                {video.channel?.name}
+              </p>
             </div>
           </Link>
 
-          <div className="flex gap-3 items-center">
-            <button
-              onClick={handleSubscribe}
-              disabled={loadingSub}
-              className={`px-4 py-2 rounded-full transition ${
-                subscribed
-                  ? "bg-gray-300"
-                  : "bg-red-500 text-white"
-              }`}
-            >
-              {loadingSub
-                ? "Loading..."
-                : subscribed
-                ? "Subscribed"
-                : "Subscribe"}
-            </button>
+          <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
 
-            <button
+            {/* ✅ SAFE RENDER */}
+            <SubscribeButton
+              subscribed={subscribed}
+              loading={loadingSub}
+              onClick={handleSubscribe}
+            />
+
+            {/* LIKE */}
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              whileHover={{ scale: 1.05 }}
               onClick={() =>
                 reactVideo({ videoId: video._id, type: "LIKE" })
               }
-              className={liked ? "bg-indigo-500 text-white px-4 py-2 rounded" : "bg-gray-200 px-4 py-2 rounded"}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-full flex items-center gap-2 transition ${
+                liked
+                  ? "bg-indigo-500 text-white shadow-lg"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
             >
-              👍 {video.likesCount}
-            </button>
+              👍 <span>{video.likesCount}</span>
+            </motion.button>
 
-            <button
+            {/* DISLIKE */}
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              whileHover={{ scale: 1.05 }}
               onClick={() =>
                 reactVideo({ videoId: video._id, type: "DISLIKE" })
               }
-              className={disliked ? "bg-red-500 text-white px-4 py-2 rounded" : "bg-gray-200 px-4 py-2 rounded"}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-full flex items-center gap-2 transition ${
+                disliked
+                  ? "bg-red-500 text-white shadow-lg"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
             >
-              👎 {video.dislikesCount}
-            </button>
+              👎 <span>{video.dislikesCount}</span>
+            </motion.button>
 
           </div>
         </div>
 
-       {/* COMMENTS */}
-<div className="mt-8">
+        {/* COMMENTS */}
+        <div className="mt-6 sm:mt-8">
+          <h2 className="text-base sm:text-lg font-semibold mb-4">
+            {comments.length} Comments
+          </h2>
 
-  <h2 className="text-lg font-semibold mb-4">
-    {comments.length} Comments
-  </h2>
+          {/* ADD COMMENT */}
+          <div className="flex gap-3 mb-6 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center font-semibold">
+              U
+            </div>
 
-  {/* ADD COMMENT */}
-  <div className="flex gap-3 mb-6">
-    <div className="w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center font-semibold">
-      U
-    </div>
+            <div className="flex-1">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a public comment..."
+                className="w-full border-b border-gray-300 focus:border-black outline-none p-2 text-sm resize-none"
+                rows={2}
+              />
 
-    <div className="flex-1">
-      <textarea
-        value={newComment}
-        onChange={(e) => setNewComment(e.target.value)}
-        placeholder="Add a comment..."
-        className="w-full border-b border-gray-400 focus:outline-none focus:border-indigo-500 resize-none p-2 bg-transparent"
-        rows={2}
-      />
+              <div className="flex justify-end mt-2 gap-2">
+                <button
+                  onClick={() => setNewComment("")}
+                  className="px-3 py-1 text-sm rounded-full hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
 
-      <div className="flex justify-end mt-2 gap-2">
-        <button
-          onClick={() => setNewComment("")}
-          className="px-4 py-1 rounded-full text-sm text-gray-500 cursor-pointer hover:bg-gray-200 hover:text-gray-800"
-        >
-          Cancel
-        </button>
-
-        <button
-          onClick={handleComment}
-          className="bg-indigo-500 cursor-pointer hover:bg-indigo-900 text-white px-4 py-1 rounded-full text-sm hover:text-gray-200"
-        >
-          Comment
-        </button>
-      </div>
-    </div>
-  </div>
-
-  {/* COMMENTS LIST */}
-  {comments.length === 0 ? (
-    <p className="text-gray-500">No comments yet</p>
-  ) : (
-    comments.map((c) => (
-      <div key={c._id} className="flex gap-3 mb-6">
-
-        {/* Avatar */}
-        <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-semibold">
-          {c.user?.username?.charAt(0)?.toUpperCase() || "U"}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1">
-
-          {/* Header */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-semibold">
-              {c.user?.username || "User"}
-            </span>
-
-            <span className="text-gray-500">
-              {formatTimeAgo(c.createdAt)}
-            </span>
+                <button
+                  onClick={handleComment}
+                  className="px-3 py-1 text-sm rounded-full bg-indigo-500 text-white"
+                >
+                  Comment
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Text */}
-          <p className="mt-1 text-sm leading-relaxed">
-            {c.text}
-          </p>
-
+          {/* LIST */}
+          <div className="space-y-5">
+            {comments.map((c) => (
+              <CommentItem key={c._id} comment={c} />
+            ))}
+          </div>
         </div>
-      </div>
-    ))
-  )}
-</div>
 
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="w-full lg:w-[30%] space-y-4">
+      <div className="w-full xl:w-[30%] space-y-4">
         {videos.map((v) => (
           <VideoCard key={v._id} video={v} />
         ))}

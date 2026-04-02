@@ -40,10 +40,16 @@ export const addView = (videoId) => {
 };
 
 // Update watch time
-export const updateWatchTime = async (videoId, watchTime) => {
+export const updateWatchTime = async (videoId, time) => {
   return api.post(`/api/video/${videoId}/watch`, {
-    watchTime // ✅ MUST MATCH BACKEND
+    videoId,
+    time   // ✅ FIXED (not watchTime)
   });
+};
+
+// ✅ GET RESUME TIME
+export const getWatchTime = (videoId) => {
+  return api.get(`/api/video/${videoId}/watch`);
 };
 
 

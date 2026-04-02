@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { useRef, useState } from "react";
+
 
 const formatTimeAgo = (date) => {
   const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -21,6 +23,8 @@ const formatTimeAgo = (date) => {
 
 const VideoCard = ({ video }) => {
   const channel = video.channel;
+
+  
 
   return (
     <div className="w-full">

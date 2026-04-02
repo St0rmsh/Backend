@@ -1,36 +1,39 @@
-import watchModel from "../models/watch.model.js";
-import videoModel from "../models/video.model.js";
+import WatchHistory from "../models/watchHistory.model.js";
 
+
+// every 5 sec
 export const updateWatchTime = async (req, res) => {
-  try {
-    const userId = req.user?._id;
-    const { videoId } = req.params;
-    const { watchTime } = req.body;
+  const { videoId, time } = req.body;
+  const userId = req.user.id;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    if (!watchTime && watchTime !== 0) {
-      return res.status(400).json({ message: "watchTime required" });
-    }
-
-    // Optional: validate number
-    if (typeof watchTime !== "number") {
-      return res.status(400).json({ message: "Invalid watchTime" });
-    }
-
-    // ✅ save logic (example)
-    await watchModel.findOneAndUpdate(
-      { user: userId, video: videoId },
-      { watchTime },
-      { upsert: true }
-    );
-
-    return res.json({ success: true });
-
-  } catch (err) {
-    return res.status(500).json({ message: "Internal Server Error" });
+  if (!videoId || time < 1) {
+    return res.status(400).json({ message: "Invalid data" });
   }
+
+  const existing = await WatchHistory.findOne({ user: userId, video: videoId });
+
+  if (existing) {
+    existing.progress = time;
+    await existing.save();
+  } else {
+    await WatchHistory.create({
+      user: userId,
+      video: videoId,
+      progress: time
+    });
+  }
+
+  res.json({ success: true });
+};
+
+export const getWatchTime = async (req, res) => {
+  const { videoId } = req.params;
+
+  const record = await WatchHistory.findOne({
+    user: req.user.id,
+    video: videoId
+  });
+
+  res.json({ time: record?.progress || 0 });
 };
 

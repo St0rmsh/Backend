@@ -7,6 +7,8 @@ import {
   isSubscribed
 } from "../services/ytapi.service";
 import VideoCard from "../components/video/VideoCard";
+import SubscribeButton from "../components/SubscribeButton";
+
 
 const ChannelPage = () => {
   const { handle } = useParams();

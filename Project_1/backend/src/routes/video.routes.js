@@ -3,7 +3,7 @@ import upload from "../middleware/upload.middleware.js";
 import { videoUpload,getAllVideos,getVideo,getMyVideos,deleteVideo } from "../controllers/video.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { addView } from "../controllers/view.controller.js";
-import { updateWatchTime } from "../controllers/watch.controller.js";
+import { updateWatchTime,getWatchTime } from "../controllers/watch.controller.js";
 
 const router = Router()
 
@@ -38,5 +38,9 @@ router.post("/:videoId/view",authMiddleware,addView);
 // /api/video/:videoId/watch
 // POST
 router.post("/:videoId/watch",authMiddleware,updateWatchTime);
+
+// /api/video/:videoId/watch
+// GET
+router.get("/:videoId/watch",authMiddleware,getWatchTime);
 
 export default router

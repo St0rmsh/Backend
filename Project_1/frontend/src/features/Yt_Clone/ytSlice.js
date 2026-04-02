@@ -87,13 +87,13 @@ const videoSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-   .addCase(fetchVideo.fulfilled, (state, action) => {
+      .addCase(fetchVideo.fulfilled, (state, action) => {
 
-  if (!action.payload?._id) return;
+        if (!action.payload?._id) return;
 
-  // 🔥 FORCE NEW OBJECT (important for re-render)
-  state.video = { ...action.payload };
-})
+        // 🔥 FORCE NEW OBJECT (important for re-render)
+        state.video = { ...action.payload };
+      })
 
 
       .addCase(fetchVideos.fulfilled, (state, action) => {
