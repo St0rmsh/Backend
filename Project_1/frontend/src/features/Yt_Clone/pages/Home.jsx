@@ -11,39 +11,60 @@ const Home = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const res = await getAllVideos();
-      setVideos(res.data.videos || []);
-      setLoading(false);
+      try {
+        const res = await getAllVideos();
+        setVideos(res.data.videos || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetch();
   }, []);
 
- return (
+  return (
+    <div className="max-w-[1400px] mx-auto px-3 md:px-6">
 
-  
-  <div className="px-2 md:px-6">
+      {/* ===== CATEGORY BAR (OPTIONAL YT STYLE) ===== */}
+      <div className="flex gap-3 overflow-x-auto mb-6 scrollbar-hide">
+        {categories.map((cat, i) => (
+          <button
+            key={i}
+            className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap
+            bg-gray-200 dark:bg-gray-800
+            hover:bg-gray-300 dark:hover:bg-gray-700 transition"
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
-    <div className="
-      grid 
-      grid-cols-1 
-      sm:grid-cols-2 
-      md:grid-cols-3 
-      lg:grid-cols-4 
-      xl:grid-cols-5 
-      gap-x-5 gap-y-8
-    ">
+      {/* ===== VIDEOS GRID (FIXED) ===== */}
+      <div
+        className="
+        grid 
+        gap-x-6 gap-y-10
 
-      {loading
-        ? Array(10).fill(0).map((_, i) => <SkeletonCard key={i} />)
-        : videos.map((v) => <VideoCard key={v._id} video={v} />)
-      }
+        grid-cols-1 
+        sm:grid-cols-2 
+        md:grid-cols-3 
+        lg:grid-cols-3 
+        xl:grid-cols-3
+      "
+      >
+        {loading
+          ? Array(9)
+              .fill(0)
+              .map((_, i) => <SkeletonCard key={i} />)
+          : videos.map((v) => (
+              <VideoCard key={v._id} video={v} />
+            ))}
+      </div>
 
     </div>
-
-  </div>
-);
-
+  );
 };
 
 export default Home;

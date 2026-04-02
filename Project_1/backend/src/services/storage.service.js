@@ -27,6 +27,17 @@ export const uploadFile = async ({ buffer, filename, folder = "YtCl" }) => {
     }
 };
 
+export const uploadToImageKit = async (file) => {
+  const base64 = file.buffer.toString("base64");
+
+  const res = await imageKit.files.upload({
+    file: base64,
+    fileName: file.originalname,
+    folder: "/yt-clone"
+  });
+
+  return res.url; // ✅ store this in DB
+};
 
 export const deleteFile = async (fileId) => {
     try {

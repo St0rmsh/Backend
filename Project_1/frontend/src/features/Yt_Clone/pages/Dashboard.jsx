@@ -1,264 +1,391 @@
-import { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import {
+  UploadCloud,
+  BarChart3,
+  X
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
 import {
   LineChart,
   Line,
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  AreaChart,
+  Area
 } from "recharts";
 
 import {
   getMyVideos,
-  createChannel,
-  getMyChannel
+  getMyChannel,
+  updateChannel,
+  uploadVideo
 } from "../services/ytapi.service";
 
 import { Card, CardContent, Button } from "../components/UI/Index";
 
+// ===== FALLBACKS =====
+const FALLBACK_AVATAR = "https://ui-avatars.com/api/?name=User&background=random";
+const FALLBACK_BANNER = "https://picsum.photos/1200/300";
+const FALLBACK_THUMB = "https://picsum.photos/400/250";
+
 const Dashboard = () => {
   const [videos, setVideos] = useState([]);
   const [channel, setChannel] = useState(null);
-  const [showChannelModal, setShowChannelModal] = useState(false);
 
-  const [form, setForm] = useState({
-    name: "",
-    handle: "",
-    description: ""
+  const [showUpload, setShowUpload] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const fileRef = useRef();
+  const avatarRef = useRef();
+  const bannerRef = useRef();
+
+  const [videoForm, setVideoForm] = useState({
+    title: "",
+    description: "",
+    video: null
   });
+
+  const [updateForm, setUpdateForm] = useState({
+    name: "",
+    description: "",
+    avatar: null,
+    banner: null
+  });
+
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
 
   const [stats, setStats] = useState({
     views: 0,
     likes: 0,
-    subscribers: 0,
-    watchTime: 0
+    subs: 0,
+    watch: 0
   });
 
+  // ===== LOAD =====
   useEffect(() => {
-    loadVideos();
-    loadChannel();
+    loadData();
   }, []);
 
-  // 🔥 LOAD CHANNEL
-  const loadChannel = async () => {
-    try {
-      const res = await getMyChannel();
-      setChannel(res.data.channel);
-    } catch {
-      setChannel(null); // no channel yet
-    }
-  };
+  const loadData = async () => {
+    const [v, c] = await Promise.all([getMyVideos(), getMyChannel()]);
 
-  // 🔥 LOAD VIDEOS
-  const loadVideos = async () => {
-    const res = await getMyVideos();
-    const vids = res.data.videos || [];
+    const vids = v.data.videos || [];
+    const ch = c.data.channel || {};
 
     setVideos(vids);
+    setChannel(ch);
 
+    setUpdateForm({
+      name: ch.name || "",
+      description: ch.description || "",
+      avatar: null,
+      banner: null
+    });
+
+    updateStats(vids, ch);
+  };
+
+  const updateStats = (vids, ch) => {
     const views = vids.reduce((a, v) => a + (v.views || 0), 0);
     const likes = vids.reduce((a, v) => a + (v.likesCount || 0), 0);
 
     setStats({
       views,
       likes,
-      subscribers: 0,
-      watchTime: views * 2
+      subs: ch?.subscribersCount || 0,
+      watch: Math.floor(views * 1.8)
     });
   };
 
-  // 🔥 CREATE CHANNEL
-  const handleCreateChannel = async () => {
-    if (!form.name || !form.handle) {
-      alert("Name and Handle required");
-      return;
+  // ===== UPLOAD =====
+  const handleUpload = async () => {
+    if (!videoForm.title || !videoForm.video) {
+      return alert("Title + Video required");
     }
 
-    try {
-      const res = await createChannel(form);
-      setChannel(res.data.channel);
-      setShowChannelModal(false);
-    } catch (err) {
-      console.error(err);
-      alert("Channel creation failed");
-    }
+    const fd = new FormData();
+    Object.entries(videoForm).forEach(([k, v]) => v && fd.append(k, v));
+
+    await uploadVideo(fd, {
+      onUploadProgress: (e) =>
+        setUploadProgress(Math.round((e.loaded * 100) / e.total))
+    });
+
+    setShowUpload(false);
+    setUploadProgress(0);
+    setVideoForm({ title: "", description: "", video: null });
+
+    loadData();
   };
 
-  // 🔥 DELETE VIDEO
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this video?")) return;
-    await deleteVideo(id);
-    loadVideos();
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    setVideoForm({ ...videoForm, video: file });
   };
 
-  const chartData = videos.map((v, i) => ({
-    name: `V${i + 1}`,
-    views: v.views || 0
+  // ===== UPDATE CHANNEL =====
+  const handleUpdate = async () => {
+    const fd = new FormData();
+
+    fd.append("name", updateForm.name);
+    fd.append("description", updateForm.description);
+
+    if (updateForm.avatar) fd.append("avatar", updateForm.avatar);
+    if (updateForm.banner) fd.append("banner", updateForm.banner);
+
+    const res = await updateChannel(fd);
+
+    setChannel(res.data.channel);
+    setShowEdit(false);
+    setAvatarPreview(null);
+    setBannerPreview(null);
+
+    loadData();
+  };
+
+  // ===== ANALYTICS =====
+  const analyticsData = videos.map((v, i) => ({
+    name: `Day ${i + 1}`,
+    views: v.views || 0,
+    watch: (v.views || 0) * 2
   }));
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white p-4 md:p-8 transition">
 
-      {/* 🔥 CHANNEL SECTION */}
-      {!channel ? (
-        <Card>
-          <CardContent className="flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-semibold">Create Your Channel</h2>
-              <p className="text-sm text-gray-500">
-                Start uploading videos like YouTube 🚀
-              </p>
-            </div>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Creator Studio 🎬</h1>
 
-            <Button
-              className="bg-indigo-500 flex items-center gap-2"
-              onClick={() => setShowChannelModal(true)}
-            >
-              <Plus size={16} /> Create Channel
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-semibold">{channel.name}</h2>
-              <p className="text-sm text-gray-500">
-                @{channel.handle}
-              </p>
-            </div>
-            <span className="text-green-500 text-sm">Channel Active</span>
-          </CardContent>
-        </Card>
-      )}
+        <Button onClick={() => setShowUpload(true)}>
+          <UploadCloud size={16}/> Upload
+        </Button>
+      </div>
 
-      {/* 🔥 STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[
-          { label: "Views", value: stats.views },
-          { label: "Likes", value: stats.likes },
-          { label: "Subscribers", value: stats.subscribers },
-          { label: "Watch Time", value: stats.watchTime }
-        ].map((item) => (
-          <Card key={item.label}>
-            <CardContent>
-              <p className="text-gray-500 text-sm">{item.label}</p>
-              <h2 className="text-2xl font-bold mt-2">{item.value}</h2>
-            </CardContent>
-          </Card>
+      {/* CHANNEL */}
+      <div className="relative rounded-xl overflow-hidden mb-16">
+
+        <img
+          src={bannerPreview || channel?.banner || FALLBACK_BANNER}
+          className="w-full h-40 md:h-56 object-cover"
+        />
+
+        <div className="absolute inset-0 bg-black/40" />
+
+        <div className="absolute -bottom-10 left-4 md:left-8 flex items-center gap-4">
+
+          <img
+            src={avatarPreview || channel?.avatar || FALLBACK_AVATAR}
+            className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white dark:border-black object-cover"
+          />
+
+          <div>
+            <h2 className="text-lg md:text-xl font-bold">
+              {channel?.name || "Your Channel"}
+            </h2>
+            <p className="text-gray-300">
+              @{channel?.handle || "handle"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* EDIT BUTTON */}
+      <div className="flex justify-end mb-6">
+        <Button onClick={() => setShowEdit(true)}>
+          Edit Channel
+        </Button>
+      </div>
+
+      {/* STATS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Object.entries(stats).map(([k, v]) => (
+          <motion.div whileHover={{ y: -5 }} key={k}>
+            <Card>
+              <CardContent>
+                <p className="text-gray-400 capitalize">{k}</p>
+                <h2 className="text-2xl font-bold">{v}</h2>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
 
-      {/* 🔥 CHART */}
-      <Card>
-        <CardContent>
-          <h2 className="text-lg font-semibold mb-4">Views Analytics</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="views" />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* ANALYTICS */}
+      <div className="grid md:grid-cols-2 gap-6 mt-6">
+        <Card>
+          <CardContent>
+            <h3 className="flex gap-2 mb-2">
+              <BarChart3 size={16}/> Views Trend
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={analyticsData}>
+                <XAxis dataKey="name" hide />
+                <YAxis />
+                <Tooltip />
+                <Line dataKey="views" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      {/* 🔥 VIDEOS */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Your Videos</h2>
-
-        <div className="space-y-4">
-          {videos.map((v) => (
-            <div
-              key={v._id}
-              className="flex items-center justify-between p-4 border rounded-xl"
-            >
-              <div className="flex gap-4 items-center">
-                <img
-                  src={v.thumbnail}
-                  className="w-32 h-20 object-cover rounded"
-                />
-
-                <div>
-                  <h3 className="font-semibold">{v.title}</h3>
-                  <p className="text-sm text-gray-500">
-                    {v.views} views • {v.likesCount} likes
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button className="bg-gray-200 text-black">
-                  <Pencil size={16} />
-                </Button>
-
-                <Button
-                  className="bg-red-500"
-                  onClick={() => handleDelete(v._id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <Card>
+          <CardContent>
+            <h3>Watch Time</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <AreaChart data={analyticsData}>
+                <XAxis dataKey="name" hide />
+                <YAxis />
+                <Tooltip />
+                <Area dataKey="watch" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* 🔥 CREATE CHANNEL MODAL */}
-      {showChannelModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-[400px] space-y-4">
+      {/* VIDEOS */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        {videos.map((v) => (
+          <motion.div key={v._id} whileHover={{ scale: 1.05 }}
+            className="bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden">
 
-            <h2 className="text-lg font-semibold">Create Channel</h2>
-
-            <input
-              placeholder="Channel Name"
-              className="w-full border p-2 rounded"
-              value={form.name}
-              onChange={(e) =>
-                setForm({ ...form, name: e.target.value })
-              }
+            <img
+              src={v.thumbnail || FALLBACK_THUMB}
+              className="h-44 w-full object-cover"
             />
 
-            <input
-              placeholder="Handle (unique)"
-              className="w-full border p-2 rounded"
-              value={form.handle}
-              onChange={(e) =>
-                setForm({ ...form, handle: e.target.value })
-              }
-            />
-
-            <textarea
-              placeholder="Description"
-              className="w-full border p-2 rounded"
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-            />
-
-            <div className="flex justify-end gap-2">
-              <Button
-                className="bg-gray-300 text-black"
-                onClick={() => setShowChannelModal(false)}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                className="bg-indigo-500"
-                onClick={handleCreateChannel}
-              >
-                Create
-              </Button>
+            <div className="p-4">
+              <h3>{v.title}</h3>
+              <p className="text-gray-400">{v.views} views</p>
             </div>
+          </motion.div>
+        ))}
+      </div>
 
-          </div>
-        </div>
-      )}
+      {/* ================= EDIT MODAL ================= */}
+      <AnimatePresence>
+        {showEdit && (
+          <motion.div className="fixed inset-0 bg-black/80 flex justify-center items-center z-50">
+
+            <motion.div className="bg-white dark:bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4">
+
+              <div className="flex justify-between">
+                <h2>Edit Channel</h2>
+                <X onClick={()=>setShowEdit(false)} className="cursor-pointer"/>
+              </div>
+
+              <input
+                value={updateForm.name}
+                placeholder="Channel Name"
+                className="w-full p-2 border bg-transparent"
+                onChange={(e)=>setUpdateForm({...updateForm,name:e.target.value})}
+              />
+
+              <textarea
+                value={updateForm.description}
+                placeholder="Description"
+                className="w-full p-2 border bg-transparent"
+                onChange={(e)=>setUpdateForm({...updateForm,description:e.target.value})}
+              />
+
+              {/* Avatar */}
+              <div onClick={()=>avatarRef.current.click()}
+                className="border p-3 text-center cursor-pointer">
+                Upload Avatar
+              </div>
+
+              <input type="file" hidden ref={avatarRef}
+                onChange={(e)=>{
+                  const file=e.target.files[0];
+                  setUpdateForm({...updateForm,avatar:file});
+                  setAvatarPreview(URL.createObjectURL(file));
+                }}
+              />
+
+              {/* Banner */}
+              <div onClick={()=>bannerRef.current.click()}
+                className="border p-3 text-center cursor-pointer">
+                Upload Banner
+              </div>
+
+              <input type="file" hidden ref={bannerRef}
+                onChange={(e)=>{
+                  const file=e.target.files[0];
+                  setUpdateForm({...updateForm,banner:file});
+                  setBannerPreview(URL.createObjectURL(file));
+                }}
+              />
+
+              <Button onClick={handleUpdate}>Save</Button>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ================= UPLOAD MODAL ================= */}
+      <AnimatePresence>
+        {showUpload && (
+          <motion.div className="fixed inset-0 bg-black/80 flex justify-center items-center z-50">
+
+            <motion.div className="bg-white dark:bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4">
+
+              <div className="flex justify-between">
+                <h2>Upload Video</h2>
+                <X onClick={()=>setShowUpload(false)} className="cursor-pointer"/>
+              </div>
+
+              <input
+                placeholder="Title"
+                className="w-full p-2 border bg-transparent"
+                onChange={(e)=>setVideoForm({...videoForm,title:e.target.value})}
+              />
+
+              <textarea
+                placeholder="Description"
+                className="w-full p-2 border bg-transparent"
+                onChange={(e)=>setVideoForm({...videoForm,description:e.target.value})}
+              />
+
+              <div
+                onClick={()=>fileRef.current.click()}
+                onDrop={handleDrop}
+                onDragOver={(e)=>e.preventDefault()}
+                className="border-2 border-dashed p-6 text-center cursor-pointer"
+              >
+                {videoForm.video ? videoForm.video.name : "Drag & Drop or Click"}
+              </div>
+
+              <input
+                type="file"
+                hidden
+                ref={fileRef}
+                onChange={(e)=>setVideoForm({...videoForm,video:e.target.files[0]})}
+              />
+
+              {uploadProgress > 0 && (
+                <div className="h-2 bg-gray-300 dark:bg-gray-700">
+                  <div
+                    className="h-2 bg-indigo-500"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+
+              <Button  onClick={handleUpload}>Upload</Button>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

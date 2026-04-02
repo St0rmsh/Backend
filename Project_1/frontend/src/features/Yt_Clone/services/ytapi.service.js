@@ -117,9 +117,14 @@ export const getChannelVideos = (handle) => {
 };
 
 // Update channel
-export const updateChannel = ({name, description, avatar, banner}) => {
-    return api.put("/api/channel/update", {name, description, avatar, banner});
+export const updateChannel = (formData) => {
+  return api.put("/api/channel/update", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  });
 };
+
 
 
 

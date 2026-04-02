@@ -8,7 +8,7 @@ import {
 
 } from "../controllers/channel.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-
+import { uploadImage } from "../middleware/uploadImage.middleware.js";
 const router = Router();
 
 
@@ -34,6 +34,9 @@ router.get("/:handle", getChannelByHandle);
 
 // /api/channel/update
 // PUT
-router.put("/update", authMiddleware, updateChannel);
+router.put("/update", authMiddleware,uploadImage.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "banner", maxCount: 1 }
+  ]), updateChannel);
 
 export default router;

@@ -6,9 +6,15 @@ import {
   toggleSubscribe,
   isSubscribed
 } from "../services/ytapi.service";
+
 import VideoCard from "../components/video/VideoCard";
 import SubscribeButton from "../components/SubscribeButton";
 
+const FALLBACK_BANNER =
+  "https://via.placeholder.com/1200x300?text=Channel+Banner";
+
+const FALLBACK_AVATAR =
+  "https://ui-avatars.com/api/?name=User&background=random";
 
 const ChannelPage = () => {
   const { handle } = useParams();
@@ -18,7 +24,7 @@ const ChannelPage = () => {
   const [subscribed, setSubscribed] = useState(false);
   const [loadingSub, setLoadingSub] = useState(false);
 
-  // FETCH CHANNEL + VIDEOS
+  // ===== FETCH DATA =====
   useEffect(() => {
     if (!handle) return;
 
@@ -28,7 +34,7 @@ const ChannelPage = () => {
         const res2 = await getChannelVideos(handle);
 
         setChannel(res1.data.channel);
-        setVideos(res2.data.videos);
+        setVideos(res2.data.videos || []);
       } catch (err) {
         console.error(err);
       }
@@ -37,7 +43,7 @@ const ChannelPage = () => {
     fetchData();
   }, [handle]);
 
-  // CHECK SUBSCRIBE
+  // ===== CHECK SUB =====
   useEffect(() => {
     if (!channel?._id) return;
 
@@ -53,7 +59,7 @@ const ChannelPage = () => {
     loadSub();
   }, [channel]);
 
-  // TOGGLE
+  // ===== TOGGLE SUB =====
   const handleSubscribe = async () => {
     if (!channel?._id || loadingSub) return;
 
@@ -68,48 +74,94 @@ const ChannelPage = () => {
     }
   };
 
-  if (!channel) return <p>Loading...</p>;
+  if (!channel) return <p className="p-4">Loading...</p>;
 
   return (
-    <div className="p-4">
+    <div className="w-full">
 
-      <div className="w-full h-48 bg-gray-300 rounded-xl mb-6"></div>
+      {/* ===== BANNER ===== */}
+      <div className="w-full h-40 md:h-48 lg:h-56 overflow-hidden">
+        <img
+          src={channel.banner || FALLBACK_BANNER}
+          alt="banner"
+          className="w-full h-full object-cover"
+        />
+      </div>
 
-      <div className="flex justify-between items-center">
-        <div className="flex gap-4 items-center">
-          <div className="w-20 h-20 bg-indigo-500 text-white rounded-full flex items-center justify-center text-2xl">
-            {channel.name?.charAt(0)}
+      {/* ===== HEADER ===== */}
+      <div className="px-4 md:px-6 mt-4">
+
+        <div className="flex justify-between items-center flex-wrap gap-4">
+
+          {/* LEFT */}
+          <div className="flex gap-4 items-center">
+
+            {/* AVATAR */}
+            <img
+              src={channel.avatar || FALLBACK_AVATAR}
+              alt="avatar"
+              className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover"
+            />
+
+            {/* INFO */}
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold">
+                {channel.name}
+              </h1>
+
+              <p className="text-gray-500 text-sm">
+                @{channel.handle}
+              </p>
+
+              
+            </div>
           </div>
 
-          <div>
-            <h1 className="text-2xl font-bold">{channel.name}</h1>
-            <p className="text-gray-500">@{channel.handle}</p>
-          </div>
+          {/* ✅ CUSTOM SUBSCRIBE BUTTON */}
+          <SubscribeButton
+            subscribed={subscribed}
+            loading={loadingSub}
+            onClick={handleSubscribe}
+            subscriberCount={channel.subscribersCount}
+          />
         </div>
 
-        {/* ✅ FIXED BUTTON */}
-        <button
-          onClick={handleSubscribe}
-          disabled={loadingSub}
-          className={`px-6 py-2 rounded-full transition ${
-            subscribed
-              ? "bg-gray-300"
-              : "bg-red-500 text-white"
-          }`}
-        >
-          {loadingSub
-            ? "Loading..."
-            : subscribed
-            ? "Subscribed"
-            : "Subscribe"}
-        </button>
+        {/* DESCRIPTION */}
+        {channel.description && (
+          <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
+            {channel.description}
+          </p>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        {videos.map((v) => (
-          <VideoCard key={v._id} video={v} />
-        ))}
+      {/* ===== VIDEOS ===== */}
+      <div className="px-4 md:px-6 mt-6">
+
+        <h2 className="text-lg font-semibold mb-4">
+          Videos
+        </h2>
+
+        <div className="
+          grid
+          grid-cols-1
+          sm:grid-cols-2
+          md:grid-cols-3
+          gap-5
+        ">
+          {videos.length > 0 ? (
+            videos.map((v) => (
+              <VideoCard 
+                key={v._id} 
+                video={v} 
+                hideChannel={true}
+              />
+            ))
+          ) : (
+            <p className="text-gray-500">No videos yet</p>
+          )}
+        </div>
       </div>
+
     </div>
   );
 };

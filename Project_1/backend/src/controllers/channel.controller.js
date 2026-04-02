@@ -1,6 +1,7 @@
 import channelModel from "../models/channel.model.js";
 import userModel from "../models/user.model.js";
 import videoModel from "../models/video.model.js";
+import { uploadToImageKit } from "../services/storage.service.js";
 
 /**
  * ✅ Create Channel
@@ -99,39 +100,54 @@ export const getChannelByHandle = async (req, res) => {
 /**
  * ✅ Update Channel
  */
+
+
 export const updateChannel = async (req, res) => {
-    try {
-        const userId = req.user?._id;
-        if (!userId) return res.status(401).json({ message: "Unauthorized" });
+  try {
+    const userId = req.user?._id;
 
-        const channel = await channelModel.findOne({ owner: userId });
-        if (!channel) {
-            return res.status(404).json({ message: "Channel not found" });
-        }
-
-        const { name, description, avatar, banner } = req.body;
-
-        const updateData = {};
-        if (name) updateData.name = name;
-        if (description) updateData.description = description;
-        if (avatar) updateData.avatar = avatar;
-        if (banner) updateData.banner = banner;
-
-        const updated = await channelModel.findByIdAndUpdate(
-            channel._id,
-            { $set: updateData },
-            { new: true }
-        );
-
-        return res.status(200).json({
-            success: true,
-            channel: updated
-        });
-
-    } catch {
-        return res.status(500).json({ message: "Internal Server Error" });
+    const channel = await channelModel.findOne({ owner: userId });
+    if (!channel) {
+      return res.status(404).json({ message: "Channel not found" });
     }
+
+    const { name, description } = req.body;
+
+    let avatarUrl = channel.avatar;
+    let bannerUrl = channel.banner;
+
+    // ✅ HANDLE FILES
+    if (req.files?.avatar) {
+      avatarUrl = await uploadToImageKit(req.files.avatar[0]);
+    }
+
+    if (req.files?.banner) {
+      bannerUrl = await uploadToImageKit(req.files.banner[0]);
+    }
+
+    const updated = await channelModel.findByIdAndUpdate(
+      channel._id,
+      {
+        name: name?.trim(),
+        description: description?.trim(),
+        avatar: avatarUrl,
+        banner: bannerUrl
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      channel: updated
+    });
+
+  } catch (err) {
+    console.error("IMAGEKIT ERROR:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 };
+
+
 
 /**
  * ✅ Get Channel Videos
