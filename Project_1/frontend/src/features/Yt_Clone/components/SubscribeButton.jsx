@@ -1,62 +1,55 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { useState, useRef } from "react";
 import confetti from "canvas-confetti";
 
-const SubscribeButton = ({
-  subscribed,
-  loading,
-  onClick,
-  subscriberCount = 0
-}) => {
-  const [count, setCount] = useState(subscriberCount);
-  const [prev, setPrev] = useState(subscribed);
+const SubscribeButton = ({ subscribed, loading, onClick, darkMode = false }) => {
   const [clicked, setClicked] = useState(false);
-
-
-  useEffect(() => {
-    if (subscribed && !prev) {
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 }
-      });
-    }
-    setPrev(subscribed);
-  }, [subscribed]);
+  const hasSubscribed = useRef(false);
 
   const handleClick = async () => {
     if (loading) return;
+
     setClicked(true);
     await onClick();
-    setTimeout(() => setClicked(false), 300);
+    setClicked(false);
+
+    if (subscribed && !hasSubscribed.current) {
+      confetti({
+        particleCount: 150,
+        spread: 90,
+        angle: 90,
+        origin: { y: 0.6 },
+        gravity: 0.7,
+        colors: ["#ff0000", "#ff6b81", "#ff9f43", "#ffdd59"]
+      });
+      hasSubscribed.current = true;
+    }
   };
 
-  return (
-    <div className="flex items-center gap-3">
+  // Colors based on theme & state
+  const baseBg = subscribed
+    ? darkMode
+      ? "bg-gradient-to-r from-indigo-600 to-purple-600"
+      : "bg-gradient-to-r from-red-500 to-pink-500"
+    : "bg-red-500";
 
-      <motion.button
-        onClick={handleClick}
-        whileTap={{ scale: 0.9 }}
-        whileHover={{
-          scale: 1.08,
-          boxShadow: "0px 0px 18px rgba(255,0,0,0.7)"
-        }}
-        animate={{ scale: clicked ? 1.15 : 1 }}
-        className={`px-5 py-2 rounded-full font-medium transition ${
-          subscribed
-            ? "bg-gray-300 text-black"
-            : "bg-red-500 text-white"
-        }`}
-      >
+  const baseText = subscribed ? "text-white" : "text-white";
+
+  return (
+    <motion.button
+      onClick={handleClick}
+      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.05 }}
+      className={`relative px-5 py-2 rounded-full font-medium overflow-hidden shadow-lg flex items-center justify-center ${baseBg}`}
+    >
+      <span className={`relative z-10 transition-colors duration-300 ${baseText}`}>
         {loading
           ? "Loading..."
           : subscribed
           ? "Subscribed ✓"
           : "Subscribe"}
-      </motion.button>
-
-  
-    </div>
+      </span>
+    </motion.button>
   );
 };
 

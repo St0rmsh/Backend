@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
     addComment,
     getComments,
-    deleteComment
+    deleteComment,
+    reactToComment
 } from "../controllers/comment.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
@@ -21,5 +22,7 @@ router.get("/:videoId", getComments);
 // /api/comment/:commentId
 // DELETE
 router.delete("/:commentId", authMiddleware, deleteComment);
+
+router.post("/:commentId/react", authMiddleware, reactToComment);
 
 export default router;

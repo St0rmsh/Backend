@@ -1,3 +1,4 @@
+// VideoPages.jsx
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
@@ -14,6 +15,7 @@ import {
 } from "../services/ytapi.service";
 import SubscribeButton from "../components/SubscribeButton";
 import CommentItem from "../components/CommentItem";
+import ReactionButton from "../components/UI/ReactionButton.jsx";
 
 const VideoPages = () => {
   const { id } = useParams();
@@ -35,8 +37,9 @@ const VideoPages = () => {
 
   const [newComment, setNewComment] = useState("");
   const [subscribed, setSubscribed] = useState(false);
-  const [subscriberCount, setSubscriberCount] = useState(null); // ✅ FIX
+  const [subscriberCount, setSubscriberCount] = useState(null);
   const [loadingSub, setLoadingSub] = useState(false);
+  const [expandAllComments, setExpandAllComments] = useState(false);
 
   const socketRef = useRef(connectSocket());
 
@@ -62,43 +65,39 @@ const VideoPages = () => {
     socket.emit("join-video", id);
 
     socket.on("comment:new", () => fetchComments(id));
-    socket.on("reaction:update", async () => {
-      await fetchVideo(id);
-    });
+    socket.on("comment:reaction", () => fetchComments(id));
+    socket.on("reaction:update", async () => await fetchVideo(id));
 
     return () => {
       socket.emit("leave-video", id);
       socket.off("comment:new");
       socket.off("reaction:update");
+      socket.off("comment:reaction");
     };
   }, [id]);
 
   // =========================
   // SUBSCRIBE STATUS + COUNT
   // =========================
-useEffect(() => {
-  if (!video?.channel?._id) return;
+  useEffect(() => {
+    if (!video?.channel?._id) return;
 
-  const loadSubData = async () => {
-    try {
-      const [subRes, countRes] = await Promise.all([
-        isSubscribed(video.channel._id),
-        getSubscribersCount(video.channel._id)
-      ]);
+    const loadSubData = async () => {
+      try {
+        const [subRes, countRes] = await Promise.all([
+          isSubscribed(video.channel._id),
+          getSubscribersCount(video.channel._id)
+        ]);
 
-      setSubscribed(subRes.data.subscribed);
+        setSubscribed(subRes.data.subscribed);
+        setSubscriberCount(countRes.data.subscribers);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-      // ✅ FIXED HERE
-      setSubscriberCount(countRes.data.subscribers);
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  loadSubData();
-}, [video?.channel?._id]);
-
+    loadSubData();
+  }, [video?.channel?._id]);
 
   // =========================
   // REALTIME SUBSCRIBERS
@@ -113,7 +112,7 @@ useEffect(() => {
 
     socket.on("channel:subscribers:update", (data) => {
       if (data.channelId === video.channel._id) {
-        setSubscriberCount(data.count); // ✅ always correct
+        setSubscriberCount(data.count);
       }
     });
 
@@ -139,42 +138,31 @@ useEffect(() => {
 
     for (let key in intervals) {
       const value = Math.floor(seconds / intervals[key]);
-      if (value >= 1) {
-        return `${value} ${key}${value > 1 ? "s" : ""} ago`;
-      }
+      if (value >= 1) return `${value} ${key}${value > 1 ? "s" : ""} ago`;
     }
-
     return "just now";
   };
 
   // =========================
   // SUBSCRIBE ACTION
   // =========================
-const handleSubscribe = async () => {
-  if (!video?.channel?._id || loadingSub) return;
+  const handleSubscribe = async () => {
+    if (!video?.channel?._id || loadingSub) return;
 
-  setLoadingSub(true);
-
-  try {
-    const res = await toggleSubscribe(video.channel._id);
-
-    // ✅ ONLY update subscription state
-    setSubscribed(res.data.subscribed);
-
-    // ❌ DO NOT update subscriberCount here
-    // Let socket or API control it
-
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoadingSub(false);
-  }
-};
-
-
+    setLoadingSub(true);
+    try {
+      const res = await toggleSubscribe(video.channel._id);
+      setSubscribed(res.data.subscribed);
+      // subscriberCount updated via socket
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingSub(false);
+    }
+  };
 
   // =========================
-  // AUTO NEXT
+  // AUTO NEXT VIDEO
   // =========================
   const handleAutoNext = () => {
     if (!videos.length) return;
@@ -182,9 +170,7 @@ const handleSubscribe = async () => {
     const index = videos.findIndex((v) => v._id === video._id);
     const next = videos[index + 1];
 
-    if (next?._id) {
-      navigate(`/video/${next._id}`);
-    }
+    if (next?._id) navigate(`/video/${next._id}`);
   };
 
   const handleWatchTime = (time) => {
@@ -246,44 +232,30 @@ const handleSubscribe = async () => {
 
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
 
-            {/* ✅ SAFE RENDER */}
-            <SubscribeButton
-              subscribed={subscribed}
-              loading={loadingSub}
-              onClick={handleSubscribe}
-            />
+           <SubscribeButton
+  subscribed={subscribed}
+  loading={loadingSub}
+  onClick={handleSubscribe}
+/>
 
-            {/* LIKE */}
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() =>
-                reactVideo({ videoId: video._id, type: "LIKE" })
-              }
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-full flex items-center gap-2 transition ${
-                liked
-                  ? "bg-indigo-500 text-white shadow-lg"
-                  : "bg-gray-200 hover:bg-gray-300"
-              }`}
-            >
-              👍 <span>{video.likesCount}</span>
-            </motion.button>
+{/* Like / Dislike buttons smoother */}
+<ReactionButton
+  type="LIKE"
+  count={video.likesCount}
+  active={liked}
+  onClick={() => reactVideo({ videoId: video._id, type: "LIKE" })}
+/>
 
-            {/* DISLIKE */}
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() =>
-                reactVideo({ videoId: video._id, type: "DISLIKE" })
-              }
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-full flex items-center gap-2 transition ${
-                disliked
-                  ? "bg-red-500 text-white shadow-lg"
-                  : "bg-gray-200 hover:bg-gray-300"
-              }`}
-            >
-              👎 <span>{video.dislikesCount}</span>
-            </motion.button>
+<ReactionButton
+  type="DISLIKE"
+  count={video.dislikesCount}
+  active={disliked}
+  onClick={() => reactVideo({ videoId: video._id, type: "DISLIKE" })}
+/>
+
+
+
+
 
           </div>
         </div>
@@ -308,7 +280,6 @@ const handleSubscribe = async () => {
                 className="w-full border-b border-gray-300 focus:border-black outline-none p-2 text-sm resize-none"
                 rows={2}
               />
-
               <div className="flex justify-end mt-2 gap-2">
                 <button
                   onClick={() => setNewComment("")}
@@ -316,7 +287,6 @@ const handleSubscribe = async () => {
                 >
                   Cancel
                 </button>
-
                 <button
                   onClick={handleComment}
                   className="px-3 py-1 text-sm rounded-full bg-indigo-500 text-white"
@@ -330,11 +300,10 @@ const handleSubscribe = async () => {
           {/* LIST */}
           <div className="space-y-5">
             {comments.map((c) => (
-              <CommentItem key={c._id} comment={c} />
+              <CommentItem key={c._id + JSON.stringify(c.reactions)} comment={c} />
             ))}
           </div>
         </div>
-
       </div>
 
       {/* RIGHT SIDE */}
@@ -343,7 +312,6 @@ const handleSubscribe = async () => {
           <VideoCard key={v._id} video={v} />
         ))}
       </div>
-
     </div>
   );
 };

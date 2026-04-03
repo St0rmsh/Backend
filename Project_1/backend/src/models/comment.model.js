@@ -17,7 +17,22 @@ const commentSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
-    
+    reactions: {
+  "👍": {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    default: []
+  },
+  "❤️": {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    default: []
+  },
+  "😂": {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    default: []
+  }
+}
+
+
   },
   { timestamps: true }
 );

@@ -73,6 +73,8 @@ export const deleteComment = (commentId) => {
     return api.delete(`/api/comment/${commentId}`);
 };
 
+export const reactToComment = (commentId, emoji) =>
+  api.post(`/api/comment/${commentId}/react`, { emoji });
 
 
 // =======================
