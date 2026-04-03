@@ -9,7 +9,7 @@ import Home from "../features/Yt_Clone/pages/Home";
 import VideoPages from "../features/Yt_Clone/pages/VideoPages";
 import Dashboard from "../features/Yt_Clone/pages/Dashboard";
 import ChannelPage from "../features/Yt_Clone/pages/ChannelPage";
-
+import Error from "../features/Yt_Clone/components/layout/Error";
 import Protected from "../features/auth/components/Protected"; // ✅ IMPORTANT
 
 export const router = createBrowserRouter([
@@ -55,6 +55,10 @@ export const router = createBrowserRouter([
   {
     path: "/channel/:handle",
     element: <ChannelPage />
+  },
+  {
+    path:"*",
+    element:<Error/>
   }
 
 ]);

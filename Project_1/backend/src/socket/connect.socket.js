@@ -16,33 +16,21 @@ export function initSocket(httpServer) {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-     // 🔥 NEW: CHANNEL ROOM (FOR SUBSCRIBE)
+    socket.on("join-video", (videoId) => {
+      socket.join(`video_${videoId}`);
+    });
+
+    socket.on("leave-video", (videoId) => {
+      socket.leave(`video_${videoId}`);
+    });
+
     socket.on("join-channel", (channelId) => {
-      if (!channelId) return;
       socket.join(`channel_${channelId}`);
     });
 
     socket.on("leave-channel", (channelId) => {
       socket.leave(`channel_${channelId}`);
     });
-
-    // VIDEO ROOM
-  socket.on("join-video", (videoId) => {
-    socket.join(videoId);
-  });
-
-  socket.on("leave-video", (videoId) => {
-    socket.leave(videoId);
-  });
-
-  // ✅ CHANNEL ROOM (ADD THIS)
-  socket.on("join-channel", (channelId) => {
-    socket.join(channelId);
-  });
-
-  socket.on("leave-channel", (channelId) => {
-    socket.leave(channelId);
-  });
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);

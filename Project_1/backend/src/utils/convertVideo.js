@@ -1,0 +1,20 @@
+import ffmpeg from "fluent-ffmpeg";
+import fs from "fs";
+
+export async function convertToMp4(inputPath) {
+  const outputPath = inputPath.replace(/\.[^/.]+$/, "") + "-converted.mp4";
+
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .videoCodec("libx264")   // ✅ browser supported
+      .audioCodec("aac")       // 🔥 FIX: audio works
+      .outputOptions([
+        "-preset fast",
+        "-crf 23",
+        "-movflags +faststart"
+      ])
+      .save(outputPath)
+      .on("end", () => resolve(outputPath))
+      .on("error", reject);
+  });
+}

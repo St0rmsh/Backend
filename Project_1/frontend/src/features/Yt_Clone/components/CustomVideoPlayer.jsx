@@ -12,7 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 const CustomPlayer = ({
-  sources, // 🔥 multiple quality sources
+  sources,
   autoPlay = false,
   onEnd,
   onWatchTime
@@ -31,25 +31,61 @@ const CustomPlayer = ({
   const [isMuted, setIsMuted] = useState(false);
   const [quality, setQuality] = useState("720p");
   const [showSettings, setShowSettings] = useState(false);
+  const [manualSpeed, setManualSpeed] = useState(false);
+
+  
+
+  const [lastInteraction, setLastInteraction] = useState(Date.now());
 
   const src = sources?.[quality];
 
-  // 🔥 AUTOPLAY
-useEffect(() => {
-  const v = videoRef.current;
-  if (!v) return;
+  // =========================
+  // APPLY VOLUME ALWAYS ✅
+  // =========================
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.volume = volume;
+  }, [volume]);
 
-  if (autoPlay) {
-    v.muted = true; // 🔥 important
-    v.play()
-      .then(() => setPlaying(true))
-      .catch(() => {
-        console.log("Autoplay blocked");
-      });
-  }
-}, [src, autoPlay]);
+  // =========================
+  // APPLY SPEED
+  // =========================
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.playbackRate = speed;
+  }, [speed, src]);
 
-  // 🔥 WATCH TIME
+  // =========================
+  // AUTOPLAY FIX (🔥 AUDIO FIX)
+  // =========================
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    if (autoPlay) {
+      v.muted = true;
+
+      v.play()
+        .then(() => {
+          setPlaying(true);
+
+          // 🔥 AUTO UNMUTE AFTER PLAY
+          setTimeout(() => {
+            v.muted = false;
+            setIsMuted(false);
+          }, 400);
+        })
+        .catch(() => {
+          console.log("Autoplay blocked");
+        });
+    }
+  }, [src, autoPlay]);
+
+  // =========================
+  // WATCH TIME
+  // =========================
   useEffect(() => {
     const interval = setInterval(() => {
       if (videoRef.current && playing) {
@@ -60,20 +96,135 @@ useEffect(() => {
     return () => clearInterval(interval);
   }, [playing]);
 
-  // 🔥 AUTO HIDE
+  // =========================
+  // AUTO HIDE CONTROLS
+  // =========================
   useEffect(() => {
     let timeout;
+
     const handleMove = () => {
       setShowControls(true);
+      setLastInteraction(Date.now());
+
       clearTimeout(timeout);
       timeout = setTimeout(() => setShowControls(false), 2500);
     };
 
     const el = containerRef.current;
     el?.addEventListener("mousemove", handleMove);
+
     return () => el?.removeEventListener("mousemove", handleMove);
   }, []);
 
+  // =========================
+  // KEYBOARD SHORTCUTS
+  // =========================
+  useEffect(() => {
+    const handleKey = (e) => {
+  const v = videoRef.current;
+  if (!v) return;
+
+  // 🚫 IGNORE when typing
+  const tag = e.target.tagName.toLowerCase();
+  const isTyping =
+    tag === "input" ||
+    tag === "textarea" ||
+    e.target.isContentEditable;
+
+  if (isTyping) return;
+
+  setLastInteraction(Date.now());
+
+  switch (e.key) {
+    case " ":
+      e.preventDefault();
+      togglePlay();
+      break;
+
+    case "ArrowRight":
+      v.currentTime += 5;
+      break;
+
+    case "ArrowLeft":
+      v.currentTime -= 5;
+      break;
+
+    case "ArrowUp":
+      v.volume = Math.min(1, v.volume + 0.1);
+      setVolume(v.volume);
+      break;
+
+    case "ArrowDown":
+      v.volume = Math.max(0, v.volume - 0.1);
+      setVolume(v.volume);
+      break;
+
+    case ">":
+    case ".":
+      if (e.shiftKey) {
+        const newSpeed = Math.min(speed + 0.25, 3);
+        setSpeed(newSpeed);
+      }
+      break;
+
+    case "<":
+    case ",":
+      if (e.shiftKey) {
+        const newSpeed = Math.max(speed - 0.25, 0.25);
+        setSpeed(newSpeed);
+      }
+      break;
+
+    case "f":
+      goFullscreen();
+      break;
+
+    case "m":
+      toggleMute();
+      break;
+  }
+};
+
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [speed]);
+
+  // =========================
+  // AI AUTO SPEED
+  // =========================
+useEffect(() => {
+  const interval = setInterval(() => {
+    const idleTime = Date.now() - lastInteraction;
+    const v = videoRef.current;
+    if (!v) return;
+
+    // 🚫 DO NOT override if user selected speed
+    if (manualSpeed) return;
+
+    if (idleTime > 5000) {
+      v.playbackRate = 1.5;
+    } else {
+      v.playbackRate = 1;
+    }
+  }, 2000);
+
+  return () => clearInterval(interval);
+}, [lastInteraction, manualSpeed]);
+
+useEffect(() => {
+  setSpeed(1);
+  setManualSpeed(false);
+
+  if (videoRef.current) {
+    videoRef.current.playbackRate = 1;
+  }
+}, [src]);
+
+
+  // =========================
+  // CONTROLS
+  // =========================
   const togglePlay = () => {
     const v = videoRef.current;
     if (!v) return;
@@ -91,10 +242,16 @@ useEffect(() => {
     videoRef.current.currentTime += time;
   };
 
+  // 🔥 FIXED MUTE LOGIC
   const toggleMute = () => {
     const v = videoRef.current;
     v.muted = !v.muted;
     setIsMuted(v.muted);
+
+    if (!v.muted && v.volume === 0) {
+      v.volume = 1;
+      setVolume(1);
+    }
   };
 
   const handleTimeUpdate = () => {
@@ -120,12 +277,6 @@ useEffect(() => {
   const handleVolume = (e) => {
     const v = Number(e.target.value);
     setVolume(v);
-    videoRef.current.volume = v;
-  };
-
-  const changeSpeed = (s) => {
-    setSpeed(s);
-    videoRef.current.playbackRate = s;
   };
 
   const goFullscreen = () => {
@@ -135,6 +286,15 @@ useEffect(() => {
       document.exitFullscreen();
     }
   };
+
+  const changeSpeed = (s) => {
+  setSpeed(s);
+  setManualSpeed(true);
+  if (videoRef.current) {
+    videoRef.current.playbackRate = s;
+  }
+};
+
 
   const formatTime = (t) => {
     if (!t || isNaN(t)) return "0:00";
@@ -148,43 +308,26 @@ useEffect(() => {
 
       {/* VIDEO */}
       <video
-        key={src}
         ref={videoRef}
         src={src}
         onClick={togglePlay}
         onTimeUpdate={handleTimeUpdate}
         onProgress={handleProgress}
         onEnded={onEnd}
-        onLoadedMetadata={() => setDuration(videoRef.current.duration)}
+        onLoadedMetadata={() => {
+          const v = videoRef.current;
+          setDuration(v.duration);
+          v.playbackRate = speed;
+          v.volume = volume; // 🔥 ENSURE AUDIO
+        }}
         className="w-full max-h-[75vh]"
       />
-
-      {/* CENTER PLAY */}
-      <AnimatePresence>
-        {!playing && (
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <button
-              onClick={togglePlay}
-              className="bg-black/60 p-5 rounded-full"
-            >
-              <Play size={40} className="text-white" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* CONTROLS */}
       <motion.div
         animate={{ opacity: showControls ? 1 : 0 }}
         className="absolute bottom-0 w-full p-3 bg-gradient-to-t from-black/80"
       >
-
-        {/* PROGRESS */}
         <div
           ref={progressRef}
           onClick={handleSeek}
@@ -194,15 +337,15 @@ useEffect(() => {
           <div className="bg-red-500 h-full absolute top-0" style={{ width: `${progress}%` }} />
         </div>
 
-        {/* CONTROLS ROW */}
         <div className="flex justify-between items-center text-white text-sm">
 
-          {/* LEFT */}
           <div className="flex items-center gap-3">
             <button onClick={() => skip(-5)}><SkipBack /></button>
+
             <button onClick={togglePlay}>
               {playing ? <Pause /> : <Play />}
             </button>
+
             <button onClick={() => skip(5)}><SkipForward /></button>
 
             <button onClick={toggleMute}>
@@ -223,42 +366,62 @@ useEffect(() => {
             </span>
           </div>
 
-          {/* RIGHT */}
-          <div className="flex items-center gap-3 relative">
+         <div className="flex items-center gap-3 relative">
 
-            {/* SETTINGS */}
-            <button onClick={() => setShowSettings(!showSettings)}>
-              <Settings />
-            </button>
+  {/* ⚙️ SETTINGS BUTTON */}
+  <button onClick={() => setShowSettings(!showSettings)}>
+    <Settings />
+  </button>
 
-            <AnimatePresence>
-              {showSettings && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute bottom-10 right-0 bg-black p-3 rounded-xl text-white"
-                >
-                  <p className="text-xs mb-1">Speed</p>
-                  {[0.5, 1, 1.5, 2].map((s) => (
-                    <div key={s} onClick={() => changeSpeed(s)} className="cursor-pointer">
-                      {s}x
-                    </div>
-                  ))}
+  {/* ⚙️ SETTINGS PANEL */}
+  <AnimatePresence>
+    {showSettings && (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        className="absolute bottom-10 right-0 bg-black p-3 rounded-xl text-white w-36 z-50"
+      >
 
-                  <p className="text-xs mt-2 mb-1">Quality</p>
-                  {Object.keys(sources || {}).map((q) => (
-                    <div key={q} onClick={() => setQuality(q)} className="cursor-pointer">
-                      {q}
-                    </div>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <button onClick={goFullscreen}>
-              <Maximize />
-            </button>
+        {/* SPEED */}
+        <p className="text-xs mb-1 text-gray-300">Speed</p>
+        {[0.5, 1, 1.25, 1.5, 2].map((s) => (
+          <div
+            key={s}
+            onClick={() => changeSpeed(s)}
+            className={`cursor-pointer px-2 py-1 rounded ${
+              speed === s ? "bg-indigo-500" : "hover:bg-gray-700"
+            }`}
+          >
+            {s}x
           </div>
+        ))}
+
+        {/* QUALITY */}
+        <p className="text-xs mt-3 mb-1 text-gray-300">Quality</p>
+        {Object.keys(sources || {}).map((q) => (
+          <div
+            key={q}
+            onClick={() => setQuality(q)}
+            className={`cursor-pointer px-2 py-1 rounded ${
+              quality === q ? "bg-indigo-500" : "hover:bg-gray-700"
+            }`}
+          >
+            {q}
+          </div>
+        ))}
+
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* FULLSCREEN */}
+  <button onClick={goFullscreen}>
+    <Maximize />
+  </button>
+
+</div>
+
 
         </div>
       </motion.div>

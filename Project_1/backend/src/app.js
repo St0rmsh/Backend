@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser"
 import morgan from "morgan"
 import cors from "cors"
 import multer from "multer"
+import fs from "fs"
 const app = express()
 
 
@@ -36,6 +37,7 @@ import videoRoutes from "./routes/video.routes.js"
 app.use("/api/video",videoRoutes)
 
 
+
 // comment
 // Routes
 import commentRoutes from "./routes/comment.routes.js"
@@ -60,7 +62,23 @@ app.use("/api/subscription",subscriptionRoutes)
 
 
 
+setInterval(async () => {
+  try {
+    const files = await fs.promises.readdir(".");
 
+    for (const file of files) {
+      if (file.startsWith("frames-")) {
+        await fs.promises.rm(file, {
+          recursive: true,
+          force: true
+        });
+        console.log("🧹 Deleted leftover:", file);
+      }
+    }
+  } catch (err) {
+    console.log("Cleanup cron error:", err.message);
+  }
+}, 60 * 60 * 1000); 
 
 
 

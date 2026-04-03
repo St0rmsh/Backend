@@ -29,16 +29,7 @@ const Home = () => {
 
       {/* ===== CATEGORY BAR (OPTIONAL YT STYLE) ===== */}
       <div className="flex gap-3 overflow-x-auto mb-6 scrollbar-hide">
-        {categories.map((cat, i) => (
-          <button
-            key={i}
-            className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap
-            bg-gray-200 dark:bg-gray-800
-            hover:bg-gray-300 dark:hover:bg-gray-700 transition"
-          >
-            {cat}
-          </button>
-        ))}
+        
       </div>
 
       {/* ===== VIDEOS GRID (FIXED) ===== */}
