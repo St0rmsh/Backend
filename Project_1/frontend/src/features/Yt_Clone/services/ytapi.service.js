@@ -29,6 +29,11 @@ export const getAllVideos = () => {
     return api.get("/api/video");
 };
 
+// Search videos
+export const searchVideos = (query) => {
+    return api.get(`/api/video/search?q=${encodeURIComponent(query)}`);
+};
+
 // Get single video
 export const getVideoById = (id) => {
     return api.get(`/api/video/${id}`);

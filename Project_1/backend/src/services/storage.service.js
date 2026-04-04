@@ -48,3 +48,15 @@ export const deleteFile = async (fileId) => {
         return null;
     }
 };
+export const getSignedUrl = (url) => {
+    try {
+        if (!url || !url.startsWith("http")) return url;
+        // Generate a signed URL that expires in 1 hour
+        return imageKit.url({
+            src: url,
+            expireSeconds: 3600
+        });
+    } catch (e) {
+        return url;
+    }
+};

@@ -87,12 +87,18 @@ const videoSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
+      .addCase(fetchVideo.pending, (state) => {
+        state.video = null; // Clear stale data
+      })
       .addCase(fetchVideo.fulfilled, (state, action) => {
-
-        if (!action.payload?._id) return;
+        const videoData = action.payload;
+        if (!videoData?._id && !videoData?.id) {
+            console.error("❌ Invalid Video format:", videoData);
+            return;
+        }
 
         // 🔥 FORCE NEW OBJECT (important for re-render)
-        state.video = { ...action.payload };
+        state.video = { ...videoData };
       })
 
 

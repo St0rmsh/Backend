@@ -1,5 +1,6 @@
 import viewModel from "../models/view.model.js";
 import videoModel from "../models/video.model.js";
+import channelModel from "../models/channel.model.js";
 import { getIO } from "../socket/connect.socket.js";
 
 export const addView = async (req, res) => {
@@ -30,6 +31,25 @@ export const addView = async (req, res) => {
       { $inc: { views: 1 } },
       { new: true }
     );
+
+    let updatedChannel = null;
+    if (updatedVideo.channel) {
+      updatedChannel = await channelModel.findByIdAndUpdate(
+        updatedVideo.channel,
+        { $inc: { totalViews: 1 } },
+        { new: true }
+      );
+    }
+
+    const io = getIO();
+    io.to(`video_${videoId}`).emit("video:views:update", { videoId, views: updatedVideo.views });
+    
+    if (updatedChannel) {
+      io.to(`channel_${updatedVideo.channel}`).emit("channel:views:update", {
+        channelId: updatedVideo.channel,
+        totalViews: updatedChannel.totalViews
+      });
+    }
 
     return res.json({
       success: true,

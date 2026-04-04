@@ -1,19 +1,14 @@
 import { motion } from "framer-motion";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 
 const SubscribeButton = ({ subscribed, loading, onClick, darkMode = false }) => {
-  const [clicked, setClicked] = useState(false);
-  const hasSubscribed = useRef(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const prevSubscribed = useRef(subscribed);
 
-  const handleClick = async () => {
-    if (loading) return;
-
-    setClicked(true);
-    await onClick();
-    setClicked(false);
-
-    if (subscribed && !hasSubscribed.current) {
+  // 🎊 CONFETTI EFFECT: ONLY trigger on fresh subscription click
+  useEffect(() => {
+    if (subscribed && !prevSubscribed.current && isSubscribing) {
       confetti({
         particleCount: 150,
         spread: 90,
@@ -22,8 +17,15 @@ const SubscribeButton = ({ subscribed, loading, onClick, darkMode = false }) => 
         gravity: 0.7,
         colors: ["#ff0000", "#ff6b81", "#ff9f43", "#ffdd59"]
       });
-      hasSubscribed.current = true;
+      setIsSubscribing(false); // Reset click tracking
     }
+    prevSubscribed.current = subscribed;
+  }, [subscribed, isSubscribing]);
+
+  const handleClick = async () => {
+    if (loading) return;
+    setIsSubscribing(true); // Track this click
+    await onClick();
   };
 
   // Colors based on theme & state
@@ -33,7 +35,7 @@ const SubscribeButton = ({ subscribed, loading, onClick, darkMode = false }) => 
       : "bg-gradient-to-r from-red-500 to-pink-500"
     : "bg-red-500";
 
-  const baseText = subscribed ? "text-white" : "text-white";
+  const baseText = "text-white";
 
   return (
     <motion.button

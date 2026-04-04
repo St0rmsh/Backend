@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useAuth } from "../features/auth/hook/useAuth";
 import { useSelector } from "react-redux";
 import { Loader } from "lucide-react";
+import { Toaster } from "react-hot-toast";
 
 
 
@@ -27,6 +28,7 @@ if (loading) return <Loader />
 
   return (
     <>
+      <Toaster position="top-center" reverseOrder={false} />
       <RouterProvider router={router} />
     </>
   );

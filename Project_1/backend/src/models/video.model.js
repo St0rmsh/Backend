@@ -14,17 +14,17 @@ const videoSchema = new mongoose.Schema({
 
     videoUrl: {
         type: String,
-        required: true
+        default: ""
     },
 
     thumbnail: {
         type: String,
-        required: true
+        default: ""
     },
 
     duration: {
         type: Number, 
-        required: true
+        default: 0
     },
 
     channel: {
@@ -119,6 +119,10 @@ const videoSchema = new mongoose.Schema({
     flagReason: {
         type: String,
         default: ""
+    },
+    deepfakeScore: {
+        type: Number,
+        default: 0
     },
     transcript: {
     type: String,

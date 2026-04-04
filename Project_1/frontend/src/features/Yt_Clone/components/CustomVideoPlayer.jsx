@@ -28,10 +28,11 @@ const CustomPlayer = ({
   const [speed, setSpeed] = useState(1);
   const [buffer, setBuffer] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // 🔥 START MUTED FOR COMFORT (User preference)
   const [quality, setQuality] = useState("720p");
   const [showSettings, setShowSettings] = useState(false);
   const [manualSpeed, setManualSpeed] = useState(false);
+  const [error, setError] = useState(false);
 
   
 
@@ -65,23 +66,31 @@ const CustomPlayer = ({
     if (!v) return;
 
     if (autoPlay) {
-      v.muted = true;
-
+      const v = videoRef.current;
+      v.muted = false; // 🚀 TRY UNMUTED FIRST
+      
       v.play()
         .then(() => {
           setPlaying(true);
-
-          // 🔥 AUTO UNMUTE AFTER PLAY
-          setTimeout(() => {
-            v.muted = false;
-            setIsMuted(false);
-          }, 400);
+          setIsMuted(false);
         })
-        .catch(() => {
-          console.log("Autoplay blocked");
+        .catch((e) => {
+          console.log("Unmuted autoplay blocked, falling back to muted...");
+          v.muted = true;
+          setIsMuted(true);
+          v.play().then(() => setPlaying(true));
         });
     }
   }, [src, autoPlay]);
+
+  // =========================
+  // HANDLE SRC CHANGE MANUALLY
+  // =========================
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.load();
+    }
+  }, [src]);
 
   // =========================
   // WATCH TIME
@@ -190,27 +199,7 @@ const CustomPlayer = ({
     return () => window.removeEventListener("keydown", handleKey);
   }, [speed]);
 
-  // =========================
-  // AI AUTO SPEED
-  // =========================
-useEffect(() => {
-  const interval = setInterval(() => {
-    const idleTime = Date.now() - lastInteraction;
-    const v = videoRef.current;
-    if (!v) return;
-
-    // 🚫 DO NOT override if user selected speed
-    if (manualSpeed) return;
-
-    if (idleTime > 5000) {
-      v.playbackRate = 1.5;
-    } else {
-      v.playbackRate = 1;
-    }
-  }, 2000);
-
-  return () => clearInterval(interval);
-}, [lastInteraction, manualSpeed]);
+// 🔥 AI AUTO SPEED REMOVED (User requested fix)
 
 useEffect(() => {
   setSpeed(1);
@@ -242,15 +231,23 @@ useEffect(() => {
     videoRef.current.currentTime += time;
   };
 
-  // 🔥 FIXED MUTE LOGIC
+  // 🔥 PERFECTED MUTE/VOLUME SYNC
   const toggleMute = () => {
     const v = videoRef.current;
-    v.muted = !v.muted;
-    setIsMuted(v.muted);
+    if (!v) return;
 
-    if (!v.muted && v.volume === 0) {
-      v.volume = 1;
-      setVolume(1);
+    if (isMuted) {
+      // Unmuting: restore volume (or set to 1 if it was 0)
+      v.muted = false;
+      setIsMuted(false);
+      if (volume === 0) {
+        setVolume(1);
+        v.volume = 1;
+      }
+    } else {
+      // Muting
+      v.muted = true;
+      setIsMuted(true);
     }
   };
 
@@ -277,6 +274,18 @@ useEffect(() => {
   const handleVolume = (e) => {
     const v = Number(e.target.value);
     setVolume(v);
+    
+    // 🔥 SYNC: If moving slider, handle mute state
+    if (videoRef.current) {
+      videoRef.current.volume = v;
+      if (v > 0 && isMuted) {
+        videoRef.current.muted = false;
+        setIsMuted(false);
+      } else if (v === 0 && !isMuted) {
+        videoRef.current.muted = true;
+        setIsMuted(true);
+      }
+    }
   };
 
   const goFullscreen = () => {
@@ -314,19 +323,49 @@ useEffect(() => {
         onTimeUpdate={handleTimeUpdate}
         onProgress={handleProgress}
         onEnded={onEnd}
+        onError={() => setError(true)}
         onLoadedMetadata={() => {
+          setError(false);
           const v = videoRef.current;
           setDuration(v.duration);
           v.playbackRate = speed;
           v.volume = volume; // 🔥 ENSURE AUDIO
         }}
-        className="w-full max-h-[75vh]"
+        playsInline
+        preload="auto"
+        className="w-full max-h-[75vh] cursor-pointer"
       />
+
+      {/* ERROR OVERLAY */}
+      {error && src && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 text-white p-6 text-center z-20">
+          <p className="text-red-500 mb-2 font-bold uppercase tracking-wider">Playback Error</p>
+          <p className="text-sm text-gray-400">The video could not be loaded. This might be due to a network issue or an unsupported format.</p>
+          <button 
+            onClick={() => { setError(false); videoRef.current?.load(); }}
+            className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+          >
+            Retry Loading
+          </button>
+        </div>
+      )}
+
+      {/* PROCESSING OVERLAY */}
+      {!src && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white p-6 text-center z-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+          <p className="text-indigo-400 mb-2 font-bold uppercase tracking-wider">Video Processing</p>
+          <p className="text-sm text-gray-400 max-w-sm">
+            We are generating the ultra-HD copy of this video. This usually takes 1-2 minutes depending on length.
+          </p>
+          <p className="mt-4 text-xs text-gray-500 italic">Please refresh in a moment...</p>
+        </div>
+      )}
 
       {/* CONTROLS */}
       <motion.div
         animate={{ opacity: showControls ? 1 : 0 }}
-        className="absolute bottom-0 w-full p-3 bg-gradient-to-t from-black/80"
+        className="absolute bottom-0 w-full p-3 bg-linear-to-t from-black/80"
       >
         <div
           ref={progressRef}

@@ -1,6 +1,7 @@
 import { useDispatch } from "react-redux";
 import { setUser,setLoading,setError,setAuthChecked } from "../authSlice";
 import { loginUser,registerUser,getMe,logoutUser,verifyOTP } from "../services/api.service";
+import { toast } from "react-hot-toast";
 
 
 
@@ -13,7 +14,7 @@ export const useAuth = ()=>{
     try {
         dispatch(setLoading(true));
         const response = await registerUser({username,email,password});
-
+        toast.success("Registration successful!");
         return response;
     } catch (error) {
         const message =
@@ -21,6 +22,7 @@ export const useAuth = ()=>{
             error?.message ||
             "Something went wrong";
 
+        toast.error(message);
         dispatch(setError(message)); // ✅ serializable
 }    finally{
         dispatch(setLoading(false));
@@ -32,6 +34,7 @@ export const useAuth = ()=>{
             dispatch(setLoading(true));
             const response = await loginUser({email,password});
             dispatch(setUser(response.user));
+            toast.success("Login successful!");
             return response;
         } catch (error) {
             const message =
@@ -39,6 +42,7 @@ export const useAuth = ()=>{
                 error?.message ||
                 "Something went wrong";
 
+            toast.error(message);
             dispatch(setError(message)); // ✅ serializable
         } finally{
             dispatch(setLoading(false));
@@ -50,8 +54,11 @@ export const useAuth = ()=>{
             dispatch(setLoading(true));
             const response = await logoutUser();
             dispatch(setUser(null));
+            toast.success("Logged out successfully");
             return response;
         } catch (error) {
+            const message = error?.response?.data?.message || "Failed to log out";
+            toast.error(message);
             dispatch(setError(error));
             throw error;
         } finally{
@@ -78,8 +85,11 @@ export const useAuth = ()=>{
             dispatch(setLoading(true));
             const response = await verifyOTP({email,otp});
             dispatch(setUser(response.user));
+            toast.success("OTP Verified Successfully!");
             return response;
         } catch (error) {
+            const message = error?.response?.data?.message || "Invalid OTP";
+            toast.error(message);
             dispatch(setError(error));
             throw error;
         } finally{

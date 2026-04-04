@@ -5,11 +5,13 @@ const BASE_URL = "https://api.assemblyai.com/v2";
 
 export async function transcribeVideo(audioUrl) {
     try {
-        // 🎯 Step 1: send transcription request
+        const cleanUrl = audioUrl.split("?")[0];
+        console.log("📝 Sending to AssemblyAI:", cleanUrl);
+
         const { data } = await axios.post(
             `${BASE_URL}/transcript`,
             {
-                audio_url: audioUrl
+                audio_url: cleanUrl
             },
             {
                 headers: {
@@ -44,7 +46,10 @@ export async function transcribeVideo(audioUrl) {
         }
 
     } catch (err) {
-        console.error("Transcription error:", err.message);
+        console.error("Transcription error:", err.response?.data?.error || err.message);
+        if (err.response?.status === 400) {
+            console.log("💡 Tip: AssemblyAI 400 usually means the URL is inaccessible or improperly formatted.");
+        }
         return null;
     }
 }

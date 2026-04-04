@@ -54,7 +54,10 @@ export const router = createBrowserRouter([
   // 📺 CHANNEL
   {
     path: "/channel/:handle",
-    element: <ChannelPage />
+    element: <Layout />,
+    children: [
+      { index: true, element: <ChannelPage /> }
+    ]
   },
   {
     path:"*",

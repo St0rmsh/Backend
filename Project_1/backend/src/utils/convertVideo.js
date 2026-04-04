@@ -9,7 +9,7 @@ export async function convertToMp4(inputPath) {
       .videoCodec("libx264")   // ✅ browser supported
       .audioCodec("aac")       // 🔥 FIX: audio works
       .outputOptions([
-        "-preset fast",
+        "-preset ultrafast",
         "-crf 23",
         "-movflags +faststart"
       ])

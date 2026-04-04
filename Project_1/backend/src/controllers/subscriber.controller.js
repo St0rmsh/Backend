@@ -38,7 +38,7 @@ export const toggleSubscribe = async (req, res) => {
 
     // ✅ REALTIME
     const io = getIO();
-    io.to(channelId).emit("channel:subscribers:update", {
+    io.to(`channel_${channelId}`).emit("channel:subscribers:update", {
       channelId,
       count
     });

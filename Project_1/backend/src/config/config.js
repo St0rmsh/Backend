@@ -17,7 +17,7 @@ const config = {
     ASSEMBLY_API_KEY:process.env.ASSEMBLY_API_KEY,
     GOOGLE_USER:process.env.GOOGLE_USER,
     GOOGLE_PASS:process.env.GOOGLE_PASS,
-    
+    IMAGEKIT_URL_ENDPOINT:process.env.IMAGE_KIT_URL_ENDPOINT
 }
 
 

@@ -8,7 +8,10 @@ export async function extractFrames(videoPath, outputDir) {
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .output(path.join(outputDir, "frame-%03d.png"))
-      .outputOptions(["-vf fps=1"])
+      .outputOptions([
+        "-vf fps=0.5", // 1 frame every 2 sec
+        "-s 224x224"  // Small resolution for AI
+      ])
       .on("end", async () => {
         const files = await fs.promises.readdir(outputDir);
 

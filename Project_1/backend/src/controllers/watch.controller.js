@@ -4,9 +4,9 @@ import WatchHistory from "../models/watchHistory.model.js";
 // every 5 sec
 export const updateWatchTime = async (req, res) => {
   const { videoId, time } = req.body;
-  const userId = req.user.id;
+  const userId = req.user._id;
 
-  if (!videoId || time < 1) {
+  if (!videoId || time < 0) {
     return res.status(400).json({ message: "Invalid data" });
   }
 
