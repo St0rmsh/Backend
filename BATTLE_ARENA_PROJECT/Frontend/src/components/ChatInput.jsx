@@ -11,6 +11,7 @@ export const ChatInput = ({ onSend, isLoading }) => {
       onSend(input);
       setInput('');
     }
+    
   };
 
   return (

@@ -5,6 +5,7 @@ import { SolutionCard } from './components/SolutionCard';
 import { JudgeSection } from './components/JudgeSection';
 import { ChatInput } from './components/ChatInput';
 import { ThemeToggle } from './components/ThemeToggle';
+import axios from "axios"
 
 // Fine-tuned Spring Variants
 const containerVariants = {
@@ -34,17 +35,7 @@ const itemVariants = {
 
 function App() {
   const [messages, setMessages] = useState([
-    {
-      problem: "I need to build a high-performance video streaming platform. What's the best technical architecture for low latency?",
-      solution_1: "### Edge-First Architecture\nUtilize a geographically distributed CDN (Content Delivery Network) for edge caching. Implement WebRTC for sub-second latency and an HLS fallback with low-latency chunking (LHLS).",
-      solution_2: "### Serverless Microservices\nBuild around AWS Lambda and CloudFront. Use MediaConvert for adaptive bitrate encoding and AppSync (GraphQL) for real-time player metadata.",
-      judge: {
-        solution_1_score: 9.8,
-        solution_2_score: 8.5,
-        solution_1_reasoning: "The Edge-First approach directly addresses the 'lower latency' requirement more effectively than a pure serverless architecture.",
-        solution_2_reasoning: "Excellent for scale, but the startup latency for serverless functions might slightly impact the real-time experience."
-      }
-    }
+ 
   ]);
   const [isDark, setIsDark] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -62,25 +53,42 @@ function App() {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  const handleSend = async (problem) => {
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+const handleSend = async (problem) => {
+  setLoading(true);
+
+  try {
+    const response = await axios.post("http://localhost:3000/chat", {
+      message: problem
+    });
+
+    const data = response.data.data;
+
+    const judgeData = data.judge || data.judgement || {};
+
     const newMessage = {
-      problem,
-      solution_1: "### Optimized Edge Pipeline\nImplementing a robust HTTP/3 based delivery system with QUIC protocol and prioritized packet handling.",
-      solution_2: "### Hybrid Cloud Strategy\nDistributed processing across multiple regions with an active-active failover system.",
+      id: Date.now(),
+      problem: data.problem || problem,
+      solution_1: data.solution_1,
+      solution_2: data.solution_2,
       judge: {
-        solution_1_score: 9.2,
-        solution_2_score: 9.0,
-        solution_1_reasoning: "Superior protocol optimization for real-time delivery.",
-        solution_2_reasoning: "Excellent redundancy model but adds slight complexity."
+        solution_1_score: Number(judgeData.solution_1_score ?? 0),
+        solution_2_score: Number(judgeData.solution_2_score ?? 0),
+        solution_1_reasoning: judgeData.solution_1_reasoning || "",
+        solution_2_reasoning: judgeData.solution_2_reasoning || ""
       }
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
+
+  } catch (error) {
+    console.error("❌ API Error:", error);
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
+
+
 
   return (
     <div className="min-h-screen relative selection:bg-(--link-color)/30 bg-(--bg-color) seamless-scroll font-sans">
@@ -160,17 +168,17 @@ function App() {
                      </div>
                     <SolutionCard
                       title="Solution Alpha"
-                      content={msg.solution_1}
-                      score={msg.judge.solution_1_score}
-                      reasoning={msg.judge.solution_1_reasoning}
-                      isPrimary={msg.judge.solution_1_score >= msg.judge.solution_2_score}
+      content={msg.solution_1}
+      score={msg.judge.solution_1_score}
+      reasoning={msg.judge.solution_1_reasoning}
+      isPrimary={msg.judge.solution_1_score >= msg.judge.solution_2_score}
                     />
                     <SolutionCard
-                      title="Solution Beta"
-                      content={msg.solution_2}
-                      score={msg.judge.solution_2_score}
-                      reasoning={msg.judge.solution_2_reasoning}
-                      isPrimary={msg.judge.solution_2_score > msg.judge.solution_1_score}
+                     title="Solution Beta"
+      content={msg.solution_2}
+      score={msg.judge.solution_2_score}
+      reasoning={msg.judge.solution_2_reasoning}
+      isPrimary={msg.judge.solution_2_score > msg.judge.solution_1_score}
                     />
                   </motion.div>
 
@@ -245,8 +253,8 @@ function App() {
             transition={{ delay: 2 }}
             className="mt-4 flex justify-center gap-8 opacity-20"
           >
-             <div className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 border-r border-(--glass-border) pr-8 hover:opacity-100 transition-opacity"><Sparkles size={10} className="text-yellow-500" /> Mistral-Medium-Latest Connected</div>
-             <div className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 hover:opacity-100 transition-opacity"><Sparkles size={10} className="text-purple-500" /> Command-a-03-2025 Linked</div>
+             <div className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 border-r border-(--glass-border) pr-8 hover:opacity-100 transition-opacity"><Sparkles size={10} className="text-yellow-500" /> Mistral Medium-Latest Connected</div>
+             <div className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 hover:opacity-100 transition-opacity"><Sparkles size={10} className="text-purple-500" />Cohere  Command-a-03-2025 Linked</div>
           </motion.div>
         </div>
       </footer>

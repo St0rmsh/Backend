@@ -2,7 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import {
   UploadCloud,
   BarChart3,
-  X
+  X,
+  Image as ImageIcon,
+  CheckCircle2,
+  AlertCircle,
+  Video
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -44,6 +48,8 @@ const Dashboard = () => {
   const avatarRef = useRef(null);
   const bannerRef = useRef(null);
   const thumbRef = useRef(null);
+  const createAvatarRef = useRef(null);
+  const createBannerRef = useRef(null);
 
   const [videoForm, setVideoForm] = useState({
     title: "",
@@ -63,6 +69,16 @@ const Dashboard = () => {
 
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
+
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    handle: "",
+    description: "",
+    avatar: null,
+    banner: null
+  });
+  const [createAvatarPreview, setCreateAvatarPreview] = useState(null);
+  const [createBannerPreview, setCreateBannerPreview] = useState(null);
 
   const [stats, setStats] = useState({
     views: 0,
@@ -143,15 +159,36 @@ const Dashboard = () => {
     setVideoForm({ ...videoForm, video: file });
   };
 
+  // ===== CREATE CHANNEL =====
+  const handleCreate = async () => {
+    if (!createForm.name || !createForm.handle) {
+      return toast.error("Name and Handle are required");
+    }
+
+    const toastId = toast.loading("Creating your channel...");
+    try {
+      const fd = new FormData();
+      Object.entries(createForm).forEach(([k, v]) => {
+        if (v) fd.append(k, v);
+      });
+
+      await createChannel(fd);
+
+      toast.success("Welcome to Creator Studio! 🎬", { id: toastId });
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Failed to create channel", { id: toastId });
+    }
+  };
+
   // ===== UPDATE CHANNEL =====
   const handleUpdate = async () => {
     const toastId = toast.loading("Saving channel details...");
     try {
       const fd = new FormData();
-
       fd.append("name", updateForm.name);
       fd.append("description", updateForm.description);
-
       if (updateForm.avatar) fd.append("avatar", updateForm.avatar);
       if (updateForm.banner) fd.append("banner", updateForm.banner);
 
@@ -176,6 +213,115 @@ const Dashboard = () => {
     views: v.views || 0,
     watch: (v.views || 0) * 2
   }));
+
+  if (!channel || !channel.name) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#0c0c22] p-6 lg:p-12 flex flex-col justify-center items-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+          className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+        >
+          {/* GREETING */}
+          <div className="space-y-6">
+            <div className="w-20 h-20 bg-linear-to-tr from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-indigo-500/30">
+              Y
+            </div>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight dark:text-white">
+               Launch your <span className="bg-linear-to-r from-indigo-400 to-purple-100 bg-clip-text text-transparent">Creative Journey</span>
+            </h1>
+            <p className="text-lg text-gray-500 dark:text-gray-400">
+               Build your brand, share your stories, and connect with millions. Start by creating your professional channel today.
+            </p>
+          </div>
+
+          {/* FORM */}
+          <div className="bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-[2.5rem] p-8 lg:p-10 space-y-6 shadow-2xl">
+              <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Channel Name</label>
+                        <input
+                          placeholder="Super Awesome Channel"
+                          className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-[#1a1a3a] border-none focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all"
+                          onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Handle</label>
+                        <input
+                          placeholder="@creative_soul"
+                          className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-[#1a1a3a] border-none focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all text-indigo-500 font-medium"
+                          onChange={(e) => setCreateForm({...createForm, handle: e.target.value})}
+                        />
+                      </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Description</label>
+                      <textarea
+                        placeholder="Tell the world what makes you unique..."
+                        rows={2}
+                        className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-[#1a1a3a] border-none focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all resize-none"
+                        onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
+                      />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                     {/* CREATE AVATAR */}
+                     <div 
+                       onClick={() => createAvatarRef.current.click()}
+                       className={`relative h-28 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
+                         ${createAvatarPreview ? 'border-indigo-500/50 bg-indigo-50/5' : 'border-gray-200 dark:border-white/10 hover:border-indigo-500 bg-white dark:bg-black/20'}
+                       `}
+                     >
+                       {createAvatarPreview ? (
+                         <img src={createAvatarPreview} className="w-full h-full object-cover" />
+                       ) : (
+                         <div className="flex flex-col items-center text-gray-400">
+                           <ImageIcon className="w-7 h-7 mb-1 opacity-50" />
+                           <span className="text-[10px] font-bold uppercase">Avatar</span>
+                         </div>
+                       )}
+                       <input type="file" hidden ref={createAvatarRef} accept="image/*" onChange={(e) => {
+                         const file=e.target.files[0];
+                         if(file) { setCreateForm({...createForm, avatar:file}); setCreateAvatarPreview(URL.createObjectURL(file)); }
+                       }} />
+                     </div>
+
+                     {/* CREATE BANNER */}
+                     <div 
+                       onClick={() => createBannerRef.current.click()}
+                       className={`relative h-28 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
+                         ${createBannerPreview ? 'border-indigo-500/50 bg-indigo-50/5' : 'border-gray-200 dark:border-white/10 hover:border-indigo-500 bg-white dark:bg-black/20'}
+                       `}
+                     >
+                        {createBannerPreview ? (
+                         <img src={createBannerPreview} className="w-full h-full object-cover" />
+                       ) : (
+                         <div className="flex flex-col items-center text-gray-400">
+                           <ImageIcon className="w-7 h-7 mb-1 opacity-50" />
+                           <span className="text-[10px] font-bold uppercase">Banner</span>
+                         </div>
+                       )}
+                       <input type="file" hidden ref={createBannerRef} accept="image/*" onChange={(e) => {
+                         const file=e.target.files[0];
+                         if(file) { setCreateForm({...createForm, banner:file}); setCreateBannerPreview(URL.createObjectURL(file)); }
+                       }} />
+                     </div>
+                  </div>
+              </div>
+
+              <button 
+                onClick={handleCreate}
+                className="w-full py-4 rounded-3xl bg-linear-to-r from-indigo-500 to-purple-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                  Establish Channel
+              </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0c0c22] text-gray-900 dark:text-[#e5e3ff] p-4 md:p-10 transition-colors duration-300">
@@ -327,45 +473,49 @@ const Dashboard = () => {
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Channel Name</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Channel Name</label>
                   <input
                     value={updateForm.name}
                     placeholder="Enter channel name"
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-inner"
                     onChange={(e) => setUpdateForm({ ...updateForm, name: e.target.value })}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Description</label>
                   <textarea
                     value={updateForm.description}
                     placeholder="Tell viewers about your channel"
                     rows={3}
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none shadow-inner"
                     onChange={(e) => setUpdateForm({ ...updateForm, description: e.target.value })}
                   />
                 </div>
 
-                <div className="flex gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Avatar Upload */}
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Avatar</label>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-semibold text-gray-500 uppercase tracking-widest text-[10px]">Avatar (1:1)</label>
                     <div 
                       onClick={() => avatarRef.current.click()}
-                      className="group relative h-24 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-indigo-500 dark:hover:border-indigo-500 flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors bg-gray-50 dark:bg-[#1a1a3a]"
+                      className={`group relative h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
+                        ${avatarPreview || channel?.avatar ? 'border-emerald-500/30 bg-emerald-50/5' : 'border-gray-200 dark:border-white/10 hover:border-indigo-500 bg-gray-50 dark:bg-black/20'}
+                      `}
                     >
                       {avatarPreview || channel?.avatar ? (
                         <>
-                          <img src={avatarPreview || channel?.avatar} className="w-full h-full object-cover opacity-60 group-hover:opacity-30 transition-opacity" />
-                          <UploadCloud className="absolute w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                          <img src={avatarPreview || channel?.avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                             <ImageIcon className="text-white w-8 h-8" />
+                          </div>
                         </>
                       ) : (
-                        <div className="flex flex-col items-center text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 transition-colors">
-                          <UploadCloud className="w-6 h-6 mb-1" />
-                          <span className="text-xs font-medium">Upload</span>
+                        <div className="flex flex-col items-center text-gray-400 group-hover:text-indigo-500 transition-colors">
+                          <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                          <span className="text-[10px] font-bold uppercase">Upload Pic</span>
                         </div>
                       )}
                     </div>
@@ -376,21 +526,25 @@ const Dashboard = () => {
                   </div>
 
                   {/* Banner Upload */}
-                  <div className="flex-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Banner</label>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-semibold text-gray-500 uppercase tracking-widest text-[10px]">Banner (16:9)</label>
                     <div 
                       onClick={() => bannerRef.current.click()}
-                      className="group relative h-24 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-indigo-500 dark:hover:border-indigo-500 flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors bg-gray-50 dark:bg-[#1a1a3a]"
+                      className={`group relative h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
+                        ${bannerPreview || channel?.banner ? 'border-emerald-500/30 bg-emerald-50/5' : 'border-gray-200 dark:border-white/10 hover:border-indigo-500 bg-gray-50 dark:bg-black/20'}
+                      `}
                     >
                       {bannerPreview || channel?.banner ? (
                         <>
-                          <img src={bannerPreview || channel?.banner} className="w-full h-full object-cover opacity-60 group-hover:opacity-30 transition-opacity" />
-                          <UploadCloud className="absolute w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                          <img src={bannerPreview || channel?.banner} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                             <ImageIcon className="text-white w-8 h-8" />
+                          </div>
                         </>
                       ) : (
-                        <div className="flex flex-col items-center text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 transition-colors">
-                          <UploadCloud className="w-6 h-6 mb-1" />
-                          <span className="text-xs font-medium text-center">Upload Banner</span>
+                        <div className="flex flex-col items-center text-gray-400 group-hover:text-indigo-500 transition-colors">
+                          <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                          <span className="text-[10px] font-bold uppercase">Upload Banner</span>
                         </div>
                       )}
                     </div>
@@ -405,7 +559,7 @@ const Dashboard = () => {
               <div className="pt-4 flex justify-end">
                 <button 
                   onClick={handleUpdate}
-                  className="px-6 py-2.5 rounded-xl bg-linear-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all"
+                  className="px-8 py-3 rounded-2xl bg-linear-to-r from-indigo-500 to-purple-600 text-white font-bold shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-widest"
                 >
                   Save Changes
                 </button>
@@ -436,22 +590,26 @@ const Dashboard = () => {
 
               {/* Video File Dropzone */}
               <div
-                onClick={() => fileRef.current.click()}
+                onClick={() => !uploadProgress && fileRef.current.click()}
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
-                className="group relative border-2 border-dashed border-gray-300 dark:border-indigo-500/30 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50 dark:bg-[#1a1a3a]/50 transition-all shadow-inner"
+                className={`group relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all shadow-inner
+                  ${videoForm.video ? 'border-emerald-500/50 bg-emerald-50/5' : 'border-gray-300 dark:border-indigo-500/30 hover:border-indigo-500 bg-gray-50/50 dark:bg-[#1a1a3a]/50'}
+                `}
               >
-                <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md">
-                  <UploadCloud className="w-8 h-8 text-indigo-500 dark:text-indigo-400" />
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-all shadow-md
+                  ${videoForm.video ? 'bg-emerald-100 text-emerald-500' : 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500'}
+                `}>
+                  {videoForm.video ? <CheckCircle2 className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
                 </div>
                 {videoForm.video ? (
-                  <p className="font-semibold text-center text-indigo-600 dark:text-indigo-400 max-w-full truncate px-4">
+                  <p className="font-bold text-center text-emerald-600 dark:text-emerald-400 max-w-full truncate px-4 animate-pulse">
                     {videoForm.video.name}
                   </p>
                 ) : (
                   <>
-                    <p className="font-semibold text-gray-700 dark:text-[#e5e3ff]">Drag & Drop video file</p>
-                    <p className="text-sm text-gray-500 dark:text-[#aaa8c6] mt-1">or click to browse</p>
+                    <p className="font-bold text-gray-700 dark:text-[#e5e3ff] uppercase tracking-widest text-xs">Drag & Drop Video</p>
+                    <p className="text-[10px] text-gray-500 dark:text-[#aaa8c6] mt-1 italic">or click to browse</p>
                   </>
                 )}
               </div>
@@ -459,61 +617,63 @@ const Dashboard = () => {
 
               {/* Inputs */}
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (Required)</label>
-                  <input
-                    value={videoForm.title}
-                    placeholder="Add a title that describes your video"
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                    onChange={(e) => setVideoForm({...videoForm, title: e.target.value})}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Title</label>
+                      <input
+                        value={videoForm.title}
+                        placeholder="Epic video title..."
+                        className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        onChange={(e) => setVideoForm({...videoForm, title: e.target.value})}
+                      />
+                   </div>
+
+                   <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Thumbnail (16:9)</label>
+                      <div 
+                        onClick={() => !uploadProgress && thumbRef.current.click()}
+                        className={`group relative h-10 rounded-xl border border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
+                          ${thumbnailPreview ? 'border-emerald-500/50 bg-emerald-50/5' : 'border-gray-300 dark:border-white/10 hover:border-indigo-500 bg-gray-50 dark:bg-black/20'}
+                        `}
+                      >
+                        {thumbnailPreview ? (
+                            <div className="flex items-center gap-2 text-xs text-emerald-500 font-bold">
+                               <CheckCircle2 className="w-3 h-3" /> Selected
+                            </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-gray-500 group-hover:text-indigo-500 transition-colors">
+                            <ImageIcon className="w-3 h-3" />
+                            <span className="text-[10px] font-bold uppercase">Upload</span>
+                          </div>
+                        )}
+                      </div>
+                      <input type="file" hidden ref={thumbRef} accept="image/*" onChange={(e) => {
+                        const file=e.target.files[0];
+                        if(file) { setVideoForm({...videoForm, thumbnail:file}); setThumbnailPreview(URL.createObjectURL(file)); }
+                      }} />
+                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Description</label>
                   <textarea
                     value={videoForm.description}
-                    placeholder="Tell viewers about your video"
-                    rows={3}
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none"
+                    placeholder="What's this about?"
+                    rows={2}
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
                     onChange={(e) => setVideoForm({...videoForm, description: e.target.value})}
                   />
-                </div>
-
-                {/* Thumbnail Upload */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thumbnail</label>
-                  <div 
-                    onClick={() => thumbRef.current.click()}
-                    className="group relative h-28 w-48 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-indigo-500 flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors bg-gray-50 dark:bg-[#1a1a3a]"
-                  >
-                    {thumbnailPreview ? (
-                        <>
-                          <img src={thumbnailPreview} className="w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
-                          <UploadCloud className="absolute w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
-                        </>
-                    ) : (
-                      <div className="flex flex-col items-center text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 transition-colors">
-                        <UploadCloud className="w-6 h-6 mb-1" />
-                        <span className="text-xs font-medium text-center px-2">Upload Thumbnail</span>
-                      </div>
-                    )}
-                  </div>
-                  <input type="file" hidden ref={thumbRef} accept="image/*" onChange={(e) => {
-                    const file=e.target.files[0];
-                    if(file) { setVideoForm({...videoForm, thumbnail:file}); setThumbnailPreview(URL.createObjectURL(file)); }
-                  }} />
                 </div>
               </div>
 
               {/* Progress Bar */}
               {uploadProgress > 0 && (
-                <div className="w-full">
-                  <div className="flex justify-between text-xs font-medium mb-1 dark:text-gray-300 text-gray-700">
-                    <span>Uploading...</span>
+                <div className="w-full pt-2">
+                  <div className="flex justify-between text-[10px] font-bold mb-1.5 dark:text-gray-300 text-gray-700 uppercase tracking-widest">
+                    <span className="flex items-center gap-2"><Video className="w-3 h-3 text-indigo-500 animate-pulse" /> Publishing...</span>
                     <span>{uploadProgress}%</span>
                   </div>
-                  <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden shadow-inner">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${uploadProgress}%` }}
@@ -527,7 +687,9 @@ const Dashboard = () => {
                 <button 
                   onClick={handleUpload}
                   disabled={uploadProgress > 0}
-                  className={`px-6 py-2.5 rounded-xl text-white font-semibold shadow-lg transition-all ${uploadProgress > 0 ? 'bg-gray-500 cursor-not-allowed opacity-70' : 'bg-linear-to-r from-indigo-500 to-purple-600 hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-95'}`}
+                  className={`px-8 py-3 rounded-2xl text-white font-bold shadow-lg transition-all text-sm uppercase tracking-widest
+                    ${uploadProgress > 0 ? 'bg-gray-500 cursor-not-allowed opacity-70' : 'bg-linear-to-r from-indigo-500 to-purple-600 hover:shadow-indigo-500/20 hover:scale-[1.02] active:scale-95'}
+                  `}
                 >
                   {uploadProgress > 0 ? "Uploading..." : "Publish Video"}
                 </button>

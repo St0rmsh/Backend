@@ -104,8 +104,10 @@ export const getUserReaction = (videoId) => {
 // =======================
 
 // Create channel
-export const createChannel = ({ name, handle, description }) => {
-    return api.post("/api/channel/create", { name, handle, description });
+export const createChannel = (formData) => {
+    return api.post("/api/channel/create", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+    });
 };
 
 // Get my channel
