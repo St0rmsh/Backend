@@ -9,16 +9,15 @@ const tavily = Tavily({
 export async function searchInternet({ query }) {
     try {
         const result = await tavily.search(query, {
-            max_results: 8,              // 🔥 more coverage
-            search_depth: "advanced",   // 🔥 deeper results
-            include_answer: true        // 🔥 summary from Tavily
+            max_results: 8,              
+            search_depth: "advanced",   
+            include_answer: true        
         });
 
         console.log("Search results:", result.results.length);
 
-        // 🎯 filter + clean
         const cleaned = result.results
-            .filter(item => item.url) // remove broken links
+            .filter(item => item.url) 
             .map(item => {
                 let domain = "unknown";
 
@@ -29,12 +28,11 @@ export async function searchInternet({ query }) {
                 return {
                     title: item.title,
                     snippet: item.content
-                        ? item.content.slice(0, 400) // 🔥 bigger context
+                        ? item.content.slice(0, 400) 
                         : "",
                     url: item.url,
                     source: domain,
 
-                    // 🔥 trust hint (VERY IMPORTANT)
                     isTrusted:
                         domain.includes(".gov") ||
                         domain.includes(".edu") ||
@@ -47,7 +45,7 @@ export async function searchInternet({ query }) {
             });
 
         return {
-            answer: result.answer || "",  // 🔥 quick summary
+            answer: result.answer || "",  
             results: cleaned
         };
 

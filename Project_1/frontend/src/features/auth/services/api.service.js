@@ -20,7 +20,7 @@ export const loginUser = async ({ email, password }) => {
     try {
         const response = await api.post("/api/auth/login", {
             email,
-            username: email, // 🔥 fallback
+            username: email,
             password
         });
         return response.data;

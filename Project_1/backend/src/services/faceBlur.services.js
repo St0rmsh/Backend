@@ -1,4 +1,3 @@
-// services/face.service.js
 import * as faceapi from "@vladmandic/face-api";
 import canvas from "canvas";
 

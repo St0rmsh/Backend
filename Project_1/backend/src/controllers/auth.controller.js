@@ -6,6 +6,8 @@ import otpModel from "../models/otp.model.js";
 import { generateOTP } from "../utils/otp.js";
 import { sendOTP } from "../services/email.service.js";
 
+
+
 export async function registerController(req, res) {
     try {
         const name = req.body.name;
@@ -19,7 +21,6 @@ export async function registerController(req, res) {
             });
         }
 
-        // ❌ check existing user
         const exists = await userModel.findOne({
             $or: [{ email }, { username }]
         });
@@ -30,7 +31,6 @@ export async function registerController(req, res) {
             });
         }
 
-        // 🔥 generate OTP
         const otp = generateOTP();
 
         const now = Date.now();
@@ -45,7 +45,6 @@ export async function registerController(req, res) {
         record.expiresAt = new Date(now + 5 * 60 * 1000);
         record.isVerified = false;
 
-        // 🔥 store temp user data
         record.tempUser = {
             name,
             username,

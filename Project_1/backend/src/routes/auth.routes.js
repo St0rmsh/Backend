@@ -11,9 +11,11 @@ const authRoutes = Router()
 // Register
 // POST 
 // /api/auth/register
-authRoutes.post("/register", authLimiter, registerValidation, registerController);
+authRoutes.post("/register", registerValidation, registerController);
 
-
+// Verify OTP
+// POST 
+// /api/auth/verify-otp
 authRoutes.post("/verify-otp", verifyOtp);
 
 // Login

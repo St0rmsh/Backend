@@ -1,6 +1,7 @@
-import express from 'express';
+import express  from 'express';
+import type { Response, Request } from 'express';
+import { searchInternet } from './services/tavily.services.js';
 import runGraph from "./ai/graph.ai.js"
-import { success } from 'zod';
 import cors from 'cors';
 
 const app = express();

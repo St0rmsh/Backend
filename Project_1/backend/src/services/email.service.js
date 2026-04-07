@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import config from "../config/config.js";
 
 
+
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -24,7 +25,11 @@ transporter.verify()
 })
 
 export async function sendOTP(email, otp) {
-  await transporter.sendMail({
+  try {
+
+    
+
+   const data =  await transporter.sendMail({
     from: config.GOOGLE_USER,
     to: email,
     subject: "Verify your account",
@@ -67,6 +72,13 @@ export async function sendOTP(email, otp) {
       </div>
     </div>
     `
+
+    
+
   });
+
+  } catch (error) {
+    console.error("Error sending OTP "+ error);
+  }
 }
 

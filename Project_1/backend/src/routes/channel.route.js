@@ -14,7 +14,10 @@ const router = Router();
 
 // /api/channel/create
 // POST
-router.post("/create", authMiddleware, createChannel);
+router.post("/create", authMiddleware, uploadImage.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "banner", maxCount: 1 }
+  ]),createChannel);
 
 
 // /api/channel/me

@@ -26,13 +26,17 @@ const Register = () => {
     e.preventDefault();
 
     try {
-      await handleRegister({
-        username: form.username,
-        email: form.email,
-        password: form.password
-      });
-      // Will navigate on success toast
-      navigate("/login");
+      const res = await handleRegister({
+  username: form.username,
+  email: form.email,
+  password: form.password
+});
+
+// 🔥 pass email in state
+navigate("/verify-otp", {
+  state: { email: form.email }
+});
+
     } catch (error) {
       console.log(error);
     }

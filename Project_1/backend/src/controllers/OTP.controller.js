@@ -17,7 +17,6 @@ export const sendOtp = async (req, res) => {
     let record = await otpModel.findOne({ email });
     const now = Date.now();
 
-    // 🔒 RATE LIMIT: 3 per minute
     if (record) {
       const diff = now - record.firstRequestTime;
 
@@ -30,7 +29,6 @@ export const sendOtp = async (req, res) => {
 
         record.requestCount += 1;
       } else {
-        // reset after 1 min
         record.requestCount = 1;
         record.firstRequestTime = now;
       }
@@ -45,7 +43,7 @@ export const sendOtp = async (req, res) => {
     const otp = generateOTP();
 
     record.otp = otp;
-    record.expiresAt = new Date(now + 5 * 60 * 1000); // 5 min
+    record.expiresAt = new Date(now + 5 * 60 * 1000); 
     record.attempts = 0;
     record.isVerified = false;
 
@@ -55,7 +53,8 @@ export const sendOtp = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "OTP sent"
+      message: "OTP sent",
+      otp
     });
 
   } catch (err) {
@@ -87,7 +86,7 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // 🔥 CREATE USER HERE
+
     const { name, username, password } = record.tempUser;
 
     const user = await userModel.create({
@@ -98,10 +97,8 @@ export const verifyOtp = async (req, res) => {
       isVerified: true
     });
 
-    // 🔥 delete OTP record
     await otpModel.deleteOne({ email });
 
-    // 🔥 login user
     const token = jwt.sign(
       { id: user._id },
       config.JWT_SECRET,

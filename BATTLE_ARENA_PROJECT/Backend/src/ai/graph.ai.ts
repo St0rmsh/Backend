@@ -81,9 +81,9 @@ const graph = new StateGraph(state)
     .compile();
 
 
-    export default function (problem: string) {
+    export default async function (problem: string) {
 
-        const response = graph.invoke({
+        const response = await graph.invoke({
             problem: problem
         })
 

@@ -10,24 +10,29 @@ export const useAuth = ()=>{
     const dispatch = useDispatch();
 
 
-   const handleRegister = async ({username,email,password})=>{
-    try {
-        dispatch(setLoading(true));
-        const response = await registerUser({username,email,password});
-        toast.success("Registration successful!");
-        return response;
-    } catch (error) {
-        const message =
-            error?.response?.data?.message ||
-            error?.message ||
-            "Something went wrong";
+const handleRegister = async ({ username, email, password }) => {
+  try {
+    dispatch(setLoading(true));
+    const response = await registerUser({ username, email, password });
 
-        toast.error(message);
-        dispatch(setError(message)); // ✅ serializable
-}    finally{
-        dispatch(setLoading(false));
-    }
-}
+    toast.success("Registration successful!");
+    return response;
+
+  } catch (error) {
+    const message =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Something went wrong";
+
+    toast.error(message);
+    dispatch(setError(message));
+
+    throw error; // 🔥 ADD THIS LINE
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
 
     const handleLogin = async ({email,password})=>{
         try {

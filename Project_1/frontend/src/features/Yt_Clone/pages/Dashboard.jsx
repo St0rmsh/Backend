@@ -25,7 +25,8 @@ import {
   getMyVideos,
   getMyChannel,
   updateChannel,
-  uploadVideo
+  uploadVideo,
+  createChannel
 } from "../services/ytapi.service";
 
 import { Card, CardContent, Button } from "../components/UI/Index";
