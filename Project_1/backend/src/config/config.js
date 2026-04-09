@@ -5,7 +5,7 @@ dotenv.config()
 
 const config = {
     PORT: process.env.PORT || 5000,
-    MONGO_URI: process.env.MONGODB_URI,
+    MONGODB_URI: process.env.MONGODB_URI,
     REDIS_HOST:process.env.REDIS_HOST,
     REDIS_PASSWORD:process.env.REDIS_PASSWORD,
     REDIS_PORT:process.env.REDIS_PORT,
