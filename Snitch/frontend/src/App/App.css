@@ -1,1 +1,36 @@
 @import "tailwindcss";
+
+/* ── Tailwind v4: class-based dark mode ─────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Base ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body { margin: 0; }
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: rgba(139,92,246,.45); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,.75); }
+
+/* ── Focus ring ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(139,92,246,.65);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── select <option> dark bg ────────────────────────────── */
+option { background:#0f1525; color:#f1f5f9; }
+
+/* ── Utility: hide number spinners ──────────────────────── */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }

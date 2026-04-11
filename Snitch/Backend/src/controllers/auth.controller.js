@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { config } from "../config/config.js";
 
 
-const sendTokenResponse = (user,  res,message) => {
+const sendTokenResponse = (user, res, message, redirectUrl = null) => {
     const token = jwt.sign({ id: user._id }, config.JWT_SECRET, {
         expiresIn: "7d",
     });
@@ -15,18 +15,22 @@ const sendTokenResponse = (user,  res,message) => {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    res.status(201).json({
-    success: true,
-    message,
-    token,
-    user: {
-        id: user._id,
-        fullname: user.fullname,
-        email: user.email,
-        contact: `${user.contact.countryCode} ${user.contact.number}`,
-        role: user.role
+    if (redirectUrl) {
+        return res.redirect(redirectUrl);
     }
-});
+
+    res.status(message === 'User registered successfully' ? 201 : 200).json({
+        success: true,
+        message,
+        token,
+        user: {
+            id: user._id,
+            fullname: user.fullname,
+            email: user.email,
+            contact: user.contact && user.contact.countryCode ? `${user.contact.countryCode} ${user.contact.number}` : null,
+            role: user.role
+        }
+    });
 };
 
 
@@ -35,9 +39,9 @@ export const registerUser = async (req, res) => {
     try {
         const { fullname, email, password, contact, role } = req.body;
 
-        const existingUser = await UserModel.findOne({ 
-            $or:[{ email: email },  ...(contact?.number ? [{ "contact.number": contact.number }] : [])]
-         });
+        const existingUser = await UserModel.findOne({
+            $or: [{ email: email }, ...(contact?.number ? [{ "contact.number": contact.number }] : [])]
+        });
 
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists' });
@@ -53,7 +57,7 @@ export const registerUser = async (req, res) => {
 
         await user.save();
 
-    sendTokenResponse(user, res, "User registered successfully");
+        sendTokenResponse(user, res, "User registered successfully");
 
     } catch (error) {
         console.error('Error registering user:', error);
@@ -66,7 +70,7 @@ export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await UserModel.findOne({  email });
+        const user = await UserModel.findOne({ email });
 
         if (!user) {
             return res.status(400).json({ message: 'Invalid email or password' });
@@ -113,6 +117,39 @@ export const getMe = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching user:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+
+export const googleAuth = async (req, res) => {
+    try {
+        const user = req.user;
+        sendTokenResponse(user, res, "User logged in successfully", "http://localhost:5173");
+    } catch (error) {
+        console.error('Error logging in user:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+export const completeProfile = async (req, res) => {
+    try {
+        const { contact, role } = req.body;
+        const userId = req.user.id;
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.contact = contact;
+        user.role = role || user.role;
+        await user.save();
+
+        sendTokenResponse(user, res, "Profile completed successfully");
+    } catch (error) {
+        console.error("Error completing profile:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
