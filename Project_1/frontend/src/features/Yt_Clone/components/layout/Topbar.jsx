@@ -1,15 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import { Search, Menu, Moon, Sun, User, LogOut, Video } from "lucide-react";
+import { Search, Menu, Moon, Sun, User, LogOut, Video, Sparkles } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { searchVideos } from "../../services/ytapi.service";
 import { useAuth } from "../../../auth/hook/useAuth";
+import { useTheme } from "../../context/ThemeContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Topbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
   const navigate = useNavigate();
   const { handleLogout } = useAuth();
-  const [isDark, setIsDark] = useState(
-    document.documentElement.classList.contains("dark")
-  );
+  const { theme, toggleTheme } = useTheme();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -56,152 +56,155 @@ const Topbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
     navigate(`/video/${videoId}`);
   };
 
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === "class") {
-          setIsDark(document.documentElement.classList.contains("dark"));
-        }
-      });
-    });
-    observer.observe(document.documentElement, { attributes: true });
-    return () => observer.disconnect();
-  }, []);
-
-  const toggleTheme = () => {
-    document.documentElement.classList.toggle("dark");
-  };
-
   return (
-    <header className="h-18 flex items-center justify-between px-4 lg:px-8 border-b border-gray-200/50 dark:border-white/5 bg-white/70 dark:bg-gray-950/70 backdrop-blur-md sticky top-0 z-30 transition-all">
+    <header className="h-18 flex items-center justify-between px-4 lg:px-8 glass sticky top-0 z-40 transition-all">
       {/* LEFT SECTION */}
       <div className="flex items-center gap-4">
-        {/* MOBILE MENU */}
         <button
-          onClick={() => setSidebarOpen(true)}
-          className="lg:hidden p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+          onClick={() => {
+            if (window.innerWidth < 1024) setSidebarOpen((prev) => !prev);
+            else setCollapsed(!collapsed);
+          }}
+          className="p-2 rounded-xl text-muted hover:bg-white/10 dark:hover:bg-white/5 transition-colors"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5 text-main" />
         </button>
 
-        {/* DESKTOP COLLAPSE */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-
-        {/* LOGO (visible only small mobile if sidebar takes it away normally, but kept for balance) */}
         <div
           onClick={() => navigate("/")}
-          className="lg:hidden flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-2 cursor-pointer group"
         >
-          <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-linear-to-tr from-blue-500 to-purple-600 text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.5)]">
-            Y
+          <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-gradient-to-tr from-brand-indigo to-brand-purple text-white shadow-lg shadow-brand-indigo/20 group-hover:scale-105 transition-transform duration-300">
+            <Video className="w-5 h-5 fill-white" />
           </div>
+          <span className="hidden sm:block font-display font-black text-xl tracking-tight text-main">
+            CURA<span className="text-brand-indigo italic">TOR</span>
+          </span>
         </div>
       </div>
 
       {/* CENTER SEARCH */}
-      <div className="flex-1 flex justify-center px-4 md:px-8 max-w-3xl relative" ref={dropdownRef}>
+      <div className="flex-1 flex justify-center px-4 md:px-12 max-w-2xl relative" ref={dropdownRef}>
         <div className="relative w-full group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted group-focus-within:text-brand-indigo transition-colors">
             <Search className="w-5 h-5" />
           </div>
           <input
-            placeholder="Search for videos..."
+            placeholder="Explore the vision..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onFocus={(e) => {
-              if (window.innerWidth < 1024) setSidebarOpen(false);
-              if (query.trim()) setShowDropdown(true);
-            }}
-            className="w-full pl-11 pr-4 py-2.5 rounded-full bg-gray-100/80 dark:bg-[#1a2235]/60 hover:bg-gray-200/50 dark:hover:bg-[#1a2235] border border-transparent dark:border-white/5 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 outline-none focus:bg-white dark:focus:bg-[#0f172a] focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
+            onFocus={() => query.trim() && setShowDropdown(true)}
+            className="w-full pl-11 pr-4 py-2.5 rounded-full bg-white/5 dark:bg-black/20 border border-main text-main placeholder-muted outline-none focus:bg-white dark:focus:bg-[#0f172a]/50 focus:border-brand-indigo/50 focus:ring-4 focus:ring-brand-indigo/10 transition-all shadow-inner"
           />
         </div>
 
-        {/* SEARCH DROPDOWN */}
-        {showDropdown && query.trim() && (
-          <div className="absolute top-14 left-0 w-full px-4 md:px-8 z-50">
-            <div className="w-full bg-white dark:bg-[#111129] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden py-2 max-h-96 overflow-y-auto">
-              {results.length > 0 ? (
-                results.map((video) => (
-                  <div
-                    key={video._id}
-                    onClick={() => handleSelectResult(video._id)}
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer transition-colors"
-                  >
-                    <div className="w-12 h-12 bg-gray-200 dark:bg-[#1c1c3a] rounded overflow-hidden shrink-0">
-                      {video.thumbnail && (
-                        <img
-                          src={video.thumbnail}
-                          alt={video.title}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+        {/* SMART SEARCH DROPDOWN */}
+        <AnimatePresence>
+          {showDropdown && query.trim() && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="absolute top-14 left-0 w-full px-4 md:px-12 z-50"
+            >
+              <div className="w-full glass-heavy rounded-2xl shadow-2xl overflow-hidden py-3 max-h-[60vh] overflow-y-auto">
+                <p className="px-4 py-1 text-[10px] font-black uppercase tracking-widest text-muted flex items-center gap-2">
+                  <Sparkles className="w-3 h-3 text-brand-amber" />
+                  AI Insights
+                </p>
+                {results.length > 0 ? (
+                  results.map((video) => (
+                    <div
+                      key={video._id}
+                      onClick={() => handleSelectResult(video._id)}
+                      className="flex items-center gap-4 px-4 py-3 hover:bg-brand-indigo/10 cursor-pointer transition-colors border-b border-main last:border-0"
+                    >
+                      <div className="w-14 h-9 bg-surface-low rounded-lg overflow-hidden shrink-0 shadow-sm">
+                        {video.thumbnail && (
+                          <img
+                            src={video.thumbnail}
+                            alt={video.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-main truncate leading-tight">
+                          {video.title}
+                        </p>
+                        <p className="text-[11px] text-muted truncate mt-0.5">
+                          {video.channel?.name || "Premium Creator"} • {video.viewsCount || 0} views
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-[#e5e3ff] truncate">
-                        {video.title}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-[#aaa8c6] truncate">
-                        {video.channel?.name || "Unknown"} • {video.viewsCount || 0} views
-                      </p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-8 text-center text-muted text-sm italic">
+                    The curator is searching for "{query}"...
                   </div>
-                ))
-              ) : (
-                <div className="px-4 py-6 text-center text-gray-500 dark:text-[#aaa8c6]">
-                  No videos found for "{query}"
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* RIGHT */}
-      <div className="flex items-center gap-3 md:gap-5">
-        <button 
+      {/* RIGHT SECTION */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
           onClick={toggleTheme}
-          className="p-2.5 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+          className="p-2.5 rounded-xl text-main hover:bg-white/10 transition-colors border border-transparent hover:border-main"
         >
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
+          {theme === "dark" ? <Sun className="w-5 h-5 text-brand-amber" /> : <Moon className="w-5 h-5 text-brand-indigo" />}
+        </motion.button>
 
         <div className="relative" ref={profileMenuRef}>
-          <div
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-10 h-10 rounded-full bg-linear-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white cursor-pointer shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:scale-105 transition-transform"
+            className="w-10 h-10 rounded-xl bg-gradient-to-r from-brand-indigo to-brand-purple flex items-center justify-center text-white cursor-pointer shadow-lg shadow-brand-indigo/20"
           >
             <User className="w-5 h-5" />
-          </div>
+          </motion.div>
 
-          {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#111129] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden py-1 z-50">
-              <button
-                onClick={() => {
-                  setShowProfileMenu(false);
-                  navigate("/studio");
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+          <AnimatePresence>
+            {showProfileMenu && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute right-0 mt-3 w-56 glass-heavy rounded-2xl shadow-2xl overflow-hidden py-2 z-50"
               >
-                <Video className="w-4 h-4" />
-                Studio
-              </button>
-              <button
-                onClick={() => {
-                  setShowProfileMenu(false);
-                  handleLogout();
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Log Out
-              </button>
-            </div>
-          )}
+                 <div className="px-4 py-3 border-b border-main mb-1">
+                   <p className="text-xs font-black uppercase text-muted tracking-wide">Member Access</p>
+                   <p className="text-sm font-bold text-main truncate">Premium Creator</p>
+                 </div>
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    navigate("/studio");
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-main hover:bg-brand-indigo/10 transition-colors"
+                >
+                  <Video className="w-4 h-4 text-brand-indigo" />
+                  Studio Dashboard
+                </button>
+                <div className="h-px bg-main my-1" />
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-brand-crimson hover:bg-brand-crimson/10 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

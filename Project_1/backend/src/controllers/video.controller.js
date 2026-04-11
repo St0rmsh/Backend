@@ -212,6 +212,7 @@ export const getVideo = async (req, res) => {
         // 🔥 NO SECURITY CHECK FOR PUBLIC PAGES
         // We sign the URL to ensure it's accessible (Fixes 403)
         video.videoUrl = getSignedUrl(video.videoUrl);
+        video.thumbnail = getSignedUrl(video.thumbnail);
 
         return res.status(200).json({ success: true, video });
 
@@ -239,6 +240,7 @@ export const getAllVideos = async (req, res) => {
         const signedVideos = videos.map(v => {
             const doc = v.toObject();
             doc.videoUrl = getSignedUrl(doc.videoUrl);
+            doc.thumbnail = getSignedUrl(doc.thumbnail);
             return doc;
         });
 
@@ -259,6 +261,7 @@ export const getMyVideos = async (req, res) => {
         const signedVideos = videos.map(v => {
             const doc = v.toObject();
             doc.videoUrl = getSignedUrl(doc.videoUrl);
+            doc.thumbnail = getSignedUrl(doc.thumbnail);
             return doc;
         });
         return res.json({ success: true, videos: signedVideos });
@@ -282,6 +285,7 @@ export const searchVideos = async (req, res) => {
         const signedVideos = videos.map(v => {
             const doc = v.toObject();
             doc.videoUrl = getSignedUrl(doc.videoUrl);
+            doc.thumbnail = getSignedUrl(doc.thumbnail);
             return doc;
         });
 
@@ -317,6 +321,7 @@ export const getTrendingVideos = async (req, res) => {
         ]);
         const signedVideos = videos.map(v => {
             v.videoUrl = getSignedUrl(v.videoUrl);
+            v.thumbnail = getSignedUrl(v.thumbnail);
             return v;
         });
         return res.json({ success: true, videos: signedVideos });

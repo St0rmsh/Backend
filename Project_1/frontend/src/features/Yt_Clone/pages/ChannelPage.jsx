@@ -285,14 +285,14 @@ const ChannelPage = () => {
 
               {/* Stats row */}
               <div className="flex flex-wrap items-center gap-4 mt-2.5">
-                <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-[#aaa8c6]">
+                <span className="flex items-center gap-1.5 text-sm text-main/60">
                   <Users className="w-4 h-4" />
                   <span className="font-semibold text-gray-900 dark:text-[#e5e3ff]">
                     {formatCount(channel.subscribersCount)}
                   </span>
                   subscribers
                 </span>
-                <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-[#aaa8c6]">
+                <span className="flex items-center gap-1.5 text-sm text-main/60">
                   <VideoIcon className="w-4 h-4" />
                   <span className="font-semibold text-gray-900 dark:text-[#e5e3ff]">
                     {formatCount(channel.videosCount ?? videos.length)}
@@ -300,7 +300,7 @@ const ChannelPage = () => {
                   videos
                 </span>
                 {channel.totalViews != null && (
-                  <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-[#aaa8c6]">
+                  <span className="flex items-center gap-1.5 text-sm text-main/60">
                     <Eye className="w-4 h-4" />
                     <span className="font-semibold text-gray-900 dark:text-[#e5e3ff]">
                       {formatCount(channel.totalViews)}
@@ -324,7 +324,7 @@ const ChannelPage = () => {
         {/* Description */}
         {channel.description && (
           <div className="mt-4 max-w-2xl">
-            <p className="text-sm text-gray-600 dark:text-[#aaa8c6] leading-relaxed">
+              <p className="text-sm text-main/70 leading-relaxed font-medium">
               {channel.description}
             </p>
           </div>

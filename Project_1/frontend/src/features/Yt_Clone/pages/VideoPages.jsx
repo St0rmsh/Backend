@@ -17,6 +17,9 @@ import {
 import SubscribeButton from "../components/SubscribeButton";
 import CommentItem from "../components/CommentItem";
 import ReactionButton from "../components/UI/ReactionButton.jsx";
+import TrustMeter from "../components/UI/TrustMeter.jsx";
+import { useTheme } from "../context/ThemeContext";
+import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 
 const VideoPages = () => {
   const { id } = useParams();
@@ -199,22 +202,23 @@ const VideoPages = () => {
   }
 
   return (
-    <div className="px-2 sm:px-4 lg:px-6 flex flex-col xl:flex-row gap-6">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-8 flex flex-col xl:flex-row gap-8">
 
       {/* LEFT SIDE */}
-      <div className="w-full xl:w-[70%]">
+      <div className="w-full xl:w-[68%] flex flex-col gap-6">
 
-        <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden relative group">
+        <div className="w-full rounded-3xl overflow-hidden glass shadow-2xl relative group">
           {video.videoUrl ? (
             <CustomPlayer
               autoPlay
               sources={videoSources}
               onEnd={handleAutoNext}
               onWatchTime={handleWatchTime}
+              videoData={video}
             />
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a1a] text-center p-6">
-                <p className="text-white font-bold">Video not available</p>
+            <div className="aspect-video flex flex-col items-center justify-center bg-surface-low text-center p-6">
+                <p className="text-main font-bold">The curator is preparing the signal...</p>
             </div>
           )}
         </div>
@@ -244,33 +248,80 @@ const VideoPages = () => {
             )}
           </div>
 
-          <p className="text-xs sm:text-sm text-gray-500">
-            {video.views} views • {formatTimeAgo(video.createdAt)}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <p className="text-xs sm:text-sm text-main/50 font-bold uppercase tracking-widest shrink-0">
+              {video.views.toLocaleString()} views • {formatTimeAgo(video.createdAt)}
+            </p>
+            <div className="flex gap-2 items-center sm:hidden">
+               <SubscribeButton subscribed={subscribed} loading={loadingSub} onClick={handleSubscribe} small />
+            </div>
+          </div>
         </div>
 
-        {/* AI CONTEXT */}
-        {video?.verification?.finalVerdict && video?.verification?.finalVerdict !== "UNKNOWN" && (
-          <div className="mt-4 bg-white dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+        {/* AI TRUST HUB (NEW) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           {video?.verification?.finalVerdict && video.verification.finalVerdict !== "UNKNOWN" && (
+             <TrustMeter score={video.trustScore || 0.8} type="trust" />
+           )}
+           {video?.deepfakeScore > 0.1 && (
+             <TrustMeter score={video.deepfakeScore} type="ai" />
+           )}
+        </div>
+
+        {/* AI VERIFICATION HUB */}
+        {video?.verification?.summary && (
+          <div className="glass-heavy rounded-3xl overflow-hidden border border-white/5">
             <div 
-              className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition flex items-center justify-between gap-4"
+              className="p-5 cursor-pointer hover:bg-white/5 transition flex items-center justify-between gap-4"
               onClick={() => setAiExpanded(!aiExpanded)}
             >
-              <div className="flex items-center gap-3">
-                {video.verification.finalVerdict === "TRUE" ? (
-                  <ShieldCheck className="w-6 h-6 text-emerald-500" />
-                ) : (
-                  <ShieldAlert className="w-6 h-6 text-red-500" />
-                )}
+              <div className="flex items-center gap-4">
+                <div className={`p-2 rounded-xl ${video.verification.finalVerdict === 'TRUE' ? 'bg-brand-emerald/10 text-brand-emerald' : 'bg-brand-crimson/10 text-brand-crimson'}`}>
+                  {video.verification.finalVerdict === "TRUE" ? (
+                    <ShieldCheck className="w-6 h-6 ai-glow-emerald" />
+                  ) : (
+                    <ShieldAlert className="w-6 h-6 ai-glow-crimson" />
+                  )}
+                </div>
                 <div>
-                  <span className="font-bold text-sm uppercase">{video.verification.finalVerdict} Verdict</span>
-                  <p className="text-sm text-gray-500">{video.verification.summary}</p>
+                  <h4 className="font-display font-bold text-xs uppercase tracking-widest text-main">
+                    Veracity Summary: <span className={video.verification.finalVerdict === 'TRUE' ? 'text-brand-emerald' : 'text-brand-crimson'}>{video.verification.finalVerdict}</span>
+                  </h4>
+                  <p className="text-sm text-main/60 font-medium mt-1 line-clamp-1">{video.verification.summary}</p>
                 </div>
               </div>
-              <div className="shrink-0 text-gray-400">
-                {aiExpanded ? <ChevronUp /> : <ChevronDown />}
-              </div>
+              <motion.div animate={{ rotate: aiExpanded ? 180 : 0 }}>
+                <ChevronDown className="text-muted" />
+              </motion.div>
             </div>
+            
+            <AnimatePresence>
+              {aiExpanded && (
+                <motion.div 
+                  initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+                  className="px-5 pb-5 border-t border-main"
+                >
+                  <div className="pt-4 space-y-4">
+                    <p className="text-sm leading-relaxed text-main font-medium">{video.verification.summary}</p>
+                    
+                    {video.verification.claims?.length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-main/60 border-b border-main pb-2">Key Fact Checks</p>
+                        {video.verification.claims.map((claim, idx) => (
+                          <div key={idx} className="flex gap-3 items-start p-3 bg-white/5 rounded-2xl">
+                            {claim.verdict === 'TRUE' ? <CheckCircle2 className="w-4 h-4 text-brand-emerald shrink-0 mt-0.5" /> : <XCircle className="w-4 h-4 text-brand-crimson shrink-0 mt-0.5" />}
+                            <div>
+                               <p className="text-xs font-bold text-main">{claim.text}</p>
+                               <p className="text-[10px] text-main/50 mt-1 leading-normal italic">{claim.explanation}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 

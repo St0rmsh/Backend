@@ -1,7 +1,7 @@
 import channelModel from "../models/channel.model.js";
 import userModel from "../models/user.model.js";
 import videoModel from "../models/video.model.js";
-import { uploadToImageKit } from "../services/storage.service.js";
+import { uploadToImageKit, getSignedUrl } from "../services/storage.service.js";
 
 /**
  * ✅ Create Channel
@@ -68,7 +68,11 @@ export const getMyChannel = async (req, res) => {
             return res.status(404).json({ message: "Channel not found" });
         }
 
-        return res.status(200).json({ success: true, channel });
+        const doc = channel.toObject();
+        doc.avatar = getSignedUrl(doc.avatar);
+        doc.banner = getSignedUrl(doc.banner);
+
+        return res.status(200).json({ success: true, channel: doc });
 
     } catch (error) {
         return res.status(500).json({ message: "Internal Server Error" });
@@ -90,7 +94,11 @@ export const getChannelByHandle = async (req, res) => {
             return res.status(404).json({ message: "Channel not found" });
         }
 
-        return res.status(200).json({ success: true, channel });
+        const doc = channel.toObject();
+        doc.avatar = getSignedUrl(doc.avatar);
+        doc.banner = getSignedUrl(doc.banner);
+
+        return res.status(200).json({ success: true, channel: doc });
 
     } catch {
         return res.status(500).json({ message: "Internal Server Error" });
@@ -136,9 +144,13 @@ export const updateChannel = async (req, res) => {
       { new: true }
     );
 
+    const doc = updated.toObject();
+    doc.avatar = getSignedUrl(doc.avatar);
+    doc.banner = getSignedUrl(doc.banner);
+
     return res.status(200).json({
       success: true,
-      channel: updated
+      channel: doc
     });
 
   } catch (err) {
@@ -174,7 +186,14 @@ export const getChannelVideos = async (req, res) => {
         ]
       }).sort({ createdAt: -1 });
 
-        return res.status(200).json({ success: true, videos });
+        const signedVideos = videos.map(v => {
+            const doc = v.toObject();
+            doc.videoUrl = getSignedUrl(doc.videoUrl);
+            doc.thumbnail = getSignedUrl(doc.thumbnail);
+            return doc;
+        });
+
+        return res.status(200).json({ success: true, videos: signedVideos });
 
     } catch {
         return res.status(500).json({ message: "Internal Server Error" });

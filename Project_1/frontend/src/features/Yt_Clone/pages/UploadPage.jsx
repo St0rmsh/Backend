@@ -7,7 +7,9 @@ import {
   X, 
   CheckCircle2, 
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  ShieldCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
@@ -23,8 +25,13 @@ export const UploadPage = () => {
   const [thumbPreview, setThumbPreview] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [isAiGenerated, setIsAiGenerated] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // Drag handles
+  const [isDraggingVideo, setIsDraggingVideo] = useState(false);
+  const [isDraggingThumb, setIsDraggingThumb] = useState(false);
 
   // Refs
   const videoInputRef = useRef(null);
@@ -32,31 +39,41 @@ export const UploadPage = () => {
 
   // Handlers
   const handleVideoSelect = (e) => {
-    const file = e.target.files[0];
+    const file = e.type === 'drop' ? e.dataTransfer.files[0] : e.target.files[0];
     if (file && file.type.startsWith("video/")) {
       setVideoFile(file);
       if (!title) setTitle(file.name.replace(/\.[^/.]+$/, ""));
-    } else {
+    } else if (file) {
       toast.error("Please select a valid video file");
     }
   };
 
   const handleThumbSelect = (e) => {
-    const file = e.target.files[0];
+    const file = e.type === 'drop' ? e.dataTransfer.files[0] : e.target.files[0];
     if (file && file.type.startsWith("image/")) {
       setThumbFile(file);
       setThumbPreview(URL.createObjectURL(file));
-    } else {
+    } else if (file) {
       toast.error("Please select a valid image file");
     }
   };
 
+  const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+
+  const onDragOverVideo = (e) => { prevent(e); setIsDraggingVideo(true); };
+  const onDragLeaveVideo = () => { setIsDraggingVideo(false); };
   const onDropVideo = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file?.type.startsWith("video/")) {
-      setVideoFile(file);
-    }
+    prevent(e);
+    setIsDraggingVideo(false);
+    handleVideoSelect(e);
+  };
+
+  const onDragOverThumb = (e) => { prevent(e); setIsDraggingThumb(true); };
+  const onDragLeaveThumb = () => { setIsDraggingThumb(false); };
+  const onDropThumb = (e) => {
+    prevent(e);
+    setIsDraggingThumb(false);
+    handleThumbSelect(e);
   };
 
   const handleUpload = async () => {
@@ -69,6 +86,7 @@ export const UploadPage = () => {
     formData.append("video", videoFile);
     formData.append("title", title);
     formData.append("description", description);
+    formData.append("isAiGenerated", isAiGenerated);
     if (thumbFile) formData.append("thumbnail", thumbFile);
 
     try {
@@ -79,7 +97,7 @@ export const UploadPage = () => {
         }
       });
 
-      toast.success("Video published successfully! 🚀", {
+      toast.success("Content archived in the vault! 🚀", {
         duration: 5000,
         icon: '🎬'
       });
@@ -88,55 +106,60 @@ export const UploadPage = () => {
 
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Upload failed. Please try again.");
+      toast.error(err?.response?.data?.message || "Transmission failed.");
       setUploading(false);
       setProgress(0);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
+    <div className="max-w-6xl mx-auto px-4 py-8 md:py-16">
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
+        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12"
       >
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
-            <UploadCloud className="text-indigo-500 w-8 h-8" />
-            Upload Center
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="text-brand-indigo w-4 h-4" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted">Contribution Port</span>
+          </div>
+          <h1 className="text-4xl font-display font-black text-main tracking-tighter uppercase italic">
+            Curate New <span className="text-brand-indigo">Content</span>
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Share your story with the world in ultra-HD.</p>
+          <p className="text-muted mt-2 font-medium">Broadcast your vision to the neural network.</p>
         </div>
         
         {videoFile && (
            <Button 
              onClick={handleUpload} 
              disabled={uploading}
-             className="w-full md:w-auto h-12 px-8 bg-linear-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20 text-lg font-bold"
+             className="w-full md:w-auto h-14 px-10 bg-gradient-to-r from-brand-indigo to-brand-purple shadow-xl shadow-brand-indigo/20 text-sm font-black uppercase tracking-widest rounded-2xl"
            >
-             {uploading ? `Uploading ${progress}%` : "Publish Now"}
+             {uploading ? `Archiving ${progress}%` : "Publish Content"}
              {!uploading && <ArrowRight className="ml-2 w-5 h-5" />}
            </Button>
         )}
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         
-        {/* LEFT COLUMN: UPLOAD ZONES */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-8">
           
-          {/* VIDEO ZONE */}
+          {/* VIDEO UPLOAD ZONE */}
           <motion.div 
-            whileHover={!videoFile ? { scale: 1.01 } : {}}
-            onDragOver={(e) => e.preventDefault()}
+            whileHover={!videoFile ? { scale: 1.005 } : {}}
+            onDragOver={onDragOverVideo}
+            onDragLeave={onDragLeaveVideo}
             onDrop={onDropVideo}
             onClick={() => !uploading && videoInputRef.current.click()}
-            className={`relative border-2 border-dashed rounded-3xl p-10 md:p-20 text-center transition-all cursor-pointer overflow-hidden
+            className={`relative border-2 border-dashed rounded-[2.5rem] p-12 md:p-24 text-center transition-all cursor-pointer overflow-hidden
               ${videoFile 
-                ? "border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-500/5" 
-                : "border-gray-300 dark:border-white/10 hover:border-indigo-500 bg-white dark:bg-white/5"}
+                ? "border-brand-emerald/50 bg-brand-emerald/5" 
+                : isDraggingVideo 
+                  ? "border-brand-indigo bg-brand-indigo/10 scale-[1.02]"
+                  : "border-main bg-surface-low hover:border-brand-indigo/50 shadow-inner"}
             `}
           >
             <input type="file" hidden ref={videoInputRef} accept="video/*" onChange={handleVideoSelect} />
@@ -145,20 +168,20 @@ export const UploadPage = () => {
               {videoFile ? (
                 <motion.div 
                   key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex flex-col items-center"
                 >
-                  <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
-                    <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                  <div className="w-20 h-20 bg-brand-emerald/10 rounded-full flex items-center justify-center mb-6 ai-glow-emerald">
+                    <CheckCircle2 className="w-10 h-10 text-brand-emerald" />
                   </div>
-                  <h2 className="text-xl font-bold mb-1">{videoFile.name}</h2>
-                  <p className="text-emerald-500 font-medium">Ready for processing • {(videoFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                  <h2 className="text-xl font-display font-black text-main mb-1 truncate max-w-md">{videoFile.name}</h2>
+                  <p className="text-brand-emerald text-xs font-black uppercase tracking-widest">Signal Ready • {(videoFile.size / (1024 * 1024)).toFixed(1)} MB</p>
                   <button 
                     onClick={(e) => { e.stopPropagation(); setVideoFile(null); }}
-                    className="mt-6 text-sm text-gray-500 hover:text-red-500 underline"
+                    className="mt-8 text-xs font-black text-muted hover:text-brand-crimson uppercase tracking-widest transition-colors"
                   >
-                    Change Video
+                    Reset Content
                   </button>
                 </motion.div>
               ) : (
@@ -168,134 +191,155 @@ export const UploadPage = () => {
                   animate={{ opacity: 1 }}
                   className="flex flex-col items-center"
                 >
-                  <div className="w-24 h-24 bg-indigo-100 dark:bg-indigo-500/10 rounded-full flex items-center justify-center mb-8 shadow-inner">
-                    <Video className="w-10 h-10 text-indigo-500" />
+                  <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-8 shadow-inner transition-all
+                    ${isDraggingVideo ? "bg-brand-indigo scale-110 shadow-brand-indigo/50" : "bg-brand-indigo/10 ai-glow-indigo"}
+                  `}>
+                    <UploadCloud className={`w-10 h-10 transition-colors ${isDraggingVideo ? "text-white" : "text-brand-indigo"}`} />
                   </div>
-                  <h2 className="text-xl font-bold mb-2">Select video to upload</h2>
-                  <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Drag and drop your video file here, or click to browse files</p>
+                  <h2 className="text-2xl font-display font-black text-main mb-3 uppercase italic">
+                    {isDraggingVideo ? "Release Signal" : "Select Video Stream"}
+                  </h2>
+                  <p className="text-muted font-medium max-w-xs mx-auto text-sm leading-relaxed">Drag and drop high-fidelity video files or click to initialize.</p>
                   
-                  <div className="mt-10 flex gap-4 text-xs font-medium text-gray-400 uppercase tracking-widest">
-                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-indigo-500" /> 4K Enabled</span>
-                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-indigo-500" /> MP4/MOV/AVI</span>
+                  <div className="mt-12 flex flex-wrap justify-center gap-6 text-[10px] font-black text-muted uppercase tracking-[0.2em]">
+                    <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-brand-emerald" /> 8K ARCHIVE</span>
+                    <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-brand-indigo" /> MP4 / MOV</span>
+                    <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-brand-purple" /> ENCRYPTION ENFORCED</span>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* PROGRESS OVERLAY */}
             {uploading && (
-              <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex flex-col items-center justify-center p-12">
-                 <div className="w-full max-w-md bg-gray-200 dark:bg-gray-800 h-3 rounded-full overflow-hidden shadow-inner">
+              <div className="absolute inset-0 glass-heavy flex flex-col items-center justify-center p-12 z-30">
+                 <div className="w-full max-w-sm h-1.5 bg-main rounded-full overflow-hidden shadow-inner">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
-                      className="h-full bg-linear-to-r from-indigo-500 to-purple-600"
+                      className="h-full bg-gradient-to-r from-brand-indigo to-brand-purple shadow-lg shadow-brand-indigo/50"
                     />
                  </div>
-                 <p className="mt-4 font-bold text-lg text-indigo-500 animate-pulse uppercase tracking-wider">
-                   Uploading your story... {progress}%
+                 <p className="mt-6 font-black text-xs text-brand-indigo animate-pulse uppercase tracking-[0.4em]">
+                   Transmission in Progress... {progress}%
                  </p>
               </div>
             )}
           </motion.div>
 
-          {/* DETAILS BOX */}
-          <div className="bg-white dark:bg-white/5 rounded-3xl p-6 md:p-8 border border-gray-200 dark:border-white/10 space-y-6">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-indigo-500" />
-              Video Information
+          {/* INFORMATION BOX */}
+          <div className="glass-heavy rounded-[2.5rem] p-8 md:p-10 border border-main space-y-8">
+            <h3 className="text-xl font-display font-black text-main flex items-center gap-3 uppercase italic">
+              <AlertCircle className="w-6 h-6 text-brand-indigo" />
+              Content Metadata
             </h3>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="text-sm font-semibold text-gray-500 mb-1.5 block">Title (Required)</label>
+                <label className="text-[10px] font-black uppercase text-muted tracking-widest mb-2 block">Curation Title</label>
                 <Input 
-                  placeholder="Enter a catchy title..." 
+                  placeholder="The signal's name..." 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-12 bg-gray-50 dark:bg-gray-950/50 border-gray-200 dark:border-white/10"
+                  className="h-14 bg-surface-low border-main rounded-2xl font-bold"
                 />
               </div>
               
               <div>
-                <label className="text-sm font-semibold text-gray-500 mb-1.5 block">Description</label>
+                <label className="text-[10px] font-black uppercase text-muted tracking-widest mb-2 block">Brief Synopsis</label>
                 <textarea 
-                  placeholder="What is this video about?"
+                  placeholder="What stories lie within the signal?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="w-full p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-950/50 focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all placeholder-gray-400"
+                  className="w-full p-5 rounded-[2rem] border border-main bg-surface-low text-main font-bold placeholder:font-medium outline-none focus:ring-2 focus:ring-brand-indigo/50 transition-all resize-none"
                 />
+              </div>
+
+              {/* AI DISCLOSURE */}
+              <div 
+                onClick={() => setIsAiGenerated(!isAiGenerated)}
+                className={`p-6 rounded-[2rem] border cursor-pointer transition-all flex items-center justify-between gap-4
+                  ${isAiGenerated ? 'bg-brand-purple/10 border-brand-purple/30' : 'bg-surface-low border-main hover:border-brand-purple/20'}
+                `}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-2xl ${isAiGenerated ? 'bg-brand-purple text-white shadow-lg' : 'bg-main text-muted'}`}>
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-main uppercase text-xs tracking-widest">AI Disclosure</h4>
+                    <p className="text-[11px] text-muted font-medium mt-0.5">Check this if any part of the signal was synthesized with AI.</p>
+                  </div>
+                </div>
+                <div className={`w-12 h-6 rounded-full p-1 transition-colors ${isAiGenerated ? 'bg-brand-purple' : 'bg-main'}`}>
+                  <motion.div animate={{ x: isAiGenerated ? 24 : 0 }} className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: THUMBNAIL */}
-        <div className="space-y-6">
-           <div className="bg-white dark:bg-white/5 rounded-3xl p-6 border border-gray-200 dark:border-white/10 space-y-6">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                <ImageIcon className="w-5 h-5 text-indigo-500" />
-                Thumbnail
+        {/* RIGHT COLUMN: PREVIEW & TIPS */}
+        <div className="space-y-8">
+           <div className="glass-heavy rounded-[2.5rem] p-8 border border-main space-y-8">
+              <h3 className="text-xl font-display font-black text-main flex items-center gap-3 uppercase italic">
+                <ImageIcon className="w-6 h-6 text-brand-indigo" />
+                Keyface
               </h3>
               
               <div 
                 onClick={() => !uploading && thumbInputRef.current.click()}
-                className={`relative aspect-video rounded-2xl border-2 border-dashed overflow-hidden cursor-pointer transition-all
+                onDragOver={onDragOverThumb}
+                onDragLeave={onDragLeaveThumb}
+                onDrop={onDropThumb}
+                className={`group relative aspect-video rounded-3xl border-2 border-dashed overflow-hidden cursor-pointer transition-all
                   ${thumbFile 
-                    ? "border-emerald-500/50" 
-                    : "border-gray-300 dark:border-white/10 hover:border-indigo-500 bg-gray-50 dark:bg-black/20"}
+                    ? "border-brand-emerald bg-brand-emerald/5" 
+                    : isDraggingThumb
+                      ? "border-brand-indigo bg-brand-indigo/10 scale-[1.05]"
+                      : "border-main bg-surface-low hover:border-brand-indigo shadow-inner"}
                 `}
               >
                 <input type="file" hidden ref={thumbInputRef} accept="image/*" onChange={handleThumbSelect} />
                 
                 {thumbPreview ? (
-                  <div className="group relative w-full h-full">
-                    <img src={thumbPreview} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <ImageIcon className="text-white w-8 h-8" />
+                  <div className="relative w-full h-full">
+                    <img src={thumbPreview} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="thumb-preview" />
+                    <div className="absolute inset-0 bg-brand-indigo/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <ImageIcon className="text-white w-8 h-8 drop-shadow-lg" />
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500 p-4">
-                    <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                    <p className="text-xs font-bold uppercase tracking-widest text-center">Select high-res image</p>
-                    <p className="text-[10px] mt-1 text-gray-400">1280x720 recommended</p>
+                  <div className="flex flex-col items-center justify-center h-full text-muted p-6 text-center">
+                    <ImageIcon className={`w-8 h-8 mb-3 transition-colors ${isDraggingThumb ? 'text-brand-indigo' : 'opacity-30'}`} />
+                    <p className="text-[10px] font-black uppercase tracking-widest">{isDraggingThumb ? "Release Keyface" : "Select Signal Thumbnail"}</p>
+                    <p className="text-[9px] mt-2 font-bold opacity-50 uppercase tracking-tighter">or drop file</p>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-3 pt-2">
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  A high-resolution thumbnail acts as the face of your video. Choose an image that stands out and accurately reflects your content.
-                </p>
-                {thumbFile && (
-                  <button 
-                    onClick={() => { setThumbFile(null); setThumbPreview(null); }}
-                    className="text-xs font-bold text-red-500 hover:text-red-400 uppercase tracking-widest"
-                  >
-                    Remove Thumbnail
-                  </button>
-                )}
+              <div className="bg-brand-indigo/5 p-4 rounded-2xl mt-4">
+                 <p className="text-xs font-bold text-muted leading-relaxed">
+                   High-fidelity thumbnails increase resonance with the curator network by <span className="text-brand-indigo font-black">40%</span>.
+                 </p>
               </div>
            </div>
 
-           {/* TIPS BOX */}
-           <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-3xl p-6">
-              <h4 className="text-indigo-500 font-bold text-sm uppercase tracking-widest mb-4">Pro Tips</h4>
-              <ul className="space-y-3">
-                <li className="flex gap-2 text-xs text-indigo-400/80">
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  Use bright, high-contrast images for thumbnails.
-                </li>
-                <li className="flex gap-2 text-xs text-indigo-400/80">
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  Check keywords for SEO.
-                </li>
-                <li className="flex gap-2 text-xs text-indigo-400/80">
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  Keep your video file size under 1GB for faster processing.
-                </li>
+           {/* CURATOR GUIDELINES */}
+           <div className="glass rounded-[2.5rem] p-8 border border-main">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-indigo mb-6">Redline Protocol</h4>
+              <ul className="space-y-4">
+                {[
+                  "Enforce high dynamic range (HDR) for maximum impact.",
+                  "Zero tolerance for deepfake impersonation without disclosure.",
+                  "Verify all data sources before transmission.",
+                  "Metadata must accurately reflect signal contents."
+                ].map((tip, i) => (
+                  <li key={i} className="flex gap-4 items-start text-[11px] font-bold text-muted">
+                    <ShieldCheck className="w-4 h-4 text-brand-indigo shrink-0" />
+                    <span className="leading-snug">{tip}</span>
+                  </li>
+                ))}
               </ul>
            </div>
         </div>
@@ -304,3 +348,5 @@ export const UploadPage = () => {
     </div>
   );
 };
+
+export default UploadPage;

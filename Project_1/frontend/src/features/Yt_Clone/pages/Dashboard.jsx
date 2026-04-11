@@ -6,18 +6,30 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   AlertCircle,
-  Video
+  Video,
+  Sparkles,
+  Users,
+  Eye,
+  Heart,
+  Clock,
+  Plus,
+  ArrowRight,
+  TrendingUp,
+  Settings,
+  ShieldCheck,
+  ShieldAlert,
+  ThumbsUp,
+  ThumbsDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   AreaChart,
-  Area
+  Area,
+  CartesianGrid
 } from "recharts";
 import { toast } from "react-hot-toast";
 
@@ -29,20 +41,21 @@ import {
   createChannel
 } from "../services/ytapi.service";
 
-import { Card, CardContent, Button } from "../components/UI/Index";
+import { Card, CardContent, Button, Input } from "../components/UI/Index";
+import { useTheme } from "../context/ThemeContext";
 
 // ===== FALLBACKS =====
 const FALLBACK_AVATAR = "https://ui-avatars.com/api/?name=User&background=random";
-const FALLBACK_BANNER = "https://picsum.photos/1200/300";
-const FALLBACK_THUMB = "https://picsum.photos/400/250";
+const FALLBACK_BANNER = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1964&auto=format&fit=crop";
+const FALLBACK_THUMB = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop";
 
 const Dashboard = () => {
+  const { theme } = useTheme();
   const [videos, setVideos] = useState([]);
   const [channel, setChannel] = useState(null);
 
   const [showUpload, setShowUpload] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const fileRef = useRef(null);
@@ -88,28 +101,55 @@ const Dashboard = () => {
     watch: 0
   });
 
+  // State to track dragging
+  const [isDragging, setIsDragging] = useState({
+    createAvatar: false,
+    createBanner: false,
+    editAvatar: false,
+    editBanner: false,
+    uploadVideo: false,
+    uploadThumb: false
+  });
+
+  // Helper for drag states
+  const setDrag = (key, val) => setIsDragging(prev => ({ ...prev, [key]: val }));
+
+  // Helper for prevent default
+  const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+
+  // Helper for drop events
+  const handleDropFile = (e, key, callback) => {
+    prevent(e);
+    setDrag(key, false);
+    const file = e.dataTransfer.files[0];
+    if (file) callback(file);
+  };
+
   // ===== LOAD =====
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    const [v, c] = await Promise.all([getMyVideos(), getMyChannel()]);
+    try {
+      const [v, c] = await Promise.all([getMyVideos(), getMyChannel()]);
+      const vids = v.data.videos || [];
+      const ch = c.data.channel || {};
 
-    const vids = v.data.videos || [];
-    const ch = c.data.channel || {};
+      setVideos(vids);
+      setChannel(ch);
 
-    setVideos(vids);
-    setChannel(ch);
+      setUpdateForm({
+        name: ch.name || "",
+        description: ch.description || "",
+        avatar: null,
+        banner: null
+      });
 
-    setUpdateForm({
-      name: ch.name || "",
-      description: ch.description || "",
-      avatar: null,
-      banner: null
-    });
-
-    updateStats(vids, ch);
+      updateStats(vids, ch);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const updateStats = (vids, ch) => {
@@ -130,7 +170,7 @@ const Dashboard = () => {
       return toast.error("Title and Video file are required");
     }
 
-    const toastId = toast.loading("Uploading video...");
+    const toastId = toast.loading("Archiving video signal...");
     try {
       const fd = new FormData();
       Object.entries(videoForm).forEach(([k, v]) => v && fd.append(k, v));
@@ -145,28 +185,22 @@ const Dashboard = () => {
       setVideoForm({ title: "", description: "", video: null, thumbnail: null });
       setThumbnailPreview(null);
 
-      toast.success("Video uploaded successfully!", { id: toastId });
+      toast.success("Broadcast archived successfully!", { id: toastId });
       loadData();
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Failed to upload video", { id: toastId });
+      toast.error(err?.response?.data?.message || "Transmission failed", { id: toastId });
       setUploadProgress(0);
     }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    setVideoForm({ ...videoForm, video: file });
   };
 
   // ===== CREATE CHANNEL =====
   const handleCreate = async () => {
     if (!createForm.name || !createForm.handle) {
-      return toast.error("Name and Handle are required");
+      return toast.error("Name and Handle are required for station ID");
     }
 
-    const toastId = toast.loading("Creating your channel...");
+    const toastId = toast.loading("Establishing station ID...");
     try {
       const fd = new FormData();
       Object.entries(createForm).forEach(([k, v]) => {
@@ -174,18 +208,17 @@ const Dashboard = () => {
       });
 
       await createChannel(fd);
-
-      toast.success("Welcome to Creator Studio! 🎬", { id: toastId });
+      toast.success("Welcome to the Curator Network! 🎬", { id: toastId });
       loadData();
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Failed to create channel", { id: toastId });
+      toast.error(err?.response?.data?.message || "Establishment failed", { id: toastId });
     }
   };
 
   // ===== UPDATE CHANNEL =====
   const handleUpdate = async () => {
-    const toastId = toast.loading("Saving channel details...");
+    const toastId = toast.loading("Saving station changes...");
     try {
       const fd = new FormData();
       fd.append("name", updateForm.name);
@@ -194,384 +227,505 @@ const Dashboard = () => {
       if (updateForm.banner) fd.append("banner", updateForm.banner);
 
       const res = await updateChannel(fd);
-
       setChannel(res.data.channel);
       setShowEdit(false);
       setAvatarPreview(null);
       setBannerPreview(null);
 
-      toast.success("Channel updated successfully!", { id: toastId });
+      toast.success("Station updated successfully!", { id: toastId });
       loadData();
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Failed to update channel", { id: toastId });
+      toast.error(err?.response?.data?.message || "Update failed", { id: toastId });
     }
   };
 
   // ===== ANALYTICS =====
-  const analyticsData = videos.map((v, i) => ({
-    name: `Day ${i + 1}`,
+  const analyticsData = videos.slice(0, 7).reverse().map((v, i) => ({
+    name: `V${i + 1}`,
     views: v.views || 0,
-    watch: (v.views || 0) * 2
+    watch: (v.views || 0) * 1.5
   }));
 
+  // =========================
+  // ONBOARDING VIEW (EMPTY CHANNEL)
+  // =========================
   if (!channel || !channel.name) {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#0c0c22] p-6 lg:p-12 flex flex-col justify-center items-center">
+      <div className="min-h-screen bg-main flex flex-col items-center justify-center p-6 md:p-12 selection:bg-brand-indigo/30">
         <motion.div 
-          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
         >
-          {/* GREETING */}
-          <div className="space-y-6">
-            <div className="w-20 h-20 bg-linear-to-tr from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-indigo-500/30">
-              Y
+          {/* LURE */}
+          <div className="space-y-8">
+            <div className="flex items-center gap-3">
+               <div className="w-14 h-14 bg-gradient-to-tr from-brand-indigo to-brand-purple rounded-2xl flex items-center justify-center text-white shadow-2xl ai-glow-indigo">
+                 <Sparkles className="w-8 h-8" />
+               </div>
+               <span className="text-xs font-black uppercase tracking-[0.3em] text-brand-indigo">Curator Access</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight dark:text-white">
-               Launch your <span className="bg-linear-to-r from-indigo-400 to-purple-100 bg-clip-text text-transparent">Creative Journey</span>
+            
+            <h1 className="text-5xl md:text-7xl font-display font-black tracking-tighter text-main leading-[0.9] uppercase italic">
+               The Stage Is <br /> <span className="text-brand-indigo">Waiting.</span>
             </h1>
-            <p className="text-lg text-gray-500 dark:text-gray-400">
-               Build your brand, share your stories, and connect with millions. Start by creating your professional channel today.
+            
+            <p className="text-xl text-muted font-medium max-w-md leading-relaxed">
+               Establish your station ID and begin broadcasting high-fidelity neural content to the world.
             </p>
+
+            <div className="flex flex-wrap gap-8 text-[11px] font-bold text-main/60 uppercase tracking-widest pt-4">
+               <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand-emerald" /> AI Verification</span>
+               <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand-purple" /> Global Reach</span>
+               <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand-indigo" /> Premium Stats</span>
+            </div>
           </div>
 
           {/* FORM */}
-          <div className="bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-[2.5rem] p-8 lg:p-10 space-y-6 shadow-2xl">
-              <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Channel Name</label>
-                        <input
-                          placeholder="Super Awesome Channel"
-                          className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-[#1a1a3a] border-none focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all"
-                          onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Handle</label>
-                        <input
-                          placeholder="@creative_soul"
-                          className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-[#1a1a3a] border-none focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all text-indigo-500 font-medium"
-                          onChange={(e) => setCreateForm({...createForm, handle: e.target.value})}
-                        />
-                      </div>
-                  </div>
+          <Card className="glass-heavy border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
+            <CardContent className="p-8 md:p-12 space-y-8">
+               <h2 className="text-2xl font-display font-black text-main uppercase italic border-b border-main pb-4">Initialize Station</h2>
+               
+               <div className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <Input 
+                     label="Station Name"
+                     placeholder="The Curated Hub"
+                     value={createForm.name}
+                     onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                   />
+                   <Input 
+                     label="Station Handle"
+                     placeholder="@curator"
+                     icon={Users}
+                     value={createForm.handle}
+                     onChange={(e) => setCreateForm({...createForm, handle: e.target.value})}
+                   />
+                 </div>
 
-                  <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Description</label>
-                      <textarea
-                        placeholder="Tell the world what makes you unique..."
-                        rows={2}
-                        className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-[#1a1a3a] border-none focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all resize-none"
-                        onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
-                      />
-                  </div>
+                 <Input 
+                   label="Mission Brief"
+                   placeholder="Share your creative intent..."
+                   value={createForm.description}
+                   onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
+                 />
 
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                     {/* CREATE AVATAR */}
-                     <div 
-                       onClick={() => createAvatarRef.current.click()}
-                       className={`relative h-28 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
-                         ${createAvatarPreview ? 'border-indigo-500/50 bg-indigo-50/5' : 'border-gray-200 dark:border-white/10 hover:border-indigo-500 bg-white dark:bg-black/20'}
-                       `}
-                     >
-                       {createAvatarPreview ? (
-                         <img src={createAvatarPreview} className="w-full h-full object-cover" />
-                       ) : (
-                         <div className="flex flex-col items-center text-gray-400">
-                           <ImageIcon className="w-7 h-7 mb-1 opacity-50" />
-                           <span className="text-[10px] font-bold uppercase">Avatar</span>
-                         </div>
-                       )}
-                       <input type="file" hidden ref={createAvatarRef} accept="image/*" onChange={(e) => {
-                         const file=e.target.files[0];
-                         if(file) { setCreateForm({...createForm, avatar:file}); setCreateAvatarPreview(URL.createObjectURL(file)); }
-                       }} />
-                     </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    {/* Create Avatar */}
+                    <div 
+                      onClick={() => createAvatarRef.current.click()}
+                      onDragOver={(e) => { prevent(e); setDrag('createAvatar', true); }}
+                      onDragLeave={() => setDrag('createAvatar', false)}
+                      onDrop={(e) => handleDropFile(e, 'createAvatar', (file) => {
+                        setCreateForm({...createForm, avatar:file}); 
+                        setCreateAvatarPreview(URL.createObjectURL(file));
+                      })}
+                      className={`group aspect-square rounded-3xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center p-4 text-center
+                        ${isDragging.createAvatar ? 'border-brand-indigo bg-brand-indigo/10 scale-105' : 'border-main bg-surface-low hover:border-brand-indigo'}
+                      `}
+                    >
+                      {createAvatarPreview ? (
+                        <img src={createAvatarPreview} className="w-full h-full object-cover" />
+                      ) : (
+                        <>
+                          <ImageIcon className={`w-6 h-6 mb-2 transition-colors ${isDragging.createAvatar ? 'text-brand-indigo' : 'text-muted group-hover:text-brand-indigo'}`} />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted">Avatar</span>
+                          <p className="text-[8px] mt-1 text-muted/50 hidden group-hover:block uppercase tracking-tighter italic">or drop file</p>
+                        </>
+                      )}
+                      <input type="file" hidden ref={createAvatarRef} accept="image/*" onChange={(e) => {
+                        const file=e.target.files[0];
+                        if(file) { setCreateForm({...createForm, avatar:file}); setCreateAvatarPreview(URL.createObjectURL(file)); }
+                      }} />
+                    </div>
 
-                     {/* CREATE BANNER */}
-                     <div 
-                       onClick={() => createBannerRef.current.click()}
-                       className={`relative h-28 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
-                         ${createBannerPreview ? 'border-indigo-500/50 bg-indigo-50/5' : 'border-gray-200 dark:border-white/10 hover:border-indigo-500 bg-white dark:bg-black/20'}
-                       `}
-                     >
-                        {createBannerPreview ? (
-                         <img src={createBannerPreview} className="w-full h-full object-cover" />
-                       ) : (
-                         <div className="flex flex-col items-center text-gray-400">
-                           <ImageIcon className="w-7 h-7 mb-1 opacity-50" />
-                           <span className="text-[10px] font-bold uppercase">Banner</span>
-                         </div>
-                       )}
-                       <input type="file" hidden ref={createBannerRef} accept="image/*" onChange={(e) => {
-                         const file=e.target.files[0];
-                         if(file) { setCreateForm({...createForm, banner:file}); setCreateBannerPreview(URL.createObjectURL(file)); }
-                       }} />
-                     </div>
-                  </div>
-              </div>
+                    {/* Create Banner */}
+                    <div 
+                      onClick={() => createBannerRef.current.click()}
+                      onDragOver={(e) => { prevent(e); setDrag('createBanner', true); }}
+                      onDragLeave={() => setDrag('createBanner', false)}
+                      onDrop={(e) => handleDropFile(e, 'createBanner', (file) => {
+                        setCreateForm({...createForm, banner:file}); 
+                        setCreateBannerPreview(URL.createObjectURL(file));
+                      })}
+                      className={`group aspect-video rounded-3xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center p-4 text-center h-full
+                        ${isDragging.createBanner ? 'border-brand-indigo bg-brand-indigo/10 scale-105' : 'border-main bg-surface-low hover:border-brand-indigo'}
+                      `}
+                    >
+                       {createBannerPreview ? (
+                        <img src={createBannerPreview} className="w-full h-full object-cover" />
+                      ) : (
+                        <>
+                          <ImageIcon className={`w-6 h-6 mb-2 transition-colors ${isDragging.createBanner ? 'text-brand-indigo' : 'text-muted group-hover:text-brand-indigo'}`} />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted">Banner</span>
+                          <p className="text-[8px] mt-1 text-muted/50 hidden group-hover:block uppercase tracking-tighter italic">or drop file</p>
+                        </>
+                      )}
+                      <input type="file" hidden ref={createBannerRef} accept="image/*" onChange={(e) => {
+                        const file=e.target.files[0];
+                        if(file) { setCreateForm({...createForm, banner:file}); setCreateBannerPreview(URL.createObjectURL(file)); }
+                      }} />
+                    </div>
+                 </div>
+               </div>
 
-              <button 
+               <Button 
+                variant="brand" 
                 onClick={handleCreate}
-                className="w-full py-4 rounded-3xl bg-linear-to-r from-indigo-500 to-purple-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all"
-              >
-                  Establish Channel
-              </button>
-          </div>
+                className="w-full py-6 text-sm flex items-center justify-center"
+               >
+                 Launch My Channel <ArrowRight className="w-5 h-5 ml-2" />
+               </Button>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     );
   }
 
+  // =========================
+  // MAIN STUDIO VIEW
+  // =========================
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0c0c22] text-gray-900 dark:text-[#e5e3ff] p-4 md:p-10 transition-colors duration-300">
-
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Creator Studio 🎬</h1>
-
-        <Button onClick={() => setShowUpload(true)}>
-          <UploadCloud size={16}/> Upload
-        </Button>
-      </div>
-
-      {/* CHANNEL */}
-      <div className="relative rounded-xl overflow-hidden mb-16">
-
-        <img
-          src={bannerPreview || channel?.banner || FALLBACK_BANNER}
-          className="w-full h-40 md:h-56 object-cover"
-        />
-
-        <div className="absolute inset-0 bg-linear-to-t from-gray-900/90 dark:from-[#0c0c22]/90 via-black/40 to-transparent" />
-
-        <div className="absolute -bottom-8 left-4 md:left-8 flex items-center gap-4 md:gap-6 z-10 w-full">
-
-          <img
-            src={avatarPreview || channel?.avatar || FALLBACK_AVATAR}
-            className="w-24 h-24 md:w-28 md:h-28 rounded-full ring-4 ring-gray-50 dark:ring-[#0c0c22] object-cover shadow-2xl"
-          />
-
-          <div className="flex-1 pb-8">
-            <h2 className="text-xl md:text-3xl font-bold text-white drop-shadow-md">
-              {channel?.name || "Your Channel"}
-            </h2>
-            <p className="text-gray-200 text-sm md:text-base font-medium mt-1">
-              @{channel?.handle || "handle"}
-            </p>
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-8 py-10 space-y-12 bg-main min-h-screen">
+      
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="text-brand-indigo w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-main/60">Creator Dashboard</span>
           </div>
+          <h1 className="text-4xl font-display font-black text-main uppercase italic tracking-tighter">
+            Studio <span className="text-brand-indigo">Command</span>
+          </h1>
+        </div>
+        
+        <div className="flex gap-4 w-full md:w-auto">
+          <Button variant="ghost" onClick={() => setShowEdit(true)} className="flex-1 md:flex-none">
+            <Settings className="w-4 h-4" /> Edit Station
+          </Button>
+          <Button variant="brand" onClick={() => setShowUpload(true)} className="flex-1 md:flex-none">
+            <UploadCloud className="w-4 h-4" /> Publish Content
+          </Button>
         </div>
       </div>
 
-      {/* EDIT BUTTON */}
-      <div className="flex justify-end mb-6">
-        <Button onClick={() => setShowEdit(true)}>
-          Edit Channel
-        </Button>
+      {/* STATION PROFILE HEADER */}
+      <div className="relative group">
+        <div className="absolute inset-0 bg-brand-indigo/10 blur-[100px] opacity-20 -z-10" />
+        <Card className="overflow-hidden border-white/5">
+           <div className="relative h-48 md:h-64 overflow-hidden">
+              <img 
+                src={bannerPreview || channel?.banner || FALLBACK_BANNER} 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                alt="banner"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              
+              <div className="absolute bottom-4 left-4 md:bottom-6 md:left-12 flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6 w-[calc(100%-2rem)]">
+                 <div className="w-20 h-20 md:w-32 md:h-32 rounded-2xl md:rounded-[2rem] border-4 border-white/10 overflow-hidden shadow-2xl bg-surface shrink-0">
+                   <img 
+                     src={avatarPreview || channel?.avatar || FALLBACK_AVATAR} 
+                     className="w-full h-full object-cover" 
+                     alt="avatar"
+                   />
+                 </div>
+                 <div className="pb-2 text-center sm:text-left">
+                    <h2 className="text-xl md:text-3xl font-display font-black text-white uppercase italic tracking-tighter line-clamp-1">
+                      {channel?.name}
+                    </h2>
+                    <p className="text-brand-indigo font-black text-xs uppercase tracking-widest mt-0.5">
+                      @{channel?.handle}
+                    </p>
+                 </div>
+              </div>
+           </div>
+        </Card>
       </div>
 
-      {/* STATS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Object.entries(stats).map(([k, v]) => (
-          <motion.div whileHover={{ y: -5 }} key={k}>
-            <Card>
-              <CardContent>
-                <p className="text-gray-400 capitalize">{k}</p>
-                <h2 className="text-2xl font-bold">{v}</h2>
+      {/* BENTO STATS GRID */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        {[
+          { label: "Views", val: stats.views, icon: Eye, color: "brand-indigo" },
+          { label: "Subs", val: stats.subs, icon: Users, color: "brand-purple" },
+          { label: "Aura", val: stats.likes, icon: Heart, color: "brand-crimson" },
+          { label: "Flux", val: stats.watch, icon: Clock, color: "brand-emerald" },
+        ].map((stat, i) => (
+          <motion.div 
+            key={i} 
+            whileHover={{ y: -5 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+          >
+            <Card className="h-full bg-brand-indigo/[0.02] border-white/5">
+              <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 md:gap-5">
+                <div className={`p-2.5 md:p-3 rounded-xl md:rounded-2xl bg-${stat.color}/10 text-${stat.color} shadow-lg shadow-${stat.color}/10`}>
+                  <stat.icon className="w-5 h-5 md:w-6 md:h-6" />
+                </div>
+                <div className="min-w-0 w-full">
+                  <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-main/60 truncate">{stat.label}</p>
+                  <p className="text-lg md:text-2xl font-display font-black text-main mt-0.5 md:mt-1 truncate">{stat.val.toLocaleString()}</p>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </div>
 
-      {/* ANALYTICS */}
-      <div className="grid md:grid-cols-2 gap-6 mt-6">
-        <Card>
-          <CardContent>
-            <h3 className="flex gap-2 mb-2">
-              <BarChart3 size={16}/> Views Trend
-            </h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={analyticsData}>
-                <XAxis dataKey="name" hide />
-                <YAxis />
-                <Tooltip />
-                <Line dataKey="views" strokeWidth={3} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* ANALYTICS HUB */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         <Card className="lg:col-span-2">
+            <CardContent>
+               <div className="flex items-center justify-between mb-8">
+                 <h3 className="font-display font-black text-main uppercase italic flex items-center gap-3">
+                   <TrendingUp className="text-brand-emerald w-5 h-5" /> Resonance Trends
+                 </h3>
+                 <div className="flex gap-2">
+                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-brand-indigo" /><span className="text-[9px] font-black uppercase text-muted">Views</span></div>
+                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-brand-emerald" /><span className="text-[9px] font-black uppercase text-muted">Watch</span></div>
+                 </div>
+               </div>
+               
+               <div className="h-[300px] w-full mt-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={analyticsData}>
+                      <defs>
+                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--color-brand-indigo)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="var(--color-brand-indigo)" stopOpacity={0}/>
+                        </linearGradient>
+                         <linearGradient id="colorWatch" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--color-brand-emerald)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="var(--color-brand-emerald)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey="name" hide />
+                      <YAxis hide />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--bg-glass)', borderRadius: '1rem', border: '1px solid var(--border-main)', backdropFilter: 'blur(10px)' }}
+                        itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                      />
+                      <Area type="monotone" dataKey="views" stroke="var(--color-brand-indigo)" strokeWidth={3} fillOpacity={1} fill="url(#colorViews)" />
+                      <Area type="monotone" dataKey="watch" stroke="var(--color-brand-emerald)" strokeWidth={3} fillOpacity={1} fill="url(#colorWatch)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+               </div>
+            </CardContent>
+         </Card>
 
-        <Card>
-          <CardContent>
-            <h3>Watch Time</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={analyticsData}>
-                <XAxis dataKey="name" hide />
-                <YAxis />
-                <Tooltip />
-                <Area dataKey="watch" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+         <Card className="flex flex-col justify-center items-center p-8 bg-brand-purple/5 border-brand-purple/20 text-center relative overflow-hidden group">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-brand-purple/20 blur-[60px] group-hover:bg-brand-purple/40 transition-all duration-700" />
+            <div className="w-20 h-20 bg-brand-purple/10 rounded-full flex items-center justify-center mb-6 ai-glow-purple">
+               <Video className="w-8 h-8 text-brand-purple" />
+            </div>
+            <h3 className="text-xl font-display font-black text-main uppercase italic mb-2">Grow Your Vision</h3>
+            <p className="text-sm text-muted font-medium mb-8">AI-verified content achieves <span className="text-brand-purple">x2.4</span> more engagement in the Curator Network.</p>
+            <Button variant="brand" className="w-full bg-brand-purple hover:bg-brand-purple/90 shadow-brand-purple/20" onClick={() => setShowUpload(true)}>
+               Analyze New Clip
+            </Button>
+         </Card>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
-        {videos.map((v) => (
-          <motion.div key={v._id} whileHover={{ y: -5 }}
-            className="bg-white dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all relative">
+      {/* CONTENT MANAGEMENT */}
+      <div className="space-y-6">
+        <h3 className="text-2xl font-display font-black text-main uppercase italic tracking-tighter">
+          Archived <span className="text-brand-indigo">Signals</span>
+        </h3>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {videos.length > 0 ? videos.map((v, i) => {
+            const totalOpinions = (v.likesCount || 0) + (v.dislikesCount || 0);
+            const likeRatio = totalOpinions > 0 ? Math.round((v.likesCount / totalOpinions) * 100) : 0;
+            
+            return (
+              <motion.div 
+                 key={v._id} 
+                 whileHover={{ y: -8 }}
+                 initial={{ opacity: 0, scale: 0.95 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 transition={{ delay: i * 0.05 }}
+                 className="group"
+              >
+                <div className="relative aspect-video rounded-3xl overflow-hidden border border-main group-hover:border-brand-indigo/50 transition-all bg-surface shadow-sm hover:shadow-2xl">
+                  <img 
+                    src={v.thumbnail || FALLBACK_THUMB} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    alt="thumb" 
+                  />
+                  
+                  {/* AI BADGES */}
+                  <div className="absolute top-2 right-2 flex flex-col gap-1.5 z-20">
+                    {v?.verification?.finalVerdict === "TRUE" && (
+                       <div className="glass px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xl">
+                          <ShieldCheck className="w-3 h-3 text-brand-emerald" />
+                          <span className="text-[8px] font-black uppercase text-white">Verified</span>
+                       </div>
+                    )}
+                    {v?.deepfakeScore > 0.5 && (
+                      <div className="glass px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xl">
+                         <Sparkles className="w-3 h-3 text-brand-purple" />
+                         <span className="text-[8px] font-black uppercase text-white">AI Clarified</span>
+                      </div>
+                    )}
+                  </div>
 
-            {/* AI BADGES */}
-            <div className="absolute top-2 right-2 z-30 flex flex-col items-end gap-1.5 opacity-90">
-              {v?.isFlagged && (
-                <div className="bg-red-500/95 backdrop-blur-sm px-2 py-0.5 rounded text-white text-[10px] font-bold tracking-widest uppercase shadow-md flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  False Info
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                     <Button variant="ghost" className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20">
+                       View Stats
+                     </Button>
+                  </div>
                 </div>
-              )}
-              {v?.deepfakeScore > 0.6 && (
-                <div className="bg-purple-600/95 backdrop-blur-sm px-2 py-0.5 rounded text-white text-[10px] font-bold tracking-widest uppercase shadow-md flex items-center gap-1.5">
-                  <span className="text-[10px]">✨</span> AI Edited
+
+                <div className="mt-4 px-1 space-y-3">
+                   <h4 className="font-bold text-main truncate leading-snug group-hover:text-brand-indigo transition-colors">{v.title}</h4>
+                   
+                   <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-main/60">
+                         <span>{v.views} Views</span>
+                         <span className={likeRatio >= 80 ? 'text-brand-emerald' : likeRatio >= 50 ? 'text-brand-indigo' : 'text-brand-crimson'}>
+                           {likeRatio}% Resonance
+                         </span>
+                      </div>
+                      
+                      {/* LIKE/DISLIKE RATIO BAR */}
+                      <div className="h-1 w-full bg-main rounded-full overflow-hidden flex shadow-inner">
+                         <motion.div 
+                           initial={{ width: 0 }}
+                           animate={{ width: `${likeRatio}%` }}
+                           className="h-full bg-brand-indigo"
+                         />
+                         <div className="h-full flex-1 bg-surface-low" />
+                      </div>
+
+                      <div className="flex items-center gap-4 text-[9px] font-bold text-main/40">
+                         <span className="flex items-center gap-1"><ThumbsUp className="w-2.5 h-2.5" /> {v.likesCount || 0}</span>
+                         <span className="flex items-center gap-1"><ThumbsDown className="w-2.5 h-2.5" /> {v.dislikesCount || 0}</span>
+                      </div>
+                   </div>
+
+                   <div className="flex items-center justify-between pt-2 border-t border-main/50">
+                      <span className="text-[8px] font-bold text-brand-emerald flex items-center gap-1">
+                        <CheckCircle2 className="w-2.5 h-2.5" /> LIVE
+                      </span>
+                      <span className="text-[8px] font-bold text-muted uppercase">ARCHIVED ON {new Date(v.createdAt).toLocaleDateString()}</span>
+                   </div>
                 </div>
-              )}
-              {v?.verification?.finalVerdict === "TRUE" && !v?.isFlagged && (
-                <div className="bg-emerald-500/95 backdrop-blur-sm px-2 py-0.5 rounded text-white text-[10px] font-bold tracking-widest uppercase shadow-md">
-                   Verified
-                </div>
-              )}
+              </motion.div>
+            );
+          }) : (
+            <div className="col-span-full py-20 text-center glass rounded-[3rem] border-dashed border-2 border-main">
+               <p className="text-muted font-bold italic">No signals archived in this station yet.</p>
             </div>
-
-            <img
-              src={v.thumbnail || FALLBACK_THUMB}
-              className="h-48 w-full object-cover"
-            />
-
-            <div className="p-4 bg-white dark:bg-[#1a1a3a]">
-              <h3 className="font-semibold text-gray-900 dark:text-[#e5e3ff] line-clamp-2 leading-snug">{v.title}</h3>
-              <p className="text-sm text-gray-500 dark:text-[#aaa8c6] mt-1.5 font-medium">{v.views} views</p>
-            </div>
-          </motion.div>
-        ))}
+          )}
+        </div>
       </div>
 
-      {/* ================= EDIT MODAL ================= */}
+      {/* ================= EDIT MODAL (REDESIGNED) ================= */}
       <AnimatePresence>
         {showEdit && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-[#111129] border border-gray-200 dark:border-white/10 p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl space-y-6"
+              className="glass-heavy border border-white/10 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] w-full max-w-xl shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto"
             >
-              <div className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-white/10">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Channel</h2>
-                <button onClick={() => setShowEdit(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-                  <X className="w-5 h-5 text-gray-500" />
+              <div className="flex justify-between items-center pb-4 border-b border-main">
+                <h2 className="text-2xl font-display font-black text-main uppercase italic">Edit Station ID</h2>
+                <button onClick={() => setShowEdit(false)} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                  <X className="w-5 h-5 text-muted" />
                 </button>
               </div>
 
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Channel Name</label>
-                  <input
-                    value={updateForm.name}
-                    placeholder="Enter channel name"
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-inner"
-                    onChange={(e) => setUpdateForm({ ...updateForm, name: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-6">
+                 <Input 
+                   label="Station Name"
+                   value={updateForm.name}
+                   onChange={(e) => setUpdateForm({ ...updateForm, name: e.target.value })}
+                 />
+                 
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted px-1">Mission briefing</label>
+                    <textarea 
+                      value={updateForm.description}
+                      onChange={(e) => setUpdateForm({ ...updateForm, description: e.target.value })}
+                      className="w-full p-5 rounded-2xl bg-surface-low border border-main text-main font-bold outline-none focus:ring-2 focus:ring-brand-indigo/50 min-h-[100px] resize-none"
+                    />
+                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Description</label>
-                  <textarea
-                    value={updateForm.description}
-                    placeholder="Tell viewers about your channel"
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none shadow-inner"
-                    onChange={(e) => setUpdateForm({ ...updateForm, description: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Avatar Upload */}
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-semibold text-gray-500 uppercase tracking-widest text-[10px]">Avatar (1:1)</label>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                    {/* Edit Avatar */}
                     <div 
-                      onClick={() => avatarRef.current.click()}
-                      className={`group relative h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
-                        ${avatarPreview || channel?.avatar ? 'border-emerald-500/30 bg-emerald-50/5' : 'border-gray-200 dark:border-white/10 hover:border-indigo-500 bg-gray-50 dark:bg-black/20'}
+                      onClick={() => avatarRef.current.click()} 
+                      onDragOver={(e) => { prevent(e); setDrag('editAvatar', true); }}
+                      onDragLeave={() => setDrag('editAvatar', false)}
+                      onDrop={(e) => handleDropFile(e, 'editAvatar', (file) => {
+                        setUpdateForm({...updateForm, avatar:file}); 
+                        setAvatarPreview(URL.createObjectURL(file));
+                      })}
+                      className={`group aspect-video rounded-3xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center
+                        ${isDragging.editAvatar ? 'border-brand-indigo bg-brand-indigo/10 scale-105' : 'border-main bg-surface-low'}
                       `}
                     >
-                      {avatarPreview || channel?.avatar ? (
-                        <>
-                          <img src={avatarPreview || channel?.avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                             <ImageIcon className="text-white w-8 h-8" />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center text-gray-400 group-hover:text-indigo-500 transition-colors">
-                          <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                          <span className="text-[10px] font-bold uppercase">Upload Pic</span>
-                        </div>
-                      )}
+                       {avatarPreview || channel?.avatar ? (
+                         <img src={avatarPreview || channel?.avatar} className="w-full h-full object-cover" /> 
+                       ) : (
+                         <div className="text-center">
+                           <ImageIcon className={`w-6 h-6 mx-auto mb-1 ${isDragging.editAvatar ? 'text-brand-indigo' : 'text-muted'}`} />
+                           <span className="text-[10px] font-black uppercase tracking-widest text-muted">Avatar</span>
+                         </div>
+                       )}
+                       <input type="file" hidden ref={avatarRef} accept="image/*" onChange={(e) => {
+                          const file=e.target.files[0];
+                          if(file) { setUpdateForm({...updateForm, avatar:file}); setAvatarPreview(URL.createObjectURL(file)); }
+                        }} />
                     </div>
-                    <input type="file" hidden ref={avatarRef} accept="image/*" onChange={(e) => {
-                      const file=e.target.files[0];
-                      if(file) { setUpdateForm({...updateForm, avatar:file}); setAvatarPreview(URL.createObjectURL(file)); }
-                    }} />
-                  </div>
 
-                  {/* Banner Upload */}
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-semibold text-gray-500 uppercase tracking-widest text-[10px]">Banner (16:9)</label>
+                    {/* Edit Banner */}
                     <div 
-                      onClick={() => bannerRef.current.click()}
-                      className={`group relative h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
-                        ${bannerPreview || channel?.banner ? 'border-emerald-500/30 bg-emerald-50/5' : 'border-gray-200 dark:border-white/10 hover:border-indigo-500 bg-gray-50 dark:bg-black/20'}
+                      onClick={() => bannerRef.current.click()} 
+                      onDragOver={(e) => { prevent(e); setDrag('editBanner', true); }}
+                      onDragLeave={() => setDrag('editBanner', false)}
+                      onDrop={(e) => handleDropFile(e, 'editBanner', (file) => {
+                        setUpdateForm({...updateForm, banner:file}); 
+                        setBannerPreview(URL.createObjectURL(file));
+                      })}
+                      className={`group aspect-video rounded-3xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center
+                        ${isDragging.editBanner ? 'border-brand-indigo bg-brand-indigo/10 scale-105' : 'border-main bg-surface-low'}
                       `}
                     >
-                      {bannerPreview || channel?.banner ? (
-                        <>
-                          <img src={bannerPreview || channel?.banner} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                             <ImageIcon className="text-white w-8 h-8" />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center text-gray-400 group-hover:text-indigo-500 transition-colors">
-                          <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                          <span className="text-[10px] font-bold uppercase">Upload Banner</span>
-                        </div>
-                      )}
+                       {bannerPreview || channel?.banner ? (
+                         <img src={bannerPreview || channel?.banner} className="w-full h-full object-cover" /> 
+                       ) : (
+                         <div className="text-center">
+                            <ImageIcon className={`w-6 h-6 mx-auto mb-1 ${isDragging.editBanner ? 'text-brand-indigo' : 'text-muted'}`} />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted">Banner</span>
+                         </div>
+                       )}
+                       <input type="file" hidden ref={bannerRef} accept="image/*" onChange={(e) => {
+                          const file=e.target.files[0];
+                          if(file) { setUpdateForm({...updateForm, banner:file}); setBannerPreview(URL.createObjectURL(file)); }
+                        }} />
                     </div>
-                    <input type="file" hidden ref={bannerRef} accept="image/*" onChange={(e) => {
-                      const file=e.target.files[0];
-                      if(file) { setUpdateForm({...updateForm, banner:file}); setBannerPreview(URL.createObjectURL(file)); }
-                    }} />
-                  </div>
-                </div>
+                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end">
-                <button 
-                  onClick={handleUpdate}
-                  className="px-8 py-3 rounded-2xl bg-linear-to-r from-indigo-500 to-purple-600 text-white font-bold shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-widest"
-                >
-                  Save Changes
-                </button>
+              <div className="pt-4">
+                <Button variant="brand" onClick={handleUpdate} className="w-full py-5">
+                   Confirm ID Updates
+                </Button>
               </div>
-
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ================= UPLOAD MODAL ================= */}
+      {/* ================= UPLOAD MODAL (REDESIGNED) ================= */}
       <AnimatePresence>
         {showUpload && (
           <motion.div 
@@ -580,122 +734,84 @@ const Dashboard = () => {
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-[#111129] border border-gray-200 dark:border-white/10 p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl space-y-5"
+              className="glass-heavy border border-white/10 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] w-full max-w-2xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
             >
-              <div className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-white/10">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Upload Video</h2>
-                <button onClick={() => {setShowUpload(false); setUploadProgress(0);}} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-                  <X className="w-5 h-5 text-gray-500" />
+              <div className="flex justify-between items-center pb-4 border-b border-main">
+                <h2 className="text-2xl font-display font-black text-main uppercase italic">Broadcast New Signal</h2>
+                <button onClick={() => {setShowUpload(false); setUploadProgress(0);}} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                  <X className="w-5 h-5 text-muted" />
                 </button>
               </div>
 
-              {/* Video File Dropzone */}
-              <div
-                onClick={() => !uploadProgress && fileRef.current.click()}
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                className={`group relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all shadow-inner
-                  ${videoForm.video ? 'border-emerald-500/50 bg-emerald-50/5' : 'border-gray-300 dark:border-indigo-500/30 hover:border-indigo-500 bg-gray-50/50 dark:bg-[#1a1a3a]/50'}
-                `}
-              >
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-all shadow-md
-                  ${videoForm.video ? 'bg-emerald-100 text-emerald-500' : 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500'}
-                `}>
-                  {videoForm.video ? <CheckCircle2 className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
-                </div>
-                {videoForm.video ? (
-                  <p className="font-bold text-center text-emerald-600 dark:text-emerald-400 max-w-full truncate px-4 animate-pulse">
-                    {videoForm.video.name}
-                  </p>
-                ) : (
-                  <>
-                    <p className="font-bold text-gray-700 dark:text-[#e5e3ff] uppercase tracking-widest text-xs">Drag & Drop Video</p>
-                    <p className="text-[10px] text-gray-500 dark:text-[#aaa8c6] mt-1 italic">or click to browse</p>
-                  </>
-                )}
-              </div>
-              <input type="file" hidden ref={fileRef} accept="video/*" onChange={(e) => setVideoForm({...videoForm, video: e.target.files[0]})} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="space-y-6">
+                    {/* Upload Video Signal */}
+                    <div
+                      onClick={() => !uploadProgress && fileRef.current.click()}
+                      onDragOver={(e) => { prevent(e); !uploadProgress && setDrag('uploadVideo', true); }}
+                      onDragLeave={() => setDrag('uploadVideo', false)}
+                      onDrop={(e) => !uploadProgress && handleDropFile(e, 'uploadVideo', (file) => {
+                        setVideoForm({...videoForm, video: file});
+                      })}
+                      className={`aspect-square border-2 border-dashed rounded-[2rem] flex flex-col items-center justify-center cursor-pointer transition-all p-6 text-center
+                        ${videoForm.video ? 'border-brand-emerald/50 bg-brand-emerald/5' : isDragging.uploadVideo ? 'border-brand-indigo bg-brand-indigo/10 scale-105' : 'border-main bg-surface-low hover:border-brand-indigo'}
+                      `}
+                    >
+                      {videoForm.video ? <CheckCircle2 className="w-12 h-12 text-brand-emerald mb-3 ai-glow-emerald" /> : <UploadCloud className={`w-12 h-12 mb-3 ${isDragging.uploadVideo ? 'text-brand-indigo' : 'text-brand-indigo'}`} />}
+                      <p className="text-xs font-black uppercase text-main truncate max-w-full px-2">{videoForm.video ? videoForm.video.name : "Transmit Signal"}</p>
+                      <input type="file" hidden ref={fileRef} accept="video/*" onChange={(e) => setVideoForm({...videoForm, video: e.target.files[0]})} />
+                    </div>
+                 </div>
 
-              {/* Inputs */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Title</label>
-                      <input
-                        value={videoForm.title}
-                        placeholder="Epic video title..."
-                        className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                        onChange={(e) => setVideoForm({...videoForm, title: e.target.value})}
-                      />
-                   </div>
+                 <div className="space-y-4">
+                    <Input label="Title" value={videoForm.title} onChange={(e) => setVideoForm({...videoForm, title: e.target.value})} />
+                    
+                    {/* Thumbnail Drag & Drop */}
+                    <div 
+                      onClick={() => !uploadProgress && thumbRef.current.click()}
+                      onDragOver={(e) => { prevent(e); !uploadProgress && setDrag('uploadThumb', true); }}
+                      onDragLeave={() => setDrag('uploadThumb', false)}
+                      onDrop={(e) => !uploadProgress && handleDropFile(e, 'uploadThumb', (file) => {
+                        setVideoForm({...videoForm, thumbnail:file}); 
+                        setThumbnailPreview(URL.createObjectURL(file));
+                      })}
+                      className={`h-10 border border-dashed rounded-xl flex items-center justify-center text-[10px] font-bold transition-all cursor-pointer
+                        ${thumbnailPreview ? 'border-brand-emerald/30 text-brand-emerald' : isDragging.uploadThumb ? 'border-brand-indigo bg-brand-indigo/10 scale-105 text-brand-indigo' : 'border-main text-muted hover:border-brand-indigo'}
+                      `}
+                    >
+                       {thumbnailPreview ? "Thumbnail Selected" : isDragging.uploadThumb ? "Drop Now" : "Upload Thumbnail"}
+                       <input type="file" hidden ref={thumbRef} accept="image/*" onChange={(e) => {
+                          const file=e.target.files[0];
+                          if(file) { setVideoForm({...videoForm, thumbnail:file}); setThumbnailPreview(URL.createObjectURL(file)); }
+                        }} />
+                    </div>
 
-                   <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Thumbnail (16:9)</label>
-                      <div 
-                        onClick={() => !uploadProgress && thumbRef.current.click()}
-                        className={`group relative h-10 rounded-xl border border-dashed transition-all cursor-pointer overflow-hidden flex items-center justify-center
-                          ${thumbnailPreview ? 'border-emerald-500/50 bg-emerald-50/5' : 'border-gray-300 dark:border-white/10 hover:border-indigo-500 bg-gray-50 dark:bg-black/20'}
-                        `}
-                      >
-                        {thumbnailPreview ? (
-                            <div className="flex items-center gap-2 text-xs text-emerald-500 font-bold">
-                               <CheckCircle2 className="w-3 h-3" /> Selected
-                            </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-gray-500 group-hover:text-indigo-500 transition-colors">
-                            <ImageIcon className="w-3 h-3" />
-                            <span className="text-[10px] font-bold uppercase">Upload</span>
-                          </div>
-                        )}
-                      </div>
-                      <input type="file" hidden ref={thumbRef} accept="image/*" onChange={(e) => {
-                        const file=e.target.files[0];
-                        if(file) { setVideoForm({...videoForm, thumbnail:file}); setThumbnailPreview(URL.createObjectURL(file)); }
-                      }} />
-                   </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Description</label>
-                  <textarea
-                    value={videoForm.description}
-                    placeholder="What's this about?"
-                    rows={2}
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a3a] border border-gray-200 dark:border-white/10 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-                    onChange={(e) => setVideoForm({...videoForm, description: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              {uploadProgress > 0 && (
-                <div className="w-full pt-2">
-                  <div className="flex justify-between text-[10px] font-bold mb-1.5 dark:text-gray-300 text-gray-700 uppercase tracking-widest">
-                    <span className="flex items-center gap-2"><Video className="w-3 h-3 text-indigo-500 animate-pulse" /> Publishing...</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden shadow-inner">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${uploadProgress}%` }}
-                      className="h-full bg-linear-to-r from-indigo-500 to-purple-600"
+                    <textarea 
+                      placeholder="Signal description..."
+                      value={videoForm.description}
+                      onChange={(e) => setVideoForm({...videoForm, description: e.target.value})}
+                      className="w-full p-4 rounded-2xl bg-surface-low border border-main text-xs font-bold outline-none focus:ring-2 focus:ring-brand-indigo/50 h-24 resize-none"
                     />
-                  </div>
+                 </div>
+              </div>
+
+              {uploadProgress > 0 && (
+                <div className="space-y-2">
+                   <div className="flex justify-between text-[10px] font-black uppercase text-brand-indigo">
+                     <span>Broadcasting signal...</span>
+                     <span>{uploadProgress}%</span>
+                   </div>
+                   <div className="h-1.5 w-full bg-main rounded-full overflow-hidden shadow-inner">
+                      <motion.div animate={{ width: `${uploadProgress}%` }} className="h-full bg-gradient-to-r from-brand-indigo to-brand-purple ai-glow-indigo shadow-lg" />
+                   </div>
                 </div>
               )}
 
-              <div className="pt-2 flex justify-end">
-                <button 
-                  onClick={handleUpload}
-                  disabled={uploadProgress > 0}
-                  className={`px-8 py-3 rounded-2xl text-white font-bold shadow-lg transition-all text-sm uppercase tracking-widest
-                    ${uploadProgress > 0 ? 'bg-gray-500 cursor-not-allowed opacity-70' : 'bg-linear-to-r from-indigo-500 to-purple-600 hover:shadow-indigo-500/20 hover:scale-[1.02] active:scale-95'}
-                  `}
-                >
-                  {uploadProgress > 0 ? "Uploading..." : "Publish Video"}
-                </button>
+              <div className="pt-4">
+                 <Button variant="brand" className="w-full py-5" onClick={handleUpload} disabled={uploadProgress > 0}>
+                   {uploadProgress > 0 ? "Archiving Signal..." : "Publish Broadcast"}
+                 </Button>
               </div>
-
             </motion.div>
           </motion.div>
         )}

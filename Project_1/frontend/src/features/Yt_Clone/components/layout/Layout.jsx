@@ -8,7 +8,7 @@ const Layout = () => {
   const [collapsed, setCollapsed] = useState(false); // desktop
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950 text-black dark:text-white">
+    <div className="flex h-screen bg-main text-main selection:bg-brand-indigo/30 overflow-hidden">
 
       <Sidebar
         open={open}
@@ -16,7 +16,7 @@ const Layout = () => {
         collapsed={collapsed}
       />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
 
         <Topbar
           setSidebarOpen={setOpen}
@@ -24,7 +24,7 @@ const Layout = () => {
           setCollapsed={setCollapsed}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
           <Outlet />
         </main>
       </div>

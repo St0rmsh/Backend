@@ -5,32 +5,29 @@ import { useAuth } from "../features/auth/hook/useAuth";
 import { useSelector } from "react-redux";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-
-
+import { ThemeProvider } from "../features/Yt_Clone/context/ThemeContext";
 
 function App() {
+  const { handleGetMe } = useAuth();
+  const { loading } = useSelector((state) => state.auth);
 
-const { handleGetMe } = useAuth();
-const { loading } = useSelector((state) => state.auth);
-
-useEffect(() => {
-  const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.classList.toggle("dark", dark);
-}, []);
- 
-useEffect(() => {
-  handleGetMe();
-}, []);
+  useEffect(() => {
+    handleGetMe();
+  }, []);
 
   // ⏳ Global loader during hydration
-if (loading) return <Loader />
+  if (loading) return (
+    <div className="h-screen w-screen flex items-center justify-center bg-white dark:bg-[#0c0c22]">
+      <Loader className="animate-spin text-indigo-500 w-10 h-10" />
+    </div>
+  );
   
 
   return (
-    <>
+    <ThemeProvider>
       <Toaster position="top-center" reverseOrder={false} />
       <RouterProvider router={router} />
-    </>
+    </ThemeProvider>
   );
 }
 

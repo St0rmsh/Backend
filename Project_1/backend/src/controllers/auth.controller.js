@@ -5,6 +5,7 @@ import redis from "../config/cache.js";
 import otpModel from "../models/otp.model.js";
 import { generateOTP } from "../utils/otp.js";
 import { sendOTP } from "../services/email.service.js";
+import { getSignedUrl } from "../services/storage.service.js";
 
 
 
@@ -151,7 +152,7 @@ export async function loginController(req, res) {
                 name: user.name,
                 username: user.username,
                 email: user.email,
-                avatar: user.avatar,
+                avatar: getSignedUrl(user.avatar),
                 isVerified: user.isVerified,
                 subscribersCount: user.subscribersCount,
                 subscribingCount: user.subscribingCount,
@@ -199,10 +200,13 @@ export async function getMeController(req, res) {
             })
         }
 
+        const doc = user.toObject();
+        doc.avatar = getSignedUrl(doc.avatar);
+
         return res.status(200).json({
             message: "User fetched Successfully",
             success: true,
-            user
+            user: doc
         })
 
     } catch (error) {

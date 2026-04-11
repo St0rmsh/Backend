@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Play,
   Pause,
@@ -7,16 +7,24 @@ import {
   Maximize,
   SkipForward,
   SkipBack,
-  Settings
+  Settings,
+  ChevronUp,
+  ShieldCheck,
+  ShieldAlert,
+  Sparkles,
+  AlertTriangle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "../context/ThemeContext";
 
 const CustomPlayer = ({
   sources,
   autoPlay = false,
   onEnd,
-  onWatchTime
+  onWatchTime,
+  videoData = {} // New: passing full video data for AI badges
 }) => {
+  const { theme } = useTheme();
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const progressRef = useRef(null);
@@ -28,264 +36,96 @@ const CustomPlayer = ({
   const [speed, setSpeed] = useState(1);
   const [buffer, setBuffer] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  const [isMuted, setIsMuted] = useState(true); // 🔥 START MUTED FOR COMFORT (User preference)
+  const [isMuted, setIsMuted] = useState(true);
   const [quality, setQuality] = useState("720p");
   const [showSettings, setShowSettings] = useState(false);
-  const [manualSpeed, setManualSpeed] = useState(false);
   const [error, setError] = useState(false);
+  const [isMini, setIsMini] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  
-
-  const [lastInteraction, setLastInteraction] = useState(Date.now());
-
-  const src = sources?.[quality];
+  const src = sources?.[quality] || sources?.["720p"];
 
   // =========================
-  // APPLY VOLUME ALWAYS ✅
+  // RESPONSIVENESS
+  // =========================
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    
+    // Mini-player scroll logic
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!isMobile) setIsMini(!entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) observer.observe(containerRef.current);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      observer.disconnect();
+    };
+  }, [isMobile]);
+
+  // =========================
+  // VIDEO LOGIC
   // =========================
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     v.volume = volume;
-  }, [volume]);
-
-  // =========================
-  // APPLY SPEED
-  // =========================
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
     v.playbackRate = speed;
-  }, [speed, src]);
+  }, [volume, speed]);
 
-  // =========================
-  // AUTOPLAY FIX (🔥 AUDIO FIX)
-  // =========================
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-
-    if (autoPlay) {
-      const v = videoRef.current;
-      v.muted = false; // 🚀 TRY UNMUTED FIRST
-      
-      v.play()
-        .then(() => {
-          setPlaying(true);
-          setIsMuted(false);
-        })
-        .catch((e) => {
-          console.log("Unmuted autoplay blocked, falling back to muted...");
-          v.muted = true;
-          setIsMuted(true);
-          v.play().then(() => setPlaying(true));
-        });
+    if (autoPlay && videoRef.current) {
+      videoRef.current.play().then(() => setPlaying(true)).catch(() => {
+        setIsMuted(true);
+        videoRef.current.muted = true;
+        videoRef.current.play().then(() => setPlaying(true));
+      });
     }
   }, [src, autoPlay]);
 
-  // =========================
-  // HANDLE SRC CHANGE MANUALLY
-  // =========================
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.load();
-    }
+    if (videoRef.current) videoRef.current.load();
   }, [src]);
-
-  // =========================
-  // WATCH TIME
-  // =========================
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (videoRef.current && playing) {
-        onWatchTime?.(videoRef.current.currentTime);
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [playing]);
-
-  // =========================
-  // AUTO HIDE CONTROLS
-  // =========================
-  useEffect(() => {
-    let timeout;
-
-    const handleMove = () => {
-      setShowControls(true);
-      setLastInteraction(Date.now());
-
-      clearTimeout(timeout);
-      timeout = setTimeout(() => setShowControls(false), 2500);
-    };
-
-    const el = containerRef.current;
-    el?.addEventListener("mousemove", handleMove);
-
-    return () => el?.removeEventListener("mousemove", handleMove);
-  }, []);
-
-  // =========================
-  // KEYBOARD SHORTCUTS
-  // =========================
-  useEffect(() => {
-    const handleKey = (e) => {
-  const v = videoRef.current;
-  if (!v) return;
-
-  // 🚫 IGNORE when typing
-  const tag = e.target.tagName.toLowerCase();
-  const isTyping =
-    tag === "input" ||
-    tag === "textarea" ||
-    e.target.isContentEditable;
-
-  if (isTyping) return;
-
-  setLastInteraction(Date.now());
-
-  switch (e.key) {
-    case " ":
-      e.preventDefault();
-      togglePlay();
-      break;
-
-    case "ArrowRight":
-      v.currentTime += 5;
-      break;
-
-    case "ArrowLeft":
-      v.currentTime -= 5;
-      break;
-
-    case "ArrowUp":
-      v.volume = Math.min(1, v.volume + 0.1);
-      setVolume(v.volume);
-      break;
-
-    case "ArrowDown":
-      v.volume = Math.max(0, v.volume - 0.1);
-      setVolume(v.volume);
-      break;
-
-    case ">":
-    case ".":
-      if (e.shiftKey) {
-        const newSpeed = Math.min(speed + 0.25, 3);
-        setSpeed(newSpeed);
-      }
-      break;
-
-    case "<":
-    case ",":
-      if (e.shiftKey) {
-        const newSpeed = Math.max(speed - 0.25, 0.25);
-        setSpeed(newSpeed);
-      }
-      break;
-
-    case "f":
-      goFullscreen();
-      break;
-
-    case "m":
-      toggleMute();
-      break;
-  }
-};
-
-
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [speed]);
-
-// 🔥 AI AUTO SPEED REMOVED (User requested fix)
-
-useEffect(() => {
-  setSpeed(1);
-  setManualSpeed(false);
-
-  if (videoRef.current) {
-    videoRef.current.playbackRate = 1;
-  }
-}, [src]);
-
 
   // =========================
   // CONTROLS
   // =========================
   const togglePlay = () => {
-    const v = videoRef.current;
-    if (!v) return;
-
-    if (v.paused) {
-      v.play();
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
       setPlaying(true);
     } else {
-      v.pause();
+      videoRef.current.pause();
       setPlaying(false);
     }
   };
 
-  const skip = (time) => {
-    videoRef.current.currentTime += time;
-  };
-
-  // 🔥 PERFECTED MUTE/VOLUME SYNC
   const toggleMute = () => {
-    const v = videoRef.current;
-    if (!v) return;
-
-    if (isMuted) {
-      // Unmuting: restore volume (or set to 1 if it was 0)
-      v.muted = false;
-      setIsMuted(false);
-      if (volume === 0) {
-        setVolume(1);
-        v.volume = 1;
-      }
-    } else {
-      // Muting
-      v.muted = true;
-      setIsMuted(true);
-    }
+    if (!videoRef.current) return;
+    videoRef.current.muted = !videoRef.current.muted;
+    setIsMuted(videoRef.current.muted);
+    if (!videoRef.current.muted && volume === 0) setVolume(1);
   };
 
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (!v?.duration) return;
     setProgress((v.currentTime / v.duration) * 100);
-  };
-
-  const handleProgress = () => {
-    const v = videoRef.current;
-    if (!v || v.buffered.length === 0) return;
-
-    const end = v.buffered.end(v.buffered.length - 1);
-    setBuffer((end / v.duration) * 100);
+    onWatchTime?.(v.currentTime);
   };
 
   const handleSeek = (e) => {
+    if (!progressRef.current) return;
     const rect = progressRef.current.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     videoRef.current.currentTime = percent * duration;
-  };
-
-  const handleVolume = (e) => {
-    const v = Number(e.target.value);
-    setVolume(v);
-    
-    // 🔥 SYNC: If moving slider, handle mute state
-    if (videoRef.current) {
-      videoRef.current.volume = v;
-      if (v > 0 && isMuted) {
-        videoRef.current.muted = false;
-        setIsMuted(false);
-      } else if (v === 0 && !isMuted) {
-        videoRef.current.muted = true;
-        setIsMuted(true);
-      }
-    }
   };
 
   const goFullscreen = () => {
@@ -296,15 +136,6 @@ useEffect(() => {
     }
   };
 
-  const changeSpeed = (s) => {
-  setSpeed(s);
-  setManualSpeed(true);
-  if (videoRef.current) {
-    videoRef.current.playbackRate = s;
-  }
-};
-
-
   const formatTime = (t) => {
     if (!t || isNaN(t)) return "0:00";
     const m = Math.floor(t / 60);
@@ -312,158 +143,161 @@ useEffect(() => {
     return `${m}:${s}`;
   };
 
-  return (
-    <div ref={containerRef} className="relative bg-black rounded-xl overflow-hidden">
+  // AI Truth Markers Logic
+  const truthMarkers = useMemo(() => {
+    if (!videoData?.verification?.claims) return [];
+    return videoData.verification.claims.map(c => ({
+      ...c,
+      percent: (c.timestamp || 0) / (duration || 1) * 100
+    }));
+  }, [videoData, duration]);
 
-      {/* VIDEO */}
+  return (
+    <div 
+      ref={containerRef} 
+      className={`relative bg-black transition-all duration-500 rounded-3xl overflow-hidden group/player shadow-2xl
+        ${isMini ? "fixed bottom-6 right-6 w-80 z-50 shadow-brand-indigo/20 scale-110" : "w-full aspect-video"}
+      `}
+    >
+      {/* CINEMA AMBIENT LIGHTING */}
+      <div className="cinema-ambient" style={{ background: `radial-gradient(circle, var(--color-brand-indigo) 0%, transparent 70%)` }} />
+
       <video
         ref={videoRef}
         src={src}
         onClick={togglePlay}
         onTimeUpdate={handleTimeUpdate}
-        onProgress={handleProgress}
+        onLoadedMetadata={() => setDuration(videoRef.current.duration)}
         onEnded={onEnd}
         onError={() => setError(true)}
-        onLoadedMetadata={() => {
-          setError(false);
-          const v = videoRef.current;
-          setDuration(v.duration);
-          v.playbackRate = speed;
-          v.volume = volume; // 🔥 ENSURE AUDIO
-        }}
+        className="w-full h-full object-contain cursor-pointer"
         playsInline
-        preload="auto"
-        className="w-full max-h-[75vh] cursor-pointer"
       />
 
-      {/* ERROR OVERLAY */}
-      {error && src && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 text-white p-6 text-center z-20">
-          <p className="text-red-500 mb-2 font-bold uppercase tracking-wider">Playback Error</p>
-          <p className="text-sm text-gray-400">The video could not be loaded. This might be due to a network issue or an unsupported format.</p>
-          <button 
-            onClick={() => { setError(false); videoRef.current?.load(); }}
-            className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
-          >
-            Retry Loading
-          </button>
-        </div>
-      )}
+      {/* AI STATUS BADGE (TOP RIGHT) */}
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
+        <AnimatePresence>
+          {videoData?.verification?.finalVerdict && videoData.verification.finalVerdict !== "UNKNOWN" && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="glass px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl border-white/20"
+            >
+              {videoData.verification.finalVerdict === "TRUE" ? (
+                <ShieldCheck className="w-4 h-4 text-brand-emerald ai-glow-emerald" />
+              ) : (
+                <ShieldAlert className="w-4 h-4 text-brand-crimson ai-glow-crimson" />
+              )}
+              <span className="text-[10px] font-black uppercase tracking-widest text-white leading-none">
+                {videoData.verification.finalVerdict} CONTENT
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-      {/* PROCESSING OVERLAY */}
-      {!src && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white p-6 text-center z-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-          <p className="text-indigo-400 mb-2 font-bold uppercase tracking-wider">Video Processing</p>
-          <p className="text-sm text-gray-400 max-w-sm">
-            We are generating the ultra-HD copy of this video. This usually takes 1-2 minutes depending on length.
-          </p>
-          <p className="mt-4 text-xs text-gray-500 italic">Please refresh in a moment...</p>
+      {/* ERROR & LOADING OVERLAYS (REUSED LOGIC WITH NEW STYLING) */}
+      {error && (
+        <div className="absolute inset-0 glass-heavy flex flex-col items-center justify-center text-white p-6 text-center z-30">
+          <AlertTriangle className="w-12 h-12 text-brand-crimson mb-4 ai-glow-crimson" />
+          <h2 className="text-xl font-black uppercase tracking-tighter mb-2">Signal Lost</h2>
+          <p className="text-sm opacity-70">The curated content could not be loaded.</p>
+          <button onClick={() => { setError(false); videoRef.current?.load(); }} className="mt-6 px-6 py-2 glass rounded-full font-bold hover:bg-white/10 transition-all uppercase text-[10px] tracking-widest">Retry Access</button>
         </div>
       )}
 
       {/* CONTROLS */}
       <motion.div
-        animate={{ opacity: showControls ? 1 : 0 }}
-        className="absolute bottom-0 w-full p-3 bg-linear-to-t from-black/80"
+        initial={false}
+        animate={{ opacity: showControls || !playing || isMini ? 1 : 0, y: showControls || !playing || isMini ? 0 : 20 }}
+        className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-20"
       >
-        <div
-          ref={progressRef}
-          onClick={handleSeek}
-          className="h-1 bg-gray-600 mb-3 cursor-pointer relative"
+        {/* PROGRESS BAR */}
+        <div className="relative group/progress mb-4">
+          <div
+            ref={progressRef}
+            onClick={handleSeek}
+            className="h-1.5 bg-white/20 rounded-full cursor-pointer relative transition-all group-hover/progress:h-2"
+          >
+            <div className="bg-brand-indigo/50 h-full rounded-full absolute" style={{ width: `${buffer}%` }} />
+            <div className="bg-gradient-to-r from-brand-indigo to-brand-purple h-full rounded-full absolute shadow-[0_0_10px_rgba(129,140,248,0.5)]" style={{ width: `${progress}%` }} />
+            
+            {/* AI TRUTH MARKERS */}
+            {truthMarkers.map((marker, i) => (
+              <div 
+                key={i}
+                className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full z-10 ai-glow-emerald cursor-help"
+                style={{ left: `${marker.percent}%`, backgroundColor: marker.verdict === "TRUE" ? "var(--color-brand-emerald)" : "var(--color-brand-crimson)" }}
+                title={marker.text}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* BOTTOM CONTROLS */}
+        <div className="flex justify-between items-center text-white">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <button onClick={togglePlay} className="hover:scale-110 transition-transform">
+              {playing ? <Pause className="fill-white" /> : <Play className="fill-white" />}
+            </button>
+            {!isMobile && (
+              <>
+                <div className="flex items-center gap-3">
+                  <button onClick={toggleMute} className="hover:text-brand-indigo transition-colors">
+                    {isMuted ? <VolumeX /> : <Volume2 />}
+                  </button>
+                  <input
+                    type="range" min="0" max="1" step="0.05" value={volume}
+                    onChange={(e) => setVolume(Number(e.target.value))}
+                    className="w-20 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-brand-indigo"
+                  />
+                </div>
+                <span className="font-display font-medium text-[11px] tracking-widest uppercase opacity-70">
+                  {formatTime(videoRef.current?.currentTime)} / {formatTime(duration)}
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4 sm:gap-6">
+            {!isMobile && (
+              <div className="relative">
+                <button onClick={() => setShowSettings(!showSettings)} className={`hover:rotate-45 transition-transform ${showSettings ? 'text-brand-indigo' : ''}`}>
+                  <Settings />
+                </button>
+                <AnimatePresence>
+                  {showSettings && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute bottom-12 right-0 glass-heavy rounded-2xl p-3 w-40 border border-white/10 shadow-2xl"
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">Playback Speed</p>
+                      {[0.5, 1, 1.5, 2].map(s => (
+                        <button key={s} onClick={() => setSpeed(s)} className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${speed === s ? 'bg-brand-indigo text-white shadow-lg shadow-brand-indigo/20' : 'hover:bg-white/10'}`}>{s}x</button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+            <button onClick={goFullscreen} className="hover:scale-110 transition-transform">
+              <Maximize />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* MINI PLAYER CLOSE */}
+      {isMini && (
+        <button 
+          onClick={() => setIsMini(false)}
+          className="absolute top-2 left-2 p-1 bg-black/50 text-white rounded-full hover:bg-black transition-colors z-40"
         >
-          <div className="bg-gray-400 h-full" style={{ width: `${buffer}%` }} />
-          <div className="bg-red-500 h-full absolute top-0" style={{ width: `${progress}%` }} />
-        </div>
-
-        <div className="flex justify-between items-center text-white text-sm">
-
-          <div className="flex items-center gap-3">
-            <button onClick={() => skip(-5)}><SkipBack /></button>
-
-            <button onClick={togglePlay}>
-              {playing ? <Pause /> : <Play />}
-            </button>
-
-            <button onClick={() => skip(5)}><SkipForward /></button>
-
-            <button onClick={toggleMute}>
-              {isMuted ? <VolumeX /> : <Volume2 />}
-            </button>
-
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={volume}
-              onChange={handleVolume}
-            />
-
-            <span>
-              {formatTime(videoRef.current?.currentTime)} / {formatTime(duration)}
-            </span>
-          </div>
-
-         <div className="flex items-center gap-3 relative">
-
-  {/* ⚙️ SETTINGS BUTTON */}
-  <button onClick={() => setShowSettings(!showSettings)}>
-    <Settings />
-  </button>
-
-  {/* ⚙️ SETTINGS PANEL */}
-  <AnimatePresence>
-    {showSettings && (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
-        className="absolute bottom-10 right-0 bg-black p-3 rounded-xl text-white w-36 z-50"
-      >
-
-        {/* SPEED */}
-        <p className="text-xs mb-1 text-gray-300">Speed</p>
-        {[0.5, 1, 1.25, 1.5, 2].map((s) => (
-          <div
-            key={s}
-            onClick={() => changeSpeed(s)}
-            className={`cursor-pointer px-2 py-1 rounded ${
-              speed === s ? "bg-indigo-500" : "hover:bg-gray-700"
-            }`}
-          >
-            {s}x
-          </div>
-        ))}
-
-        {/* QUALITY */}
-        <p className="text-xs mt-3 mb-1 text-gray-300">Quality</p>
-        {Object.keys(sources || {}).map((q) => (
-          <div
-            key={q}
-            onClick={() => setQuality(q)}
-            className={`cursor-pointer px-2 py-1 rounded ${
-              quality === q ? "bg-indigo-500" : "hover:bg-gray-700"
-            }`}
-          >
-            {q}
-          </div>
-        ))}
-
-      </motion.div>
-    )}
-  </AnimatePresence>
-
-  {/* FULLSCREEN */}
-  <button onClick={goFullscreen}>
-    <Maximize />
-  </button>
-
-</div>
-
-
-        </div>
-      </motion.div>
+          <ChevronUp className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 };

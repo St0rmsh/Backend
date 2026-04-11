@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { getAllVideos } from "../services/ytapi.service";
 import VideoCard from "../components/video/VideoCard";
 import SkeletonCard from "../components/video/SkeletonCard";
+import { motion } from "framer-motion";
 
 const Home = () => {
-  const categories = ["All", "AI", "Music", "Coding", "Podcasts", "Startups"];
-
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,22 +24,15 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="max-w-[1400px] mx-auto px-3 md:px-6">
-
-      {/* ===== CATEGORY BAR (OPTIONAL YT STYLE) ===== */}
-      <div className="flex gap-3 overflow-x-auto mb-6 scrollbar-hide">
-        
-      </div>
-
-      {/* ===== VIDEOS GRID (FIXED) ===== */}
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-8 py-6">
+      
+      {/* ===== VIDEOS GRID (3 Columns requested) ===== */}
       <div
         className="
         grid 
-        gap-x-6 gap-y-10
-
+        gap-x-8 gap-y-12
         grid-cols-1 
         sm:grid-cols-2 
-        md:grid-cols-3 
         lg:grid-cols-3 
         xl:grid-cols-3
       "
@@ -52,6 +44,13 @@ const Home = () => {
           : videos.map((v) => (
               <VideoCard key={v._id} video={v} />
             ))}
+      </div>
+
+      {/* FOOTER */}
+      <div className="mt-20 border-t border-main pt-12 text-center pb-12">
+         <p className="text-main font-bold opacity-30 text-sm italic tracking-widest uppercase">
+           AI Verified Content Network
+         </p>
       </div>
 
     </div>
