@@ -58,8 +58,9 @@ const CompleteProfilePage = () => {
     const { user, handleCompleteProfile, loading } = useAuth();
     const navigate = useNavigate();
 
-    const [form, setForm] = useState({ countryCode: '+91', number: '', role: 'buyer' });
-    const [error, setError] = useState('');
+    const [form, setForm] = useState({ countryCode: '+91', number: '', role: 'buyer', password: '' });
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState({ number: '', password: '' });
     const [serverErr, setServerErr] = useState('');
 
     // Protect route: Ensure user is loaded
@@ -71,16 +72,29 @@ const CompleteProfilePage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        let hasError = false;
+        const newError = { number: '', password: '' };
+
         if (!/^[6-9]\d{9}$/.test(form.number)) {
-            setError('Enter valid 10-digit mobile number');
-            return;
+            newError.number = 'Enter valid 10-digit mobile number';
+            hasError = true;
         }
-        setError('');
+
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
+        if (!passwordRegex.test(form.password)) {
+            newError.password = 'Password must be 6+ chars, 1 uppercase, 1 number';
+            hasError = true;
+        }
+
+        setError(newError);
+        if (hasError) return;
         
         if (!handleCompleteProfile) return;
         const result = await handleCompleteProfile({
             contact: { countryCode: form.countryCode, number: form.number },
-            role: form.role
+            role: form.role,
+            password: form.password
         });
         
         if (result.success) navigate('/', { replace: true });
@@ -119,17 +133,50 @@ const CompleteProfilePage = () => {
                                     onChange={(code) => setForm((p) => ({ ...p, countryCode: code }))}
                                 />
                                 <input 
-                                    className={`flex-1 bg-[#1c1b1b] border ${error ? 'border-[#ffb4ab]' : 'border-[#3b494b]/10'} rounded-md px-4 py-4 text-sm font-medium focus:ring-1 focus:ring-[#00f0ff] focus:border-[#00f0ff] outline-none placeholder:text-[#b9cacb]/30 transition-all h-[54px]`}
+                                    className={`flex-1 bg-[#1c1b1b] border ${error.number ? 'border-[#ffb4ab]' : 'border-[#3b494b]/10'} rounded-md px-4 py-4 text-sm font-medium focus:ring-1 focus:ring-[#00f0ff] focus:border-[#00f0ff] outline-none placeholder:text-[#b9cacb]/30 transition-all h-[54px]`}
                                     placeholder="000-000-0000" 
                                     type="tel"
                                     value={form.number}
                                     onChange={(e) => {
                                         setForm({...form, number: e.target.value});
-                                        setError('');
+                                        setError(p => ({...p, number: ''}));
                                     }}
                                 />
                             </div>
-                            {error && <p className="text-[#ffb4ab] text-xs">{error}</p>}
+                            {error.number && <p className="text-[#ffb4ab] text-xs mt-1">{error.number}</p>}
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-sans font-bold uppercase tracking-widest text-[#b9cacb] block">PASSWORD</label>
+                            <div className="relative">
+                                <input 
+                                    className={`w-full bg-[#1c1b1b] border ${error.password ? 'border-[#ffb4ab]' : 'border-[#3b494b]/10'} rounded-md px-4 py-4 text-sm font-medium focus:ring-1 focus:ring-[#00f0ff] focus:border-[#00f0ff] outline-none placeholder:text-[#b9cacb]/30 transition-all h-[54px]`}
+                                    placeholder="••••••••" 
+                                    type={showPassword ? "text" : "password"}
+                                    value={form.password}
+                                    onChange={(e) => {
+                                        setForm({...form, password: e.target.value});
+                                        setError(p => ({...p, password: ''}));
+                                    }}
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#b9cacb] hover:text-[#00f0ff] transition-colors"
+                                >
+                                    {showPassword ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A11.055 11.055 0 001.5 12c.563 3.013 3.4 5.5 8.5 5.5s7.937-2.487 8.5-5.5a11.055 11.055 0 00-2.48-3.777M15.312 7.02c.384.223.746.47 1.085.738a11.099 11.099 0 013.103 4.242M9.47 9.47l-4.242-4.242M19.42 19.42l-4.242-4.242M14.53 14.53L9.47 9.47m5.06 5.06L19.42 19.42m-5.06-5.06l-4.242-4.242m0 0L3.34 3.34" />
+                                        </svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.399 8.049 7.045 5.5 11.5 5.5s8.101 2.549 9.464 6.178c.07.233.07.47 0 .704-1.363 4.273-5.008 6.822-9.464 6.822s-8.101-2.549-9.464-6.178z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    )}
+                                </button>
+                            </div>
+                            {error.password && <p className="text-[#ffb4ab] text-xs mt-1">{error.password}</p>}
                         </div>
 
                         <div className="space-y-4">

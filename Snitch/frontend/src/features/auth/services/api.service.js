@@ -32,9 +32,9 @@ export const getMe = async () => {
     }
 };
 
-export const completeProfile = async ({ contact, role }) => {
+export const completeProfile = async ({ contact, role, password }) => {
     try {
-        const response = await api.put('/complete-profile', { contact, role });
+        const response = await api.put('/complete-profile', { contact, role, password });
         return response.data;
     } catch (error) {
         throw new Error(error.response?.data?.message || 'Profile completion failed');

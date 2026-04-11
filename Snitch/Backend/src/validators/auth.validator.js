@@ -65,6 +65,35 @@ export const loginValidator = [
 	validate,
 ];
 
+export const completeProfileValidator = [
+	body('password')
+		.isLength({ min: 6 })
+		.withMessage('Password must be at least 6 characters long')
+		.matches(/[A-Z]/)
+		.withMessage('Password must contain at least one uppercase letter')
+		.matches(/[0-9]/)
+		.withMessage('Password must contain at least one number'),
+
+	body('contact.countryCode')
+		.notEmpty()
+		.withMessage('Country code is required')
+		.matches(/^\+\d{1,3}$/)
+		.withMessage('Format: +91'),
+
+	body('contact.number')
+		.notEmpty()
+		.withMessage('Contact number is required')
+		.matches(/^[6-9]\d{9}$/)
+		.withMessage('Enter a valid 10-digit Indian number'),
+
+	body('role')
+		.optional()
+		.isIn(['buyer', 'seller'])
+		.withMessage('Role must be either "buyer" or "seller"'),
+
+	validate,
+];
+
 
 
 

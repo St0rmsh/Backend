@@ -12,7 +12,7 @@ const sendTokenResponse = (user, res, message, redirectUrl = null) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     if (redirectUrl) {
@@ -135,7 +135,7 @@ export const googleAuth = async (req, res) => {
 
 export const completeProfile = async (req, res) => {
     try {
-        const { contact, role } = req.body;
+        const { contact, role, password } = req.body;
         const userId = req.user.id;
 
         const user = await UserModel.findById(userId);
@@ -145,6 +145,11 @@ export const completeProfile = async (req, res) => {
 
         user.contact = contact;
         user.role = role || user.role;
+        
+        if (password) {
+            user.password = password;
+        }
+
         await user.save();
 
         sendTokenResponse(user, res, "Profile completed successfully");
