@@ -215,12 +215,12 @@ const LoginPage = () => {
                     <label htmlFor="password" className="text-sm font-medium text-slate-600 dark:text-slate-300">
                       Password
                     </label>
-                    <button
-                      type="button"
+                    <Link
+                      to="/forgot-password"
                       className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 transition-colors"
                     >
                       Forgot password?
-                    </button>
+                    </Link>
                   </div>
                   <div className="relative">
                     <input

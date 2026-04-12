@@ -94,6 +94,24 @@ export const completeProfileValidator = [
 	validate,
 ];
 
+export const forgotPasswordValidator = [
+	body('email')
+		.trim()
+		.isEmail()
+		.withMessage('A valid email is required')
+		.normalizeEmail(),
 
+	validate,
+];
 
+export const resetPasswordValidator = [
+	body('password')
+		.isLength({ min: 6 })
+		.withMessage('Password must be at least 6 characters long')
+		.matches(/[A-Z]/)
+		.withMessage('Password must contain at least one uppercase letter')
+		.matches(/[0-9]/)
+		.withMessage('Password must contain at least one number'),
 
+	validate,
+];
