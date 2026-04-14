@@ -1,5 +1,6 @@
 import {
   uploadFile,
+  uploadFromPath,
   deleteFile,
   getSignedUrl
 } from "../services/storage.service.js";
@@ -55,11 +56,12 @@ export const videoUpload = async (req, res) => {
       title,
       description: description || "",
       videoUrl: "", // 🔄 Will be updated after background processing
-      thumbnail: "https://ik.imagekit.io/p7b10nfhs/placeholder-track.jpg", // Temporary placeholder
+      thumbnail: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop", // Temporary placeholder
       duration: 0,
       channel: req.user.channel,
       uploader: req.user._id,
       isPublished: false, // 🔒 Keep hidden until processed
+      status: "PROCESSING"
     });
 
     videoId = video._id;
@@ -83,7 +85,6 @@ export const videoUpload = async (req, res) => {
 
         // 🎥 CONVERT VIDEO
         convertedPath = await convertToMp4(tempVideoPath);
-        const videoBuffer = await fs.promises.readFile(convertedPath);
 
         // ⏱ GET DURATION
         const duration = await new Promise((resolve) => {
@@ -92,11 +93,11 @@ export const videoUpload = async (req, res) => {
           });
         });
 
-        // ☁️ UPLOAD CONVERTED VIDEO
-        uploadedVideo = await uploadFile({
-          buffer: videoBuffer,
+        // ☁️ UPLOAD CONVERTED VIDEO (Using Path to avoid 413 error)
+        uploadedVideo = await uploadFromPath(convertedPath, {
           filename: fileName.replace(/\.[^/.]+$/, ".mp4"),
-          folder: "videos"
+          folder: "videos",
+          resource_type: "video"
         });
 
         // 🖼 THUMBNAIL LOGIC
@@ -128,23 +129,29 @@ export const videoUpload = async (req, res) => {
             }
         }
 
+        // 🤖 START AI PIPELINE
+        if (uploadedVideo && uploadedVideo.url) {
+          await triggerAiPipeline(videoId, uploadedVideo.url, title, description, convertedPath);
+        } else {
+          console.warn("⚠️ BG: Skipping AI pipeline because video upload failed.");
+        }
+
         // 📝 DB UPDATE: MARK AS READY
         await videoModel.findByIdAndUpdate(videoId, {
             videoUrl: uploadedVideo.url,
-            thumbnail: uploadedThumbnail?.url || "https://ik.imagekit.io/p7b10nfhs/placeholder-track.jpg",
+            thumbnail: uploadedThumbnail?.url || "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop",
             duration: duration || 0,
             isPublished: true, // 🔓 NOW VISIBLE
+            status: "COMPLETED"
         });
 
         console.log("✅ BG: Processing complete!");
-
-        // 🤖 START AI PIPELINE
-        await triggerAiPipeline(videoId, uploadedVideo.url, title, description, convertedPath);
 
         // 🔒 Update with signed URL for consistency if needed (optional here as we update doc later)
 
       } catch (bgErr) {
         console.error("❌ BG ERROR:", bgErr.message);
+        await videoModel.findByIdAndUpdate(videoId, { status: "FAILED" });
       } finally {
         // CLEANUP
         try {
@@ -166,7 +173,8 @@ async function triggerAiPipeline(videoId, url, title, description, videoPath) {
     const aiVideoPath = `temp/ai-${Date.now()}.mp4`;
     try {
         await fs.promises.copyFile(videoPath, aiVideoPath);
-        const cleanUrl = url.split("?")[0];
+        const cleanUrl = url ? url.split("?")[0] : "";
+        if (!cleanUrl) throw new Error("Video URL is required for AI processing");
 
         const [transcript, deepfakeScore] = await Promise.all([
           transcribeVideo(cleanUrl),
@@ -182,9 +190,14 @@ async function triggerAiPipeline(videoId, url, title, description, videoPath) {
           transcript,
           deepfakeScore,
           verification: { ...data, checkedAt: new Date() },
-          trustScore: data.finalVerdict === "TRUE" ? 100 : (data.finalVerdict === "FALSE" || deepfakeScore > 0.7) ? 20 : 50,
-          isFlagged: (data.finalVerdict === "FALSE" || deepfakeScore > 0.8) ? true : false,
-          flagReason: data.finalVerdict === "FALSE" ? "AI Verification: False Information Detected" : deepfakeScore > 0.8 ? "AI Detection: High Deepfake Probability" : null
+          aiGenerated: {
+            isAi: data.aiDetection?.isAi || false,
+            modelUsed: data.aiDetection?.modelUsed || "",
+            confidence: data.aiDetection?.confidence || 0
+          },
+          trustScore: data.finalVerdict === "TRUE" ? 100 : (data.finalVerdict === "FALSE" || data.finalVerdict === "DISINFORMATION" || deepfakeScore > 0.7) ? 10 : (data.finalVerdict === "PARTIALLY TRUE" || data.finalVerdict === "MISINFORMATION") ? 40 : 50,
+          isFlagged: (data.finalVerdict === "FALSE" || data.finalVerdict === "DISINFORMATION" || deepfakeScore > 0.8) ? true : false,
+          flagReason: data.finalVerdict === "DISINFORMATION" ? "AI Verification: Malicious Disinformation Detected" : data.finalVerdict === "FALSE" ? "AI Verification: False Information Detected" : deepfakeScore > 0.8 ? "AI Detection: High Deepfake Probability" : null
         });
 
     } catch (e) {
@@ -228,7 +241,7 @@ export const getAllVideos = async (req, res) => {
         const skip = (page - 1) * limit;
 
         const videos = await videoModel
-            .find({})
+            .find({ isPublished: true })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -315,6 +328,7 @@ export const deleteVideo = async (req, res) => {
 export const getTrendingVideos = async (req, res) => {
     try {
         const videos = await videoModel.aggregate([
+            { $match: { isPublished: true } },
             { $addFields: { score: { $add: ["$views", { $multiply: ["$likesCount", 2] }] } } },
             { $sort: { score: -1 } },
             { $limit: 20 }

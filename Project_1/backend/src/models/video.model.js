@@ -79,6 +79,12 @@ const videoSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    
+    status: {
+        type: String,
+        enum: ["PROCESSING", "COMPLETED", "FAILED"],
+        default: "PROCESSING"
+    },
 
    verification: {
     summary: String,
@@ -95,7 +101,7 @@ const videoSchema = new mongoose.Schema({
 
     finalVerdict: {
         type: String,
-        enum: ["TRUE", "PARTIALLY TRUE", "FALSE", "UNKNOWN"],
+        enum: ["TRUE", "PARTIALLY TRUE", "FALSE", "MISINFORMATION", "DISINFORMATION", "UNKNOWN"],
         default: "UNKNOWN"
     },
 
@@ -123,6 +129,11 @@ const videoSchema = new mongoose.Schema({
     deepfakeScore: {
         type: Number,
         default: 0
+    },
+    aiGenerated: {
+        isAi: { type: Boolean, default: false },
+        modelUsed: { type: String, default: "" },
+        confidence: { type: Number, default: 0 }
     },
     transcript: {
     type: String,

@@ -218,7 +218,7 @@ const VideoPages = () => {
             />
           ) : (
             <div className="aspect-video flex flex-col items-center justify-center bg-surface-low text-center p-6">
-                <p className="text-main font-bold">The curator is preparing the signal...</p>
+              <p className="text-main font-bold">The curator is preparing the signal...</p>
             </div>
           )}
         </div>
@@ -242,9 +242,9 @@ const VideoPages = () => {
               {video.title}
             </h1>
             {video?.verification?.finalVerdict === "TRUE" && (
-                <div className="bg-emerald-500/95 px-2 py-0.5 rounded text-white text-[11px] font-bold uppercase h-fit mt-1">
-                   Verified
-                </div>
+              <div className="bg-emerald-500/95 px-2 py-0.5 rounded text-white text-[11px] font-bold uppercase h-fit mt-1">
+                Verified
+              </div>
             )}
           </div>
 
@@ -253,25 +253,25 @@ const VideoPages = () => {
               {video.views.toLocaleString()} views • {formatTimeAgo(video.createdAt)}
             </p>
             <div className="flex gap-2 items-center sm:hidden">
-               <SubscribeButton subscribed={subscribed} loading={loadingSub} onClick={handleSubscribe} small />
+              <SubscribeButton subscribed={subscribed} loading={loadingSub} onClick={handleSubscribe} small />
             </div>
           </div>
         </div>
 
         {/* AI TRUST HUB (NEW) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           {video?.verification?.finalVerdict && video.verification.finalVerdict !== "UNKNOWN" && (
-             <TrustMeter score={video.trustScore || 0.8} type="trust" />
-           )}
-           {video?.deepfakeScore > 0.1 && (
-             <TrustMeter score={video.deepfakeScore} type="ai" />
-           )}
+          {video?.verification?.finalVerdict && video.verification.finalVerdict !== "UNKNOWN" && (
+            <TrustMeter score={video.trustScore || 0.8} type="trust" />
+          )}
+          {video?.deepfakeScore > 0.1 && (
+            <TrustMeter score={video.deepfakeScore} type="ai" />
+          )}
         </div>
 
         {/* AI VERIFICATION HUB */}
         {video?.verification?.summary && (
           <div className="glass-heavy rounded-3xl overflow-hidden border border-white/5">
-            <div 
+            <div
               className="p-5 cursor-pointer hover:bg-white/5 transition flex items-center justify-between gap-4"
               onClick={() => setAiExpanded(!aiExpanded)}
             >
@@ -294,16 +294,16 @@ const VideoPages = () => {
                 <ChevronDown className="text-muted" />
               </motion.div>
             </div>
-            
+
             <AnimatePresence>
               {aiExpanded && (
-                <motion.div 
+                <motion.div
                   initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
                   className="px-5 pb-5 border-t border-main"
                 >
                   <div className="pt-4 space-y-4">
                     <p className="text-sm leading-relaxed text-main font-medium">{video.verification.summary}</p>
-                    
+
                     {video.verification.claims?.length > 0 && (
                       <div className="space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-main/60 border-b border-main pb-2">Key Fact Checks</p>
@@ -311,8 +311,8 @@ const VideoPages = () => {
                           <div key={idx} className="flex gap-3 items-start p-3 bg-white/5 rounded-2xl">
                             {claim.verdict === 'TRUE' ? <CheckCircle2 className="w-4 h-4 text-brand-emerald shrink-0 mt-0.5" /> : <XCircle className="w-4 h-4 text-brand-crimson shrink-0 mt-0.5" />}
                             <div>
-                               <p className="text-xs font-bold text-main">{claim.text}</p>
-                               <p className="text-[10px] text-main/50 mt-1 leading-normal italic">{claim.explanation}</p>
+                              <p className="text-xs font-bold text-main">{claim.text}</p>
+                              <p className="text-[10px] text-main/50 mt-1 leading-normal italic">{claim.explanation}</p>
                             </div>
                           </div>
                         ))}
@@ -326,7 +326,7 @@ const VideoPages = () => {
         )}
 
         {/* DESCRIPTION */}
-        <div 
+        <div
           onClick={() => setDescExpanded(!descExpanded)}
           className="mt-3 bg-gray-100 dark:bg-[#1a1a2e] p-3 rounded-xl text-sm cursor-pointer"
         >

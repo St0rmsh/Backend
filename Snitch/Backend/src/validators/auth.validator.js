@@ -42,9 +42,9 @@ export const registerValidator = [
 		.withMessage('Enter a valid 10-digit Indian number'),
 
 	body('role')
+	    .optional()
 		.isIn(['buyer', 'seller'])  
 		.withMessage('Role must be either "buyer" or "seller"')
-        .optional()
 ,
 
 	validate,
