@@ -13,6 +13,9 @@ import TermsOfService from "../features/legal/pages/TermsOfService";
 import PrivacyPolicy from "../features/legal/pages/PrivacyPolicy";
 import ReturnPolicy from "../features/legal/pages/ReturnPolicy";
 import ShippingPolicy from "../features/legal/pages/ShippingPolicy";
+import CreateProducts from "../features/products/pages/CreateProducts";
+import ViewProducts from "../features/products/pages/ViewProducts";
+import OneProduct from "../features/products/components/OneProduct";
 
 export const router = createBrowserRouter([
     {
@@ -54,6 +57,21 @@ export const router = createBrowserRouter([
     {
         path: "/complete-profile",
         element: <CompleteProfilePage />
+
+
+    },
+    {
+        path: "/seller/create",
+        element: <CreateProducts />
+
+    },
+    {
+        path: "/seller",
+        element: <ViewProducts />
+    },
+    {
+        path: "/seller/:id",
+        element: <OneProduct />
     },
     {
         path: "/legal",

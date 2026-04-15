@@ -43,7 +43,7 @@ export const authSeller = async(req,res,next) => {
         }
         if(user.role !== 'seller'){
             return res.status(403).json({
-                message: "Forbidden: Only sellers can create products"
+                message: "Forbidden"
             });
         }
         req.user = user;
