@@ -1,10 +1,10 @@
 import mongoose from "mongoose"
+import {config} from "./config.js"
 
 
-
-const connectDB = async () => {
+const connectDB = async (): Promise<void> => {
     try {
-        await mongoose.connect("mongodb://localhost:27017/Zentro")
+        await mongoose.connect(config.MONGO_URI)
         console.log("MongoDB connected")
     } catch (error) {
         console.error("MongoDB connection error:", error)

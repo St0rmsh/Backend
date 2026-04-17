@@ -190,7 +190,12 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState({});
   const [serverErr, setServerErr] = useState('');
 
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    if (user.role === 'seller') {
+        return <Navigate to="/seller" replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
 
   /* Client-side validation mirrors backend rules */
   const validate = () => {
@@ -223,8 +228,13 @@ const RegisterPage = () => {
       contact: { countryCode: form.countryCode, number: form.number },
       role: form.role,
     });
-    if (result.success) navigate('/', { replace: true });
-    else setServerErr(result.error || 'Registration failed. Please try again.');
+    if (result.success) {
+        if (result.user?.role === 'seller') {
+            navigate('/seller', { replace: true });
+        } else {
+            navigate('/', { replace: true });
+        }
+    } else setServerErr(result.error || 'Registration failed. Please try again.');
   };
 
   const strength = getStrength(form.password);
@@ -352,7 +362,7 @@ const RegisterPage = () => {
                 />
                 <input
                   id="number" name="number" type="tel"
-                  placeholder="9876543210"
+                  placeholder="1234567890"
                   value={form.number} onChange={handleChange}
                   className={`${inputCls(!!errors.number)} flex-1`}
                 />

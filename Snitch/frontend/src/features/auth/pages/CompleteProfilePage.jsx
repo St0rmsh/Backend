@@ -67,6 +67,9 @@ const CompleteProfilePage = () => {
     if (!user) return <Navigate to="/login" replace />;
     // Redirect naturally if complete
     if (user && user.contact && (typeof user.contact === 'string' ? user.contact.trim() !== '' : user.contact.number)) {
+        if (user.role === 'seller') {
+            return <Navigate to="/seller" replace />;
+        }
         return <Navigate to="/" replace />;
     }
 
@@ -97,7 +100,13 @@ const CompleteProfilePage = () => {
             password: form.password
         });
         
-        if (result.success) navigate('/', { replace: true });
+        if (result.success) {
+            if (result.user?.role === 'seller') {
+                navigate('/seller', { replace: true });
+            } else {
+                navigate('/', { replace: true });
+            }
+        }
         else setServerErr(result.error || 'Failed to complete profile.');
     };
 

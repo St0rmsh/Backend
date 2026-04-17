@@ -6,6 +6,8 @@ import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
 import CompleteProfilePage from "../features/auth/pages/CompleteProfilePage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
+import SellerRoute from "../components/SellerRoute";
+import BuyerRoute from "../components/BuyerRoute";
 
 // Legal Suite
 import LegalLayout from "../features/legal/components/LegalLayout";
@@ -19,7 +21,7 @@ import OneProduct from "../features/products/components/OneProduct";
 
 export const router = createBrowserRouter([
     {
-        element: <ProtectedRoute />,
+        element: <BuyerRoute />,
         children: [
             {
                 path: "/",
@@ -27,9 +29,26 @@ export const router = createBrowserRouter([
                     <div className="min-h-screen bg-[#131313] text-white p-10 flex flex-col items-center justify-center relative overflow-hidden">
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#00f0ff]/5 blur-[120px] pointer-events-none"></div>
                         <h1 className="text-6xl font-black italic mb-4 tracking-tighter">SNITCH</h1>
-                        <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Home Page (Protected)</p>
+                        <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Home Page (Buyer Only)</p>
                     </div>
                 )
+            }
+        ]
+    },
+    {
+        element: <SellerRoute />,
+        children: [
+            {
+                path: "/seller/create",
+                element: <CreateProducts />
+            },
+            {
+                path: "/seller",
+                element: <ViewProducts />
+            },
+            {
+                path: "/seller/:id",
+                element: <OneProduct />
             }
         ]
     },
@@ -57,21 +76,6 @@ export const router = createBrowserRouter([
     {
         path: "/complete-profile",
         element: <CompleteProfilePage />
-
-
-    },
-    {
-        path: "/seller/create",
-        element: <CreateProducts />
-
-    },
-    {
-        path: "/seller",
-        element: <ViewProducts />
-    },
-    {
-        path: "/seller/:id",
-        element: <OneProduct />
     },
     {
         path: "/legal",

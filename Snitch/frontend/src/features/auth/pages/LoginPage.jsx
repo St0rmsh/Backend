@@ -52,7 +52,12 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [serverErr, setServerErr] = useState('');
 
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    if (user.role === 'seller') {
+        return <Navigate to="/seller" replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
 
   const validate = () => {
     const e = {};
@@ -74,8 +79,13 @@ const LoginPage = () => {
     if (Object.keys(ve).length) { setErrors(ve); return; }
 
     const result = await handleLogin({ email: form.email, password: form.password });
-    if (result.success) navigate('/', { replace: true });
-    else setServerErr(result.error || 'Invalid email or password.');
+    if (result.success) {
+        if (result.user?.role === 'seller') {
+            navigate('/seller', { replace: true });
+        } else {
+            navigate('/', { replace: true });
+        }
+    } else setServerErr(result.error || 'Invalid email or password.');
   };
 
   return (

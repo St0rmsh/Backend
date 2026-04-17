@@ -12,7 +12,7 @@ export const useAuth = () => {
         try {
             const data = await registerUser({ fullname, email, password, contact, role });
             dispatch(setUser(data.user));
-            return { success: true };
+            return { success: true, user: data.user };
         } catch (err) {
             dispatch(setError(err.message));
             return { success: false, error: err.message };
@@ -27,7 +27,7 @@ export const useAuth = () => {
         try {
             const data = await loginUser({ email, password });
             dispatch(setUser(data.user));
-            return { success: true };
+            return { success: true, user: data.user };
         } catch (err) {
             dispatch(setError(err.message));
             return { success: false, error: err.message };
@@ -42,7 +42,7 @@ export const useAuth = () => {
         try {
             const data = await completeProfile({ contact, role });
             dispatch(setUser(data.user));
-            return { success: true };
+            return { success: true, user: data.user };
         } catch (err) {
             dispatch(setError(err.message));
             return { success: false, error: err.message };
@@ -72,7 +72,7 @@ export const useAuth = () => {
         try {
             const data = await resetPassword(token, password);
             dispatch(setUser(data.user));
-            return { success: true };
+            return { success: true, user: data.user };
         } catch (err) {
             dispatch(setError(err.message));
             return { success: false, error: err.message };
