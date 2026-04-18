@@ -4,6 +4,7 @@ import { useProduct } from '../hook/useProduct';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
 import { useCart } from '../../../context/CartContext';
+import SearchSort from '../components/SearchSort';
 
 const SYM = { INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
 
@@ -177,25 +178,6 @@ const Products = () => {
             <span className="text-[22px] font-black italic tracking-[-0.05em]">SNITCH</span>
           </Link>
 
-          <div className="hidden sm:flex flex-1 max-w-lg">
-            <div className="relative w-full">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-[15px] h-[15px] opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search for products…"
-                value={search}
-                onChange={onSearch}
-                className={`w-full h-[38px] pl-9 pr-4 rounded-full text-[13px] border outline-none transition-colors
-                  ${isDark
-                    ? 'bg-[#161616] border-[#282828] focus:border-[#444] text-white placeholder-[#4a4a4a]'
-                    : 'bg-white border-[#ddd] focus:border-[#aaa] text-black placeholder-[#aaa]'
-                  }`}
-              />
-            </div>
-          </div>
-
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={toggleTheme}
@@ -236,65 +218,27 @@ const Products = () => {
             )}
           </div>
         </div>
-
-        <div className="sm:hidden px-4 pb-3">
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-[15px] h-[15px] opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input
-              type="text"
-              placeholder="Search for products…"
-              value={search}
-              onChange={onSearch}
-              className={`w-full h-[38px] pl-9 pr-4 rounded-full text-[13px] border outline-none
-                ${isDark
-                  ? 'bg-[#161616] border-[#282828] text-white placeholder-[#4a4a4a]'
-                  : 'bg-white border-[#ddd] text-black placeholder-[#aaa]'
-                }`}
-            />
-          </div>
-        </div>
       </nav>
 
-      <main className="max-w-[1360px] mx-auto px-4 sm:px-6 py-5 sm:py-6">
+      <main className="max-w-[1360px] mx-auto px-4 sm:px-6 py-8">
 
-        <div className="flex items-end justify-between mb-5 gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
-              {search ? `Results for "${search}"` : 'All Products'}
-            </h1>
-            <p className={`text-[12px] mt-0.5 ${isDark ? 'text-[#555]' : 'text-[#999]'}`}>
-              {loading ? 'Loading…' : `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`}
-            </p>
-          </div>
-
-          <select
-            value={sortBy}
-            onChange={onSort}
-            className={`h-[34px] px-3 pr-7 rounded-full text-[12px] font-medium cursor-pointer border outline-none appearance-none
-              bg-[length:12px_12px] bg-no-repeat bg-[position:right_10px_center]
-              ${isDark
-                ? 'bg-[#161616] border-[#282828] text-[#ccc] bg-[url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2212%22%20height=%2212%22%20fill=%22%23555%22%20viewBox=%220%200%2020%2020%22%3E%3Cpath%20d=%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22/%3E%3C/svg%3E")]'
-                : 'bg-white border-[#ddd] text-[#333] bg-[url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2212%22%20height=%2212%22%20fill=%22%23999%22%20viewBox=%220%200%2020%2020%22%3E%3Cpath%20d=%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22/%3E%3C/svg%3E")]'
-              }`}
-          >
-            <option value="newest">Newest First</option>
-            <option value="priceLow">Price: Low → High</option>
-            <option value="priceHigh">Price: High → Low</option>
-            <option value="rating">Top Rated</option>
-            <option value="reviews">Most Reviewed</option>
-          </select>
-        </div>
+        <SearchSort 
+          search={search}
+          setSearch={setSearch}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          isDark={isDark}
+          resultsCount={filtered.length}
+        />
 
         {loading ? (
           <Skeleton />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className={`w-[72px] h-[72px] rounded-2xl flex items-center justify-center mb-5 ${isDark ? 'bg-[#161616]' : 'bg-[#e8e8e3]'}`}>
+            <div className={`w-[72px] h-[72px] rounded-2xl flex items-center justify-center mb-5 ${isDark ? 'bg-[#111]' : 'bg-[#e8e8e3]'}`}>
               <svg className="w-8 h-8 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
-            <h2 className="text-lg font-bold mb-1">{search ? 'No results' : 'No products yet'}</h2>
+            <h2 className="text-lg font-bold mb-1">{search ? 'No products found' : 'No products yet'}</h2>
             <p className={`text-sm max-w-xs ${isDark ? 'text-[#555]' : 'text-[#999]'}`}>
               {search ? `Nothing matches "${search}". Try something else.` : 'Check back soon for new arrivals.'}
             </p>
