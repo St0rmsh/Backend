@@ -18,19 +18,23 @@ body { margin: 0; }
 /* ── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: rgba(139,92,246,.45); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,.75); }
+::-webkit-scrollbar-thumb  { background: rgba(100,100,100,.45); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(100,100,100,.75); }
 
 /* ── Focus ring ─────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid rgba(139,92,246,.65);
+  outline: 2px solid rgba(100,100,100,.5);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* ── select <option> dark bg ────────────────────────────── */
-option { background:#0f1525; color:#f1f5f9; }
+option { background:#0f0f0f; color:#f1f5f9; }
 
 /* ── Utility: hide number spinners ──────────────────────── */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+
+/* ── Scrollbar hide utility ─────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

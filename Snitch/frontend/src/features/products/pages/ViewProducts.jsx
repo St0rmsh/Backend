@@ -21,12 +21,20 @@ const ViewProducts = () => {
           <h1 className="text-3xl font-bold tracking-tight mb-2">My Products</h1>
           <p className={`text-sm ${isDark ? 'text-[#8b8b8b]' : 'text-[#5a5a5a]'}`}>Manage your catalog and inventory</p>
         </div>
-        <Link 
-          to="/seller/create" 
-          className="mt-4 md:mt-0 flex items-center justify-center h-10 px-6 font-semibold text-sm bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-[#333] dark:hover:bg-[#e0e0e0] transition-colors"
-        >
-          + Add New Product
-        </Link>
+        <div className="mt-4 md:mt-0 flex items-center gap-3">
+          <Link 
+            to="/seller/reviews" 
+            className={`flex items-center justify-center h-10 px-5 font-semibold text-sm rounded-lg border transition-colors ${isDark ? 'border-[#444] hover:bg-[#1a1a1a]' : 'border-[#ccc] hover:bg-white'}`}
+          >
+            Reviews
+          </Link>
+          <Link 
+            to="/seller/create" 
+            className="flex items-center justify-center h-10 px-6 font-semibold text-sm bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-[#333] dark:hover:bg-[#e0e0e0] transition-colors"
+          >
+            + Add New Product
+          </Link>
+        </div>
       </header>
 
       {loading ? (

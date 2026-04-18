@@ -63,9 +63,7 @@ const CompleteProfilePage = () => {
     const [error, setError] = useState({ number: '', password: '' });
     const [serverErr, setServerErr] = useState('');
 
-    // Protect route: Ensure user is loaded
     if (!user) return <Navigate to="/login" replace />;
-    // Redirect naturally if complete
     if (user && user.contact && (typeof user.contact === 'string' ? user.contact.trim() !== '' : user.contact.number)) {
         if (user.role === 'seller') {
             return <Navigate to="/seller" replace />;

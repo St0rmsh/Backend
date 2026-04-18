@@ -36,11 +36,11 @@ export const useAuth = () => {
         }
     };
 
-    const handleCompleteProfile = async ({ contact, role }) => {
+    const handleCompleteProfile = async ({ contact, role, password }) => {
         dispatch(setLoading(true));
         dispatch(setError(null));
         try {
-            const data = await completeProfile({ contact, role });
+            const data = await completeProfile({ contact, role, password });
             dispatch(setUser(data.user));
             return { success: true, user: data.user };
         } catch (err) {

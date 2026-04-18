@@ -204,3 +204,112 @@ export const createProductReview = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
+
+
+
+export const getProductReviews = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await ProductModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+        res.status(200).json({ message: "Product reviews fetched successfully", success: true, reviews: product.reviews });
+    } catch (error) {
+        console.error("Error fetching product reviews:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const updateProductReview = async (req, res) => {
+    try {
+        const { rating, comment } = req.body;
+        const productId = req.params.id;
+        const reviewId = req.params.reviewId;
+        const userId = req.user._id || req.user.id;
+
+        const product = await ProductModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        const review = product.reviews.id(reviewId);
+        if (!review) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+
+        if (review.user.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "You can only edit your own reviews" });
+        }
+
+        if (rating) review.rating = Number(rating);
+        if (comment) review.comment = comment;
+
+        product.averageRating = product.reviews.reduce((acc, r) => r.rating + acc, 0) / product.reviews.length;
+
+        await product.save();
+        res.status(200).json({ message: "Review updated", success: true, product });
+    } catch (error) {
+        console.error("Error updating review:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const deleteProductReview = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const reviewId = req.params.reviewId;
+        const userId = req.user._id || req.user.id;
+
+        const product = await ProductModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        const review = product.reviews.id(reviewId);
+        if (!review) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+
+        if (review.user.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "You can only delete your own reviews" });
+        }
+
+        product.reviews.pull(reviewId);
+        product.numReviews = product.reviews.length;
+        product.averageRating = product.reviews.length > 0
+            ? product.reviews.reduce((acc, r) => r.rating + acc, 0) / product.reviews.length
+            : 0;
+
+        await product.save();
+        res.status(200).json({ message: "Review deleted", success: true, product });
+    } catch (error) {
+        console.error("Error deleting review:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const fetchAllProducts = async (req, res) => {
+    try {
+        const products = await ProductModel.find().sort({ createdAt: -1 });
+        res.status(200).json({ message: "Products fetched successfully", success: true, products });
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const fetchProductById = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await ProductModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+        res.status(200).json({ message: "Product fetched successfully", success: true, product });
+    } catch (error) {
+        console.error("Error fetching product:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

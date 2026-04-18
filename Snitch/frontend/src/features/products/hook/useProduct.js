@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { createProduct, getAllProducts, getProductById, updateProduct, deleteProduct, createProductReview } from "../services/product.service";
+import { createProduct, getAllProducts, getProductById, updateProduct, deleteProduct, createProductReview, fetchAllPublicProducts, fetchPublicProductById, getProductReviews, updateReview, deleteReview } from "../services/product.service";
 import { setProducts, setProduct, setLoading, setError, removeProduct, updateProductState } from "../state/product.slice";
 
 
@@ -103,7 +103,95 @@ export const useProduct = () => {
         try {
             dispatch(setLoading(true));
             const response = await createProductReview(productId, reviewData);
-            // Updating the active product state with the returned product
+            dispatch(setProduct(response.product));
+            return response.product;
+        } catch (error) {
+            const formattedError = {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            dispatch(setError(formattedError));
+            throw formattedError;
+        } finally {
+            dispatch(setLoading(false));
+        }
+    };
+
+    // ─── PUBLIC HANDLERS ────────────────────────────────
+
+    const handleFetchAllPublicProducts = async () => {
+        try {
+            dispatch(setLoading(true));
+            const data = await fetchAllPublicProducts();
+            dispatch(setProducts(data.products));
+            return data.products;
+        } catch (error) {
+            const formattedError = {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            dispatch(setError(formattedError));
+            throw formattedError;
+        } finally {
+            dispatch(setLoading(false));
+        }
+    };
+
+    const handleFetchPublicProductById = async (productId) => {
+        try {
+            dispatch(setLoading(true));
+            const data = await fetchPublicProductById(productId);
+            dispatch(setProduct(data.product));
+            return data.product;
+        } catch (error) {
+            const formattedError = {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            dispatch(setError(formattedError));
+            throw formattedError;
+        } finally {
+            dispatch(setLoading(false));
+        }
+    };
+
+    // ─── REVIEW CRUD HANDLERS ───────────────────────────
+
+    const handleGetReviews = async (productId) => {
+        try {
+            const data = await getProductReviews(productId);
+            return data.reviews;
+        } catch (error) {
+            const formattedError = {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            throw formattedError;
+        }
+    };
+
+    const handleUpdateReview = async (productId, reviewId, data) => {
+        try {
+            dispatch(setLoading(true));
+            const response = await updateReview(productId, reviewId, data);
+            dispatch(setProduct(response.product));
+            return response.product;
+        } catch (error) {
+            const formattedError = {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            dispatch(setError(formattedError));
+            throw formattedError;
+        } finally {
+            dispatch(setLoading(false));
+        }
+    };
+
+    const handleDeleteReview = async (productId, reviewId) => {
+        try {
+            dispatch(setLoading(true));
+            const response = await deleteReview(productId, reviewId);
             dispatch(setProduct(response.product));
             return response.product;
         } catch (error) {
@@ -124,6 +212,11 @@ export const useProduct = () => {
         handleGetProductById,
         handleUpdateProduct,
         handleDeleteProduct,
-        handleAddReview
+        handleAddReview,
+        handleFetchAllPublicProducts,
+        handleFetchPublicProductById,
+        handleGetReviews,
+        handleUpdateReview,
+        handleDeleteReview,
     };
 }

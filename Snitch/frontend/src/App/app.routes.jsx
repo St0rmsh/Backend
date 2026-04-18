@@ -15,19 +15,40 @@ import TermsOfService from "../features/legal/pages/TermsOfService";
 import PrivacyPolicy from "../features/legal/pages/PrivacyPolicy";
 import ReturnPolicy from "../features/legal/pages/ReturnPolicy";
 import ShippingPolicy from "../features/legal/pages/ShippingPolicy";
+
+// Seller Pages
 import CreateProducts from "../features/products/pages/CreateProducts";
 import ViewProducts from "../features/products/pages/ViewProducts";
 import OneProduct from "../features/products/components/OneProduct";
+import SellerReviews from "../features/products/pages/SellerReviews";
+
+// Public / Buyer Pages
+import Products from "../features/products/pages/Products";
+import ProductDetails from "../features/products/components/ProductDetails";
 
 export const router = createBrowserRouter([
+    // ─── PUBLIC ROUTES (no auth required) ───────────
+    {
+        path: "/",
+        element: <Navigate to="/products" replace />
+    },
+    {
+        path: "/products",
+        element: <Products />
+    },
+    {
+        path: "/products/:id",
+        element: <ProductDetails />
+    },
+
+    // ─── BUYER ROUTES (auth + buyer role) ───────────
     {
         element: <BuyerRoute />,
         children: [
             {
-                path: "/",
+                path: "/home",
                 element: (
                     <div className="min-h-screen bg-[#131313] text-white p-10 flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#00f0ff]/5 blur-[120px] pointer-events-none"></div>
                         <h1 className="text-6xl font-black italic mb-4 tracking-tighter">SNITCH</h1>
                         <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Home Page (Buyer Only)</p>
                     </div>
@@ -35,6 +56,8 @@ export const router = createBrowserRouter([
             }
         ]
     },
+
+    // ─── SELLER ROUTES (auth + seller role) ─────────
     {
         element: <SellerRoute />,
         children: [
@@ -47,11 +70,17 @@ export const router = createBrowserRouter([
                 element: <ViewProducts />
             },
             {
+                path: "/seller/reviews",
+                element: <SellerReviews />
+            },
+            {
                 path: "/seller/:id",
                 element: <OneProduct />
             }
         ]
     },
+
+    // ─── AUTH ROUTES (public only, redirect if logged in) ─
     {
         element: <PublicRoute />,
         children: [
@@ -73,10 +102,14 @@ export const router = createBrowserRouter([
             }
         ]
     },
+
+    // ─── PROFILE COMPLETION ─────────────────────────
     {
         path: "/complete-profile",
         element: <CompleteProfilePage />
     },
+
+    // ─── LEGAL PAGES ────────────────────────────────
     {
         path: "/legal",
         element: <LegalLayout />,
@@ -103,8 +136,10 @@ export const router = createBrowserRouter([
             }
         ]
     },
+
+    // ─── CATCH-ALL ──────────────────────────────────
     {
         path: "*",
-        element: <Navigate to="/" replace />
+        element: <Navigate to="/products" replace />
     }
 ]);
