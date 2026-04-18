@@ -36,7 +36,7 @@ const Sidebar = ({ open, setOpen, collapsed }) => {
 
       <aside
         className={`
-          fixed lg:sticky top-0 lg:top-18 left-0 h-full lg:h-[calc(100vh-4.5rem)] z-50
+          fixed lg:sticky top-0 lg:top-16 left-0 h-full lg:h-[calc(100vh-4rem)] z-50
           glass lg:bg-transparent lg:border-r-0 lg:backdrop-blur-0
           transition-all duration-300 ease-in-out
           
@@ -52,16 +52,16 @@ const Sidebar = ({ open, setOpen, collapsed }) => {
           {/* MOBILE LOGO & CLOSE */}
           <div className="lg:hidden flex items-center justify-between mb-4 border-b border-main pb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-indigo to-brand-purple flex items-center justify-center text-white font-black">
-                Y
+              <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center text-white font-black">
+                S
               </div>
-              <span className="font-display font-black text-lg tracking-tight text-main uppercase">
-                Cura<span className="text-brand-indigo">tor</span>
+              <span className="font-display font-black text-lg tracking-tight text-main uppercase italic">
+                Sti<span className="text-brand-orange">tch</span>
               </span>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="p-1.5 rounded-lg text-muted hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg text-muted hover:bg-black/5 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -78,19 +78,19 @@ const Sidebar = ({ open, setOpen, collapsed }) => {
                   `flex items-center gap-4 px-3.5 py-3 rounded-2xl transition-all duration-300 group relative
                   ${
                     isActive
-                      ? "bg-brand-indigo/10 text-brand-indigo font-bold"
-                      : "text-muted hover:bg-brand-indigo/5 hover:text-main"
+                      ? "bg-brand-orange/10 text-brand-orange font-bold shadow-sm"
+                      : "text-muted hover:bg-brand-orange/5 hover:text-main"
                   }`
                 }
               >
                 {({ isActive }) => (
                   <>
                     <item.icon className={`w-5 h-5 shrink-0 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`} />
-                    {!collapsed && <span className="whitespace-nowrap text-sm tracking-wide">{item.name}</span>}
+                    {!collapsed && <span className="whitespace-nowrap text-[12px] font-black uppercase tracking-widest">{item.name}</span>}
                     {isActive && (
                       <motion.div 
                         layoutId="active-pill"
-                        className="absolute left-0 w-1 h-6 bg-brand-indigo rounded-r-full"
+                        className="absolute left-0 w-1 h-6 bg-brand-orange rounded-r-full"
                       />
                     )}
                   </>
@@ -102,7 +102,7 @@ const Sidebar = ({ open, setOpen, collapsed }) => {
           <div className="mt-auto pt-4 border-t border-main">
             <button
               onClick={onLogout}
-              className="w-full flex items-center gap-4 px-3.5 py-3 rounded-2xl text-brand-crimson hover:bg-brand-crimson/10 font-bold text-sm transition-all group"
+              className="w-full flex items-center gap-4 px-3.5 py-3 rounded-2xl text-brand-red hover:bg-brand-red/10 font-black text-[10px] uppercase tracking-widest transition-all group"
             >
               <LogOut className="w-5 h-5 shrink-0 transition-transform group-hover:-translate-x-1" />
               {!collapsed && <span className="whitespace-nowrap">Sign Out</span>}

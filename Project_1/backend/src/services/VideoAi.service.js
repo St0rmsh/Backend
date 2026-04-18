@@ -6,10 +6,6 @@ import {
   loadDeepFakeModel
 } from "./deepfake.service.js";
 
-/**
- * AI VIDEO ANALYSIS
- * Scans video frames for deepfake markers and transcription.
- */
 export async function analyzeVideoForDeepFake(videoPath) {
   await loadDeepFakeModel();
 
@@ -17,13 +13,11 @@ export async function analyzeVideoForDeepFake(videoPath) {
   let frames = [];
 
   try {
-    // 🎯 Step 1: Extract lightweight frames
     frames = await extractFrames(videoPath, frameDir);
 
     let total = 0;
     let count = 0;
 
-    // 🎯 Step 2: Analyze top 5 frames
     for (const frame of frames.slice(0, 5)) {
       try {
         const img = await loadImageToTensor(frame);
@@ -44,7 +38,6 @@ export async function analyzeVideoForDeepFake(videoPath) {
     return 0;
 
   } finally {
-    // 🧹 SAFE CLEANUP
     try {
       if (frames.length) {
         await Promise.all(

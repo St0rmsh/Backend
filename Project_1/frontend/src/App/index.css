@@ -1,52 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand Colors */
-  --color-brand-indigo: #818CF8;
-  --color-brand-purple: #A855F7;
-  --color-brand-emerald: #10B981;
-  --color-brand-amber: #F59E0B;
-  --color-brand-crimson: #EF4444;
+  /* Stitch Design System Palette - Standardized */
+  --color-brand-orange: #FF4D00;  /* Primary Accent */
+  --color-brand-green: #00C853;   /* Success / Verified */
+  --color-brand-red: #D50000;     /* Danger / Misinformation */
+  --color-brand-earth: #A67C52;   /* Earth Tone / Curator */
+  --color-brand-tan: #D9B99B;     /* Sub-accent */
+  
+  --color-stitch-white: #FFFFFF;
+  --color-stitch-black: #000000;
+  --color-stitch-grey: #F2F2F2;
+  --color-stitch-grey-dark: #333333;
 
   /* Typography */
   --font-display: "Manrope", sans-serif;
   --font-body: "Inter", sans-serif;
 }
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 :root {
-  /* LIGHT THEME (The Alabaster Gallery) */
-  --bg-main: #F8FAFC;
-  --bg-surface: #FFFFFF;
-  --bg-surface-low: #F1F5F9;
-  --bg-glass: rgba(255, 255, 255, 0.7);
-  --text-main: #1E293B;
-  --text-muted: #64748B;
-  --border-main: rgba(0, 0, 0, 0.05);
-  --shadow-main: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  /* LIGHT MODE ONLY (Stitch) */
+  --bg-main: #FFFFFF;
+  --bg-surface: #F8F8F8;
+  --bg-surface-low: #F2F2F2;
+  --bg-glass: rgba(255, 255, 255, 0.82);
+  --text-main: #000000;
+  --text-muted: #666666;
+  --border-main: rgba(0, 0, 0, 0.08);
+  --shadow-main: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
   --contrast-bg: #000000;
   --contrast-text: #FFFFFF;
 }
 
-.dark {
-  /* DARK THEME (The Nocturnal Curator) */
-  --bg-main: #0c0c22;
-  --bg-surface: #171732;
-  --bg-surface-low: #111129;
-  --bg-glass: rgba(12, 12, 34, 0.7);
-  --text-main: #E5E3FF;
-  --text-muted: #AAA8C6;
-  --border-main: rgba(255, 255, 255, 0.05);
-  --shadow-main: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-  --contrast-bg: #FFFFFF;
-  --contrast-text: #000000;
-}
-
 * {
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              color 0.1s linear;
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -71,14 +59,14 @@ h1, h2, h3, h4, .font-display {
 
 .glass-heavy {
   background: var(--bg-glass);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
   border: 1px solid var(--border-main);
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -86,26 +74,25 @@ h1, h2, h3, h4, .font-display {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-brand-indigo);
+  background: var(--color-brand-orange);
   border-radius: 10px;
-  border: 2px solid var(--bg-main);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-brand-purple);
+  background: #E64600;
 }
 
 /* AI Glow Effects */
-.ai-glow-emerald {
-  filter: drop-shadow(0 0 8px var(--color-brand-emerald));
+.ai-glow-orange {
+  filter: drop-shadow(0 0 8px rgba(255, 77, 0, 0.5));
 }
 
-.ai-glow-amber {
-  filter: drop-shadow(0 0 8px var(--color-brand-amber));
+.ai-glow-green {
+  filter: drop-shadow(0 0 8px rgba(0, 200, 83, 0.5));
 }
 
-.ai-glow-crimson {
-  filter: drop-shadow(0 0 8px var(--color-brand-crimson));
+.ai-glow-red {
+  filter: drop-shadow(0 0 8px rgba(213, 0, 0, 0.5));
 }
 
 /* Cinema Ambient Mode */
@@ -113,8 +100,16 @@ h1, h2, h3, h4, .font-display {
   position: absolute;
   inset: -100px;
   z-index: -1;
-  filter: blur(100px);
-  opacity: 0.4;
-  transition: opacity 1s ease-in-out;
+  filter: blur(120px);
+  opacity: 0.25;
+  transition: opacity 1.5s ease-in-out;
   pointer-events: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

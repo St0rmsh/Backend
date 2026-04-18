@@ -55,6 +55,10 @@ app.use("/api/like",likeRoutes)
 import subscriptionRoutes from "./routes/subscriber.routes.js"
 app.use("/api/subscription",subscriptionRoutes)
 
+// analytics
+import analyticsRoutes from "./routes/analytics.routes.js"
+app.use("/api/analytics", analyticsRoutes)
+
 
 
 

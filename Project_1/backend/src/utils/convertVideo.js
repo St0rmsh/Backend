@@ -6,8 +6,8 @@ export async function convertToMp4(inputPath) {
 
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
-      .videoCodec("libx264")   // ✅ browser supported
-      .audioCodec("aac")       // 🔥 FIX: audio works
+      .videoCodec("libx264")   
+      .audioCodec("aac")       
       .outputOptions([
         "-preset ultrafast",
         "-crf 23",

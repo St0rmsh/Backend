@@ -1,6 +1,6 @@
 import { Router } from "express";
 import upload from "../middleware/upload.middleware.js";
-import { videoUpload,getAllVideos,getVideo,getMyVideos,deleteVideo,searchVideos } from "../controllers/video.controller.js";
+import { videoUpload,getAllVideos,getVideo,getMyVideos,deleteVideo,searchVideos,updateVideo } from "../controllers/video.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { optionalAuth } from "../middleware/optionalAuth.middleware.js";
 import { addView } from "../controllers/view.controller.js";
@@ -18,11 +18,15 @@ router.post("/upload", authMiddleware, upload.fields([{ name: "video", maxCount:
 
 // /api/video
 // GET
-router.get("/", getAllVideos);
+router.get("/", optionalAuth, getAllVideos);
 
 // /api/video/search?q=...
 // GET
-router.get("/search", searchVideos);
+router.get("/search", optionalAuth, searchVideos);
+
+// /api/video/:id
+// PATCH
+router.patch("/:id", authMiddleware, upload.single("thumbnail"), updateVideo);
 
 // /api/video/:id
 // DELETE

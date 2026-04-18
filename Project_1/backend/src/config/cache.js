@@ -14,9 +14,8 @@ redis.on("connect",()=>{
     
 })
 redis.on("error",(error)=>{
-    console.error("Error "+error);
-    process.exit(1)
-    
+    console.error("Signal cache link severed: "+error);
+    // process.exit(1) - Prevents entire station collapse on cache error
 })
 
 

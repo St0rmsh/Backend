@@ -24,8 +24,8 @@ export function detectDeepFakeFromImage(imageData) {
       .div(255);
 
     const prediction = model.predict(tensor);
-    const data = prediction.dataSync(); // ⚡ faster than async
+    const data = prediction.dataSync(); 
 
-    return data[0]; // fake probability
+    return data[0]; 
   });
 }

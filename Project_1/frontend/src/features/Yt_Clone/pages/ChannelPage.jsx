@@ -47,7 +47,7 @@ const VideoCard = ({ video }) => {
       onMouseLeave={() => setHover(false)}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-200 dark:bg-[#1c1c3a] mb-3">
+      <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-200 dark:bg-[#1c1c3a] mb-2.5 shadow-sm group-hover:shadow-lg transition-all border border-black/5">
         {video.thumbnail ? (
           <img
             src={video.thumbnail}
@@ -62,31 +62,31 @@ const VideoCard = ({ video }) => {
 
         {/* Play Overlay */}
         <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${hover ? "opacity-100" : "opacity-0"}`}>
-          <div className="w-12 h-12 rounded-full bg-indigo-500/80 backdrop-blur-sm flex items-center justify-center shadow-lg">
-            <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+          <div className="w-10 h-10 rounded-full bg-indigo-500/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
+            <Play className="w-4 h-4 text-white fill-white ml-0.5" />
           </div>
         </div>
 
         {/* Duration badge */}
         {video.duration && (
-          <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white text-xs px-1.5 py-0.5 rounded font-mono">
+          <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded font-bold">
             {video.duration}
           </div>
         )}
       </div>
 
       {/* Info */}
-      <div className="px-1">
-        <h3 className="font-semibold text-gray-900 dark:text-[#e5e3ff] line-clamp-2 text-sm leading-snug mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+      <div className="px-0.5">
+        <h3 className="font-semibold text-gray-900 dark:text-[#e5e3ff] line-clamp-2 text-[14px] leading-snug mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
           {video.title}
         </h3>
-        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-[#aaa8c6]">
-          <span className="flex items-center gap-1">
-            <Eye className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-[#aaa8c6] font-medium">
+          <span className="flex items-center gap-1.5">
+            <Eye className="w-3.5 h-3.5 opacity-60" />
             {formatCount(video.views)} views
           </span>
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
+          <span className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 opacity-60" />
             {timeAgo(video.createdAt)}
           </span>
         </div>
@@ -242,7 +242,7 @@ const ChannelPage = () => {
     <div className="min-h-screen bg-white dark:bg-[#0c0c22] text-gray-900 dark:text-[#e5e3ff] transition-colors duration-300">
 
       {/* ═══════════════ BANNER ═══════════════ */}
-      <div className="relative w-full h-44 md:h-60 lg:h-72 overflow-hidden">
+      <div className="relative w-full h-32 sm:h-44 md:h-60 lg:h-72 overflow-hidden bg-stitch-grey">
         <img
           src={bannerSrc}
           alt="Channel Banner"
@@ -250,17 +250,17 @@ const ChannelPage = () => {
           className="w-full h-full object-cover"
         />
         {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-linear-to-t from-white dark:from-[#0c0c22] via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-linear-to-r from-indigo-600/20 to-purple-600/20 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-linear-to-t from-white dark:from-[#0c0c22] via-transparent to-transparent opacity-60" />
+        <div className="absolute inset-0 bg-linear-to-r from-indigo-600/10 to-purple-600/10 mix-blend-multiply" />
       </div>
 
       {/* ═══════════════ CHANNEL HEADER ═══════════════ */}
-      <div className="px-4 md:px-8 -mt-10 relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
+      <div className="px-4 sm:px-6 md:px-10 lg:px-12 -mt-6 sm:-mt-10 relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-5">
 
           {/* Avatar */}
           <div className="shrink-0">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full ring-4 ring-white dark:ring-[#0c0c22] overflow-hidden shadow-2xl shadow-indigo-500/20">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-2xl sm:rounded-3xl ring-4 ring-white dark:ring-[#0c0c22] overflow-hidden shadow-2xl shadow-indigo-500/10 bg-stitch-grey">
               <img
                 src={avatarSrc}
                 alt={channel.name}
@@ -271,100 +271,102 @@ const ChannelPage = () => {
           </div>
 
           {/* Info + actions */}
-          <div className="flex-1 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
+          <div className="flex-1 flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-2">
 
             {/* Channel info */}
-            <div>
-              {/* ✅ CHANNEL NAME - always visible */}
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 dark:text-[#e5e3ff] leading-tight">
+            <div className="space-y-1">
+              {/* ✅ CHANNEL NAME */}
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-display font-black tracking-tight text-gray-900 dark:text-[#e5e3ff] leading-none">
                 {channel.name || channel.handle || "Unknown Channel"}
               </h1>
-              <p className="text-sm text-indigo-500 dark:text-indigo-400 font-medium mt-0.5">
+              <p className="text-xs sm:text-sm text-indigo-500 dark:text-indigo-400 font-black uppercase tracking-widest">
                 @{channel.handle}
               </p>
 
               {/* Stats row */}
-              <div className="flex flex-wrap items-center gap-4 mt-2.5">
-                <span className="flex items-center gap-1.5 text-sm text-main/60">
-                  <Users className="w-4 h-4" />
-                  <span className="font-semibold text-gray-900 dark:text-[#e5e3ff]">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3 text-[10px] sm:text-xs font-bold uppercase tracking-tight text-main/50">
+                <span className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-indigo-500" />
+                  <span className="font-black text-gray-900 dark:text-[#e5e3ff]">
                     {formatCount(channel.subscribersCount)}
                   </span>
-                  subscribers
+                  Subscribers
                 </span>
-                <span className="flex items-center gap-1.5 text-sm text-main/60">
-                  <VideoIcon className="w-4 h-4" />
-                  <span className="font-semibold text-gray-900 dark:text-[#e5e3ff]">
+                <span className="flex items-center gap-1.5">
+                  <VideoIcon className="w-3.5 h-3.5 text-indigo-500" />
+                  <span className="font-black text-gray-900 dark:text-[#e5e3ff]">
                     {formatCount(channel.videosCount ?? videos.length)}
                   </span>
-                  videos
+                  Transmissions
                 </span>
                 {channel.totalViews != null && (
-                  <span className="flex items-center gap-1.5 text-sm text-main/60">
-                    <Eye className="w-4 h-4" />
-                    <span className="font-semibold text-gray-900 dark:text-[#e5e3ff]">
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-indigo-500" />
+                    <span className="font-black text-gray-900 dark:text-[#e5e3ff]">
                       {formatCount(channel.totalViews)}
                     </span>
-                    views
+                    Views
                   </span>
                 )}
               </div>
             </div>
 
             {/* Subscribe */}
-            <SubscribeButton
-              subscribed={subscribed}
-              loading={loadingSub}
-              onClick={handleSubscribe}
-              subscriberCount={channel.subscribersCount}
-            />
+            <div className="w-full sm:w-auto">
+              <SubscribeButton
+                subscribed={subscribed}
+                loading={loadingSub}
+                onClick={handleSubscribe}
+                subscriberCount={channel.subscribersCount}
+              />
+            </div>
           </div>
         </div>
 
         {/* Description */}
         {channel.description && (
-          <div className="mt-4 max-w-2xl">
-              <p className="text-sm text-main/70 leading-relaxed font-medium">
+          <div className="mt-8 max-w-2xl bg-black/5 dark:bg-white/5 p-5 rounded-2xl border border-black/5">
+              <p className="text-sm text-main/70 leading-relaxed font-bold italic">
               {channel.description}
             </p>
           </div>
         )}
 
         {/* Divider */}
-        <div className="mt-6 h-px bg-linear-to-r from-indigo-500/30 via-purple-500/20 to-transparent" />
+        <div className="mt-10 h-px bg-linear-to-r from-indigo-500/20 via-purple-500/10 to-transparent" />
       </div>
 
       {/* ═══════════════ VIDEOS SECTION ═══════════════ */}
-      <div className="px-4 md:px-8 mt-6 pb-12">
+      <div className="px-4 sm:px-6 md:px-10 lg:px-12 mt-10 pb-20">
 
         {/* Section header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-1 h-6 rounded-full bg-linear-to-b from-indigo-500 to-purple-500" />
-          <h2 className="text-lg font-bold tracking-tight text-gray-900 dark:text-[#e5e3ff]">
-            Videos
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-1.5 h-6 rounded-full bg-linear-to-b from-indigo-500 to-purple-600" />
+          <h2 className="text-lg sm:text-xl font-display font-black uppercase italic tracking-tight text-gray-900 dark:text-[#e5e3ff]">
+            Network Archives
           </h2>
           {videos.length > 0 && (
-            <span className="ml-1 text-xs bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full px-2.5 py-0.5 font-semibold">
-              {videos.length}
+            <span className="ml-2 text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg px-2.5 py-1 font-black uppercase tracking-widest border border-indigo-500/20">
+              {videos.length} NODES
             </span>
           )}
         </div>
 
         {/* Grid */}
         {videos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 sm:gap-8">
             {videos.map((v) => (
               <VideoCard key={v._id} video={v} />
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/15 flex items-center justify-center mb-4">
-              <VideoIcon className="w-8 h-8 text-indigo-400" />
+          <div className="flex flex-col items-center justify-center py-32 text-center bg-black/5 dark:bg-white/5 rounded-[3rem] border border-dashed border-black/10 transition-all">
+            <div className="w-20 h-20 rounded-3xl bg-indigo-500/10 flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/5">
+              <VideoIcon className="w-10 h-10 text-indigo-400" />
             </div>
-            <p className="text-lg font-semibold text-gray-700 dark:text-[#e5e3ff]">No videos yet</p>
-            <p className="text-sm text-gray-500 dark:text-[#aaa8c6] mt-1">
-              This channel hasn't uploaded any videos.
+            <p className="text-xl font-display font-black text-gray-800 dark:text-[#e5e3ff]">SIGNAL SILENCE</p>
+            <p className="text-xs font-bold text-gray-500 dark:text-[#aaa8c6] mt-2 uppercase tracking-widest opacity-60">
+              This node has not initiated a network broadcast yet.
             </p>
           </div>
         )}

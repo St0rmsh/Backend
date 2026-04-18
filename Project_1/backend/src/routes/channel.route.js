@@ -8,6 +8,7 @@ import {
 
 } from "../controllers/channel.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
+import { optionalAuth } from "../middleware/optionalAuth.middleware.js";
 import { uploadImage } from "../middleware/uploadImage.middleware.js";
 const router = Router();
 
@@ -27,7 +28,7 @@ router.get("/me", authMiddleware, getMyChannel);
 
 // /api/channel/:handle/videos
 // GET
-router.get("/:handle/videos", getChannelVideos);
+router.get("/:handle/videos", optionalAuth, getChannelVideos);
 
 
 // /api/channel/:handle

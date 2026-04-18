@@ -12,7 +12,7 @@ export const timeAgo = (date) => {
     for (let key in intervals) {
         const value = Math.floor(seconds / intervals[key]);
         if (value > 0) {
-            return `${value}${key[0]} ago`; // 2h ago, 4d ago
+            return `${value}${key[0]} ago`; 
         }
     }
 

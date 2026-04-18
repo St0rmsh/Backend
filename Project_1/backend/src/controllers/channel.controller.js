@@ -144,6 +144,12 @@ export const updateChannel = async (req, res) => {
       { new: true }
     );
 
+    // ✅ SYNC WITH USER MODEL
+    await userModel.findByIdAndUpdate(userId, {
+        avatar: avatarUrl,
+        banner: bannerUrl
+    });
+
     const doc = updated.toObject();
     doc.avatar = getSignedUrl(doc.avatar);
     doc.banner = getSignedUrl(doc.banner);
@@ -168,9 +174,6 @@ export const getChannelVideos = async (req, res) => {
     try {
         const handle = req.params.handle.toLowerCase();
 
-        const userId = req.user?._id;
-
-
         const channel = await channelModel.findOne({ handle });
 
         if (!channel) {
@@ -178,13 +181,15 @@ export const getChannelVideos = async (req, res) => {
         }
 
        
-     const videos = await videoModel.find({
-       channel: channel._id,
-         $or: [
-           { isPublished: true },
-           { uploader: userId } 
-        ]
-      }).sort({ createdAt: -1 });
+        const userId = req.user?._id;
+        const isOwner = userId && channel.owner.toString() === userId.toString();
+
+        const query = { channel: channel._id, status: { $ne: "PROCESSING" } };
+        if (!isOwner) {
+            query.visibility = "public";
+        }
+
+        const videos = await videoModel.find(query).sort({ createdAt: -1 });
 
         const signedVideos = videos.map(v => {
             const doc = v.toObject();

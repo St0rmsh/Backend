@@ -73,7 +73,7 @@ export const videoUpload = async (req, res) => {
     // 🚀 STEP 2: RETURN SUCCESS IMMEDIATELY
     res.status(201).json({
       success: true,
-      message: "Video upload started! Generating premium copy...",
+      message: "Signal Injection Initiated. Verifying broadcast integrity...",
       video
     });
 
@@ -220,6 +220,18 @@ export const getVideo = async (req, res) => {
             return res.status(404).json({ message: "Video not found" });
         }
 
+        // 🔐 PRIVACY & STATUS CHECK
+        if (!video.isPublished || video.status !== "COMPLETED" || video.visibility === "private") {
+            const isOwner = userId && video.uploader.toString() === userId.toString();
+            if (!isOwner) {
+                return res.status(403).json({ 
+                    message: video.status === "PROCESSING" 
+                        ? "Signal still initializing. Only curator has access." 
+                        : "Access Denied: Private Signal" 
+                });
+            }
+        }
+
         console.log(`🔍 [GET_VIDEO] Req: ${req.params.id} | User: ${userId || "GUEST"} | Owner: ${video.uploader}`);
 
         // 🔥 NO SECURITY CHECK FOR PUBLIC PAGES
@@ -240,8 +252,20 @@ export const getAllVideos = async (req, res) => {
         const limit = 10;
         const skip = (page - 1) * limit;
 
+        const userId = req.user?._id;
+
+        const query = { status: { $ne: "PROCESSING" } };
+        if (userId) {
+            query.$or = [
+                { visibility: "public" },
+                { uploader: userId }
+            ];
+        } else {
+            query.visibility = "public";
+        }
+
         const videos = await videoModel
-            .find({ isPublished: true })
+            .find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -288,10 +312,22 @@ export const searchVideos = async (req, res) => {
         const q = req.query.q;
         if (!q) return res.json({ success: true, videos: [] });
 
-        const videos = await videoModel.find({
-            isPublished: { $ne: false },
+        const userId = req.user?._id;
+        const query = {
+            status: { $ne: "PROCESSING" },
             title: { $regex: q, $options: "i" }
-        })
+        };
+
+        if (userId) {
+            query.$or = [
+                { visibility: "public" },
+                { uploader: userId }
+            ];
+        } else {
+            query.visibility = "public";
+        }
+
+        const videos = await videoModel.find(query)
         .populate("channel", "name handle avatar")
         .limit(20);
 
@@ -328,7 +364,7 @@ export const deleteVideo = async (req, res) => {
 export const getTrendingVideos = async (req, res) => {
     try {
         const videos = await videoModel.aggregate([
-            { $match: { isPublished: true } },
+            { $match: { status: { $ne: "PROCESSING" }, visibility: "public" } },
             { $addFields: { score: { $add: ["$views", { $multiply: ["$likesCount", 2] }] } } },
             { $sort: { score: -1 } },
             { $limit: 20 }
@@ -340,6 +376,57 @@ export const getTrendingVideos = async (req, res) => {
         });
         return res.json({ success: true, videos: signedVideos });
     } catch {
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+/**
+ * 🛠 UPDATE VIDEO (Studio metadata edit)
+ */
+export const updateVideo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, description, visibility, isPublished } = req.body;
+        const thumbFile = req.file;
+
+        const video = await videoModel.findById(id);
+        if (!video) return res.status(404).json({ message: "Video not found" });
+
+        // 🔐 OWNER CHECK
+        if (video.uploader.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Unauthorized edit attempt" });
+        }
+
+        const updates = {};
+        if (title) updates.title = title;
+        if (description !== undefined) updates.description = description;
+        if (visibility) updates.visibility = visibility;
+        if (isPublished !== undefined) updates.isPublished = isPublished === "true" || isPublished === true;
+
+        if (thumbFile) {
+            const uploaded = await uploadFile({
+                buffer: thumbFile.buffer,
+                filename: `update-${Date.now()}-${thumbFile.originalname}`,
+                folder: "thumbnails"
+            });
+            updates.thumbnail = uploaded.url;
+        }
+
+        const updatedVideo = await videoModel.findByIdAndUpdate(id, updates, { new: true });
+        
+        // Sign URLs for response
+        const doc = updatedVideo.toObject();
+        doc.videoUrl = getSignedUrl(doc.videoUrl);
+        doc.thumbnail = getSignedUrl(doc.thumbnail);
+
+        return res.json({
+            success: true,
+            message: "Archives updated successfully",
+            video: doc
+        });
+
+    } catch (err) {
+        console.error("Update error:", err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };

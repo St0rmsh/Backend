@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 const Home = () => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -24,17 +23,19 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-8 py-6">
+    <div className="max-w-[2200px] mx-auto px-4 sm:px-10 lg:px-12 py-8 sm:py-12">
       
-      {/* ===== VIDEOS GRID (3 Columns requested) ===== */}
+      {/* ===== VIDEOS GRID ===== */}
       <div
         className="
         grid 
-        gap-x-8 gap-y-12
+        gap-x-6 gap-y-12
+        sm:gap-x-8 sm:gap-y-16
         grid-cols-1 
         sm:grid-cols-2 
         lg:grid-cols-3 
-        xl:grid-cols-3
+        xl:grid-cols-4
+        2xl:grid-cols-5
       "
       >
         {loading
@@ -47,9 +48,9 @@ const Home = () => {
       </div>
 
       {/* FOOTER */}
-      <div className="mt-20 border-t border-main pt-12 text-center pb-12">
-         <p className="text-main font-bold opacity-30 text-sm italic tracking-widest uppercase">
-           AI Verified Content Network
+      <div className="mt-32 border-t border-black/5 pt-16 text-center pb-16">
+         <p className="text-[10px] font-black opacity-30 tracking-[0.4em] uppercase">
+            Neural Content Verification Network &copy; 2026
          </p>
       </div>
 

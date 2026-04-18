@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, ShieldCheck, ShieldAlert, Shield, AlertTriangle, Sparkles } from "lucide-react";
+import { Play, ShieldCheck, ShieldAlert, Sparkles, Clock, Eye } from "lucide-react";
 
 const formatTimeAgo = (date) => {
   if (!date) return "just now";
@@ -24,21 +24,11 @@ const VideoCard = ({ video }) => {
   const channel = video?.channel || {};
   const videoRef = useRef(null);
   const [isHovering, setIsHovering] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   const handleMouseEnter = () => {
-    if (isMobile) return;
     setIsHovering(true);
     if (videoRef.current) {
       try {
-        videoRef.current.currentTime = 2;
         videoRef.current.play();
       } catch {}
     }
@@ -55,115 +45,106 @@ const VideoCard = ({ video }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-      className="w-full group cursor-pointer"
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      className="w-full group cursor-pointer transition-all"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <Link to={`/video/${video?._id}`}>
-        <div className="relative aspect-video rounded-3xl overflow-hidden bg-surface-low border border-main group-hover:border-brand-indigo/30 transition-all duration-500 shadow-sm group-hover:shadow-xl group-hover:shadow-brand-indigo/10 group-hover:-translate-y-1">
-          
+        <div className="relative aspect-video rounded-xl overflow-hidden bg-surface-low mb-3 border border-black/5 shadow-sm group-hover:shadow-[0_12px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
           {/* THUMBNAIL */}
-          <motion.img
-            animate={{ scale: isHovering ? 1.1 : 1, filter: isHovering ? "blur(4px)" : "blur(0px)" }}
-            transition={{ duration: 0.6 }}
+          <img
             src={video?.thumbnail || "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop"}
             alt={video?.title}
-            className="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300"
-            style={{ opacity: isHovering ? 0.3 : 1 }}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${isHovering ? "scale-105 blur-[2px] opacity-40" : "scale-100 opacity-100"}`}
           />
 
           {/* VIDEO PREVIEW */}
-          {video?.videoUrl && !isMobile && (
+          {video?.videoUrl && (
             <video
               ref={videoRef}
               src={video.videoUrl}
               muted
               loop
               playsInline
-              className={`absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-500 ${isHovering ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isHovering ? "opacity-100" : "opacity-0"}`}
             />
           )}
 
-          {/* AI STATUS OVERLAY (TOP LEFT) */}
-          <div className="absolute top-3 left-3 z-30 flex flex-wrap gap-1.5 pointer-events-none">
-            {video?.verification?.finalVerdict === "TRUE" && (
-              <div className="glass px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
-                <ShieldCheck className="w-3.5 h-3.5 text-brand-emerald ai-glow-emerald" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white">Verified</span>
-              </div>
-            )}
-            {video?.verification?.finalVerdict === "FALSE" && (
-              <div className="bg-brand-crimson/90 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
-                <ShieldAlert className="w-3.5 h-3.5 text-white ai-glow-crimson" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white">False Info</span>
-              </div>
-            )}
-            {video?.deepfakeScore > 0.5 && (
-              <div className="glass px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
-                <Sparkles className="w-3.5 h-3.5 text-brand-purple" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white">AI Gen</span>
-              </div>
-            )}
-          </div>
-
-          {/* HOVER PLAY ICON */}
-          <AnimatePresence>
-            {isHovering && !isMobile && (
-              <motion.div 
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 z-20 flex items-center justify-center bg-black/20"
-              >
-                <div className="w-14 h-14 rounded-full glass-heavy flex items-center justify-center shadow-2xl scale-110">
-                  <Play className="w-6 h-6 text-white fill-white ml-1" />
+          {/* AI STATUS BADGE - GLASSMORPHIC */}
+          <div className="absolute top-4 left-4 z-10">
+            {video?.verification?.finalVerdict === "TRUE" ? (
+                <div className="bg-white/90 backdrop-blur-xl border border-black/5 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                    <ShieldCheck className="w-3.5 h-3.5 text-brand-green" />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-black">AI Verified</span>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            ) : video?.deepfakeScore > 0.5 ? (
+                <div className="bg-brand-red/90 backdrop-blur-xl border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                    <ShieldAlert className="w-3.5 h-3.5 text-white" />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white">Manipulated</span>
+                </div>
+            ) : null}
+          </div>
 
           {/* DURATION */}
-          <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-black text-white tracking-widest uppercase">
-            {video?.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : "LIVE"}
+          <div className="absolute bottom-4 right-4 z-10 bg-black/80 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-xl text-[9px] font-black text-white tracking-widest uppercase">
+            {video?.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : "0:00"}
           </div>
+
+          {/* PLAY ICON OVERLAY ON HOVER */}
+          <AnimatePresence>
+            {isHovering && (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="absolute inset-0 flex items-center justify-center bg-brand-orange/10 pointer-events-none"
+                >
+                    <div className="w-16 h-16 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-brand-orange shadow-2xl">
+                        <Play fill="currentColor" size={32} className="ml-1" />
+                    </div>
+                </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </Link>
 
-      {/* CONTENT */}
-      <div className="flex mt-4 gap-4 px-1">
-        <Link to={`/channel/${channel?.handle || ""}`} className="shrink-0">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-indigo to-brand-purple flex items-center justify-center text-lg font-black text-white shadow-lg overflow-hidden border-2 border-transparent group-hover:border-brand-indigo/50 transition-all">
+      <div className="flex gap-4 px-1">
+        {/* CHANNEL AVATAR */}
+        <Link to={`/channel/${channel?.handle || ""}`} className="shrink-0 mt-0.5">
+          <div className="w-9 h-9 rounded-full bg-surface-low border border-black/5 overflow-hidden flex items-center justify-center shadow-sm transition-colors group-hover:border-black/10">
             {channel?.avatar ? (
               <img src={channel.avatar} alt={channel.name} className="w-full h-full object-cover" />
             ) : (
-              channel?.name?.charAt(0) || "U"
+              <span className="font-black text-[10px] opacity-40">{channel?.name?.charAt(0) || "C"}</span>
             )}
           </div>
         </Link>
 
-        <div className="flex flex-col flex-1">
+        {/* INFO */}
+        <div className="flex flex-col flex-1 min-w-0">
           <Link to={`/video/${video?._id}`}>
-            <h3 className="font-display font-bold text-[16px] leading-snug line-clamp-2 text-main group-hover:text-brand-indigo transition-colors duration-300">
-              {video?.title || "Premium Editorial Content"}
+            <h3 className="font-display font-black text-[14px] leading-snug text-black line-clamp-2 transition-colors duration-300">
+              {video?.title || "Untitled Transmission"}
             </h3>
           </Link>
           
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-1 flex flex-col gap-0.5">
             <Link to={`/channel/${channel?.handle || ""}`}>
-              <span className="text-xs font-black uppercase tracking-widest text-muted hover:text-main transition-colors">
-                {channel?.name || "The Curator"}
-              </span>
+              <div className="flex items-center gap-1.5 group/chan">
+                <span className="text-[12px] font-bold text-muted hover:text-black transition-colors">
+                    {channel?.name || "The Curator"}
+                </span>
+                {channel?.verified && <ShieldCheck size={10} className="text-black/40" />}
+              </div>
             </Link>
-            <span className="w-1 h-1 rounded-full bg-muted opacity-30" />
-            <span className="text-xs font-bold text-muted">
-              {video?.views || 0} Views
-            </span>
+            <div className="flex items-center gap-3 text-[10px] text-muted font-bold uppercase tracking-tighter">
+              <span className="flex items-center gap-1.5"><Eye size={12} className="text-brand-orange/60" /> {video?.views?.toLocaleString() || 0}</span>
+              <span className="w-1 h-1 rounded-full bg-black/10" />
+              <span className="flex items-center gap-1.5"><Clock size={12} className="text-brand-orange/60" /> {formatTimeAgo(video?.createdAt)}</span>
+            </div>
           </div>
-          
-          <p className="text-[11px] text-muted font-bold uppercase tracking-tighter mt-1 opacity-50">
-            {formatTimeAgo(video?.createdAt)}
-          </p>
         </div>
       </div>
     </motion.div>

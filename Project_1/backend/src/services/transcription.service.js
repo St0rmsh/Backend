@@ -34,14 +34,13 @@ export async function transcribeVideo(audioUrl) {
             );
 
             if (res.data.status === "completed") {
-                return res.data.text; // ✅ transcript text
+                return res.data.text; 
             }
 
             if (res.data.status === "error") {
                 throw new Error("Transcription failed");
             }
 
-            // wait 3 sec before retry
             await new Promise(r => setTimeout(r, 3000));
         }
 

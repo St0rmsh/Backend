@@ -9,6 +9,7 @@ import Home from "../features/Yt_Clone/pages/Home";
 import VideoPages from "../features/Yt_Clone/pages/VideoPages";
 import Dashboard from "../features/Yt_Clone/pages/Dashboard";
 import ChannelPage from "../features/Yt_Clone/pages/ChannelPage";
+import SearchPage from "../features/Yt_Clone/pages/Search";
 import Error from "../features/Yt_Clone/components/layout/Error";
 import Protected from "../features/auth/components/Protected"; // ✅ IMPORTANT
 
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "video/:id", element: <VideoPages /> },
+      { path: "search", element: <SearchPage /> },
     ],
   },
 

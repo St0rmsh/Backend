@@ -13,7 +13,23 @@ const watchHistorySchema = new mongoose.Schema({
     progress: {
         type: Number,
         default: 0
-    }, // seconds
+    }, // last point reached in seconds
+    retention: {
+        type: [Number],
+        default: new Array(20).fill(0) // 20 buckets of 5% each
+    },
+    sessionStart: {
+        type: Date,
+        default: Date.now
+    },
+    viewCounted: {
+        type: Boolean,
+        default: false
+    },
+    lastUpdated: {
+        type: Date,
+        default: Date.now
+    }
 }, { timestamps: true });
 
 const WatchHistory = mongoose.model("WatchHistory", watchHistorySchema);

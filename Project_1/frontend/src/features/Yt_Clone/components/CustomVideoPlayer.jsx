@@ -5,135 +5,139 @@ import {
   Volume2,
   VolumeX,
   Maximize,
-  SkipForward,
-  SkipBack,
   Settings,
   ChevronUp,
   ShieldCheck,
   ShieldAlert,
-  Sparkles,
-  AlertTriangle
+  AlertTriangle,
+  RotateCcw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../context/ThemeContext";
 
 const CustomPlayer = ({
   sources,
   autoPlay = false,
   onEnd,
   onWatchTime,
-  videoData = {} // New: passing full video data for AI badges
+  videoData = {},
+  initialTime = 0
 }) => {
-  const { theme } = useTheme();
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const progressRef = useRef(null);
+  const lastTrackedTimeRef = useRef(0);
+  const retryCountRef = useRef(0);
 
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem("signal_volume");
+    return saved !== null ? parseFloat(saved) : 1;
+  });
+  const [isMuted, setIsMuted] = useState(() => {
+    const saved = localStorage.getItem("signal_muted");
+    return saved !== null ? JSON.parse(saved) : false;
+  });
   const [playing, setPlaying] = useState(autoPlay);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
   const [speed, setSpeed] = useState(1);
   const [buffer, setBuffer] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
   const [quality, setQuality] = useState("720p");
   const [showSettings, setShowSettings] = useState(false);
   const [error, setError] = useState(false);
+  const [buffering, setBuffering] = useState(false);
   const [isMini, setIsMini] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+
+  // 💾 PERSIST & SYNC PREFERENCES
+  useEffect(() => {
+    localStorage.setItem("signal_volume", volume.toString());
+    localStorage.setItem("signal_muted", JSON.stringify(isMuted));
+    if (videoRef.current) {
+        videoRef.current.volume = volume;
+        videoRef.current.muted = isMuted;
+        videoRef.current.playbackRate = speed;
+    }
+  }, [volume, isMuted, speed]);
 
   const src = sources?.[quality] || sources?.["720p"];
 
-  // =========================
-  // RESPONSIVENESS
-  // =========================
+  // Handle src change and autoplay
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    
-    // Mini-player scroll logic
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!isMobile) setIsMini(!entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
-
-    if (containerRef.current) observer.observe(containerRef.current);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      observer.disconnect();
-    };
-  }, [isMobile]);
-
-  // =========================
-  // VIDEO LOGIC
-  // =========================
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.volume = volume;
-    v.playbackRate = speed;
-  }, [volume, speed]);
-
-  useEffect(() => {
+    retryCountRef.current = 0;
+    setError(false);
     if (autoPlay && videoRef.current) {
-      videoRef.current.play().then(() => setPlaying(true)).catch(() => {
-        setIsMuted(true);
-        videoRef.current.muted = true;
-        videoRef.current.play().then(() => setPlaying(true));
-      });
+        const attemptPlay = () => {
+            videoRef.current.play().catch(() => {
+                // If blocked (e.g. by browser policy), mute and try again
+                setIsMuted(true);
+                videoRef.current.muted = true;
+                videoRef.current.play().catch(e => console.error("Neural link failed to auto-initiate:", e));
+            });
+        };
+        
+        videoRef.current.load();
+        attemptPlay();
     }
   }, [src, autoPlay]);
 
+  // ⌚ RESUME LOGIC
   useEffect(() => {
-    if (videoRef.current) videoRef.current.load();
-  }, [src]);
-
-  // =========================
-  // CONTROLS
-  // =========================
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setPlaying(false);
+    if (initialTime > 0 && videoRef.current) {
+        videoRef.current.currentTime = initialTime;
+        lastTrackedTimeRef.current = initialTime;
     }
-  };
+  }, [initialTime]);
 
-  const toggleMute = () => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !videoRef.current.muted;
-    setIsMuted(videoRef.current.muted);
-    if (!videoRef.current.muted && volume === 0) setVolume(1);
-  };
-
+  // =========================
+  // ANALYTICS TRACKING
+  // =========================
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (!v?.duration) return;
-    setProgress((v.currentTime / v.duration) * 100);
-    onWatchTime?.(v.currentTime);
+    
+    const currentPos = v.currentTime;
+    setProgress((currentPos / v.duration) * 100);
+
+    // Track every 5 seconds
+    if (Math.abs(currentPos - lastTrackedTimeRef.current) >= 5) {
+      lastTrackedTimeRef.current = currentPos;
+      onWatchTime?.(currentPos, v.duration);
+    }
   };
 
   const handleSeek = (e) => {
-    if (!progressRef.current) return;
+    if (!progressRef.current || !duration) return;
     const rect = progressRef.current.getBoundingClientRect();
     const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     videoRef.current.currentTime = percent * duration;
+    onWatchTime?.(videoRef.current.currentTime, duration);
   };
 
-  const goFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen();
+  // 🔄 RETRY LOGIC
+  const handleError = () => {
+    if (retryCountRef.current < 3) {
+        retryCountRef.current++;
+        console.warn(`Connection dropped. Retrying signal attempt ${retryCountRef.current}...`);
+        setTimeout(() => {
+            if (videoRef.current) videoRef.current.load();
+        }, 2000 * retryCountRef.current);
     } else {
-      document.exitFullscreen();
+        setError(true);
     }
+  };
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+        videoRef.current.play().catch(() => {
+            setIsMuted(true);
+            videoRef.current.muted = true;
+            videoRef.current.play();
+        });
+    } else {
+        videoRef.current.pause();
+    }
+    setPlaying(!videoRef.current.paused);
   };
 
   const formatTime = (t) => {
@@ -143,161 +147,162 @@ const CustomPlayer = ({
     return `${m}:${s}`;
   };
 
-  // AI Truth Markers Logic
-  const truthMarkers = useMemo(() => {
-    if (!videoData?.verification?.claims) return [];
-    return videoData.verification.claims.map(c => ({
-      ...c,
-      percent: (c.timestamp || 0) / (duration || 1) * 100
-    }));
-  }, [videoData, duration]);
-
   return (
     <div 
       ref={containerRef} 
-      className={`relative bg-black transition-all duration-500 rounded-3xl overflow-hidden group/player shadow-2xl
-        ${isMini ? "fixed bottom-6 right-6 w-80 z-50 shadow-brand-indigo/20 scale-110" : "w-full aspect-video"}
+      onMouseMove={() => setShowControls(true)}
+      onMouseLeave={() => playing && setShowControls(false)}
+      className={`relative bg-black group/player overflow-hidden select-none touch-none
+        ${isMini ? "fixed bottom-6 right-6 w-80 z-50 rounded-2xl shadow-2xl" : "w-full aspect-video rounded-3xl border border-border-main"}
       `}
     >
-      {/* CINEMA AMBIENT LIGHTING */}
-      <div className="cinema-ambient" style={{ background: `radial-gradient(circle, var(--color-brand-indigo) 0%, transparent 70%)` }} />
-
       <video
         ref={videoRef}
         src={src}
         onClick={togglePlay}
         onTimeUpdate={handleTimeUpdate}
+        onWaiting={() => setBuffering(true)}
+        onPlaying={() => { setBuffering(false); setPlaying(true); }}
+        onSeeking={() => setBuffering(true)}
+        onSeeked={() => setBuffering(false)}
+        onPause={() => setPlaying(false)}
         onLoadedMetadata={() => setDuration(videoRef.current.duration)}
         onEnded={onEnd}
-        onError={() => setError(true)}
+        onError={handleError}
         className="w-full h-full object-contain cursor-pointer"
         playsInline
+        muted={isMuted}
       />
 
-      {/* AI STATUS BADGE (TOP RIGHT) */}
-      <div className="absolute top-4 right-4 z-20 flex gap-2">
-        <AnimatePresence>
-          {videoData?.verification?.finalVerdict && videoData.verification.finalVerdict !== "UNKNOWN" && (
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="glass px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl border-white/20"
-            >
-              {videoData.verification.finalVerdict === "TRUE" ? (
-                <ShieldCheck className="w-4 h-4 text-brand-emerald ai-glow-emerald" />
-              ) : (
-                <ShieldAlert className="w-4 h-4 text-brand-crimson ai-glow-crimson" />
-              )}
-              <span className="text-[10px] font-black uppercase tracking-widest text-white leading-none">
-                {videoData.verification.finalVerdict} CONTENT
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <AnimatePresence>
+        {buffering && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center bg-black/20 z-10 pointer-events-none"
+          >
+            <div className="w-12 h-12 border-4 border-white/20 border-t-brand-orange rounded-full animate-spin"></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="absolute top-4 right-4 z-20">
+        {videoData?.verification?.finalVerdict && (
+          <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 border border-black/5 shadow-sm">
+            {videoData.verification.finalVerdict === "TRUE" ? (
+              <ShieldCheck className="w-3.5 h-3.5 text-brand-green" />
+            ) : (
+              <ShieldAlert className="w-3.5 h-3.5 text-brand-red" />
+            )}
+            <span className="text-[9px] font-black uppercase tracking-widest text-black leading-none">
+              AI {videoData.verification.finalVerdict}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* ERROR & LOADING OVERLAYS (REUSED LOGIC WITH NEW STYLING) */}
       {error && (
-        <div className="absolute inset-0 glass-heavy flex flex-col items-center justify-center text-white p-6 text-center z-30">
-          <AlertTriangle className="w-12 h-12 text-brand-crimson mb-4 ai-glow-crimson" />
-          <h2 className="text-xl font-black uppercase tracking-tighter mb-2">Signal Lost</h2>
-          <p className="text-sm opacity-70">The curated content could not be loaded.</p>
-          <button onClick={() => { setError(false); videoRef.current?.load(); }} className="mt-6 px-6 py-2 glass rounded-full font-bold hover:bg-white/10 transition-all uppercase text-[10px] tracking-widest">Retry Access</button>
+        <div className="absolute inset-0 bg-white flex flex-col items-center justify-center text-black p-6 text-center z-30">
+          <AlertTriangle className="w-10 h-10 text-brand-orange mb-4" />
+          <h2 className="text-lg font-black uppercase tracking-tight mb-2">Signal Connection Lost</h2>
+          <p className="text-[10px] font-bold text-muted max-w-[200px] uppercase">Failed to establish secure neural link after 3 attempts.</p>
+          <button onClick={() => { retryCountRef.current = 0; setError(false); videoRef.current?.load(); }} className="mt-8 px-8 py-3 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-brand-orange transition-all active:scale-95 shadow-xl">
+            Hard Reset Signal
+          </button>
         </div>
       )}
 
-      {/* CONTROLS */}
       <motion.div
-        initial={false}
-        animate={{ opacity: showControls || !playing || isMini ? 1 : 0, y: showControls || !playing || isMini ? 0 : 20 }}
-        className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-20"
+        animate={{ opacity: showControls || !playing ? 1 : 0, y: showControls || !playing ? 0 : 10 }}
+        className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-20 pt-16"
       >
-        {/* PROGRESS BAR */}
-        <div className="relative group/progress mb-4">
-          <div
-            ref={progressRef}
-            onClick={handleSeek}
-            className="h-1.5 bg-white/20 rounded-full cursor-pointer relative transition-all group-hover/progress:h-2"
-          >
-            <div className="bg-brand-indigo/50 h-full rounded-full absolute" style={{ width: `${buffer}%` }} />
-            <div className="bg-gradient-to-r from-brand-indigo to-brand-purple h-full rounded-full absolute shadow-[0_0_10px_rgba(129,140,248,0.5)]" style={{ width: `${progress}%` }} />
-            
-            {/* AI TRUTH MARKERS */}
-            {truthMarkers.map((marker, i) => (
-              <div 
-                key={i}
-                className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full z-10 ai-glow-emerald cursor-help"
-                style={{ left: `${marker.percent}%`, backgroundColor: marker.verdict === "TRUE" ? "var(--color-brand-emerald)" : "var(--color-brand-crimson)" }}
-                title={marker.text}
-              />
-            ))}
+        <div 
+          ref={progressRef}
+          onClick={handleSeek}
+          className="group/progress relative h-1 bg-white/20 rounded-full cursor-pointer mb-6 transition-all hover:h-1.5"
+        >
+          <div className="absolute left-0 top-0 h-full bg-brand-orange rounded-full" style={{ width: `${progress}%` }}>
+             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg scale-0 group-hover/progress:scale-100 transition-transform" />
           </div>
         </div>
 
-        {/* BOTTOM CONTROLS */}
         <div className="flex justify-between items-center text-white">
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-6">
             <button onClick={togglePlay} className="hover:scale-110 transition-transform">
-              {playing ? <Pause className="fill-white" /> : <Play className="fill-white" />}
+              {playing ? <Pause className="fill-white" size={20} /> : <Play className="fill-white" size={20} />}
             </button>
-            {!isMobile && (
-              <>
-                <div className="flex items-center gap-3">
-                  <button onClick={toggleMute} className="hover:text-brand-indigo transition-colors">
-                    {isMuted ? <VolumeX /> : <Volume2 />}
-                  </button>
-                  <input
-                    type="range" min="0" max="1" step="0.05" value={volume}
-                    onChange={(e) => setVolume(Number(e.target.value))}
-                    className="w-20 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-brand-indigo"
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setIsMuted(!isMuted)}
+                className="hover:text-brand-orange transition-colors"
+              >
+                {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </button>
+              
+              <div className="group/volume relative w-24 h-6 flex items-center cursor-pointer">
+                {/* VOLUME TRACK CONTAINER */}
+                <div 
+                  className="w-full h-1 bg-white/20 rounded-full relative overflow-hidden"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const newVol = (e.clientX - rect.left) / rect.width;
+                    setVolume(Math.max(0, Math.min(1, newVol)));
+                    setIsMuted(false);
+                  }}
+                >
+                  <motion.div 
+                    initial={false}
+                    animate={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
+                    className="absolute left-0 top-0 h-full bg-brand-orange"
                   />
                 </div>
-                <span className="font-display font-medium text-[11px] tracking-widest uppercase opacity-70">
-                  {formatTime(videoRef.current?.currentTime)} / {formatTime(duration)}
-                </span>
-              </>
-            )}
+                {/* INVISIBLE SCORCH ZONE FOR EASIER DRAGGING/CLICKING */}
+                <div 
+                  className="absolute inset-0 z-10"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const newVol = (e.clientX - rect.left) / rect.width;
+                    setVolume(Math.max(0, Math.min(1, newVol)));
+                    setIsMuted(false);
+                  }}
+                />
+              </div>
+            </div>
+            <span className="font-display font-bold text-[10px] tracking-widest opacity-80 uppercase">
+              {formatTime(videoRef.current?.currentTime)} / {formatTime(duration)}
+            </span>
           </div>
 
-          <div className="flex items-center gap-4 sm:gap-6">
-            {!isMobile && (
-              <div className="relative">
-                <button onClick={() => setShowSettings(!showSettings)} className={`hover:rotate-45 transition-transform ${showSettings ? 'text-brand-indigo' : ''}`}>
-                  <Settings />
-                </button>
-                <AnimatePresence>
-                  {showSettings && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute bottom-12 right-0 glass-heavy rounded-2xl p-3 w-40 border border-white/10 shadow-2xl"
-                    >
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">Playback Speed</p>
-                      {[0.5, 1, 1.5, 2].map(s => (
-                        <button key={s} onClick={() => setSpeed(s)} className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${speed === s ? 'bg-brand-indigo text-white shadow-lg shadow-brand-indigo/20' : 'hover:bg-white/10'}`}>{s}x</button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-            <button onClick={goFullscreen} className="hover:scale-110 transition-transform">
-              <Maximize />
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <button onClick={() => setShowSettings(!showSettings)} className={`transition-colors ${showSettings ? 'text-brand-orange' : 'hover:text-brand-tan'}`}>
+                <Settings size={18} />
+              </button>
+              <AnimatePresence>
+                {showSettings && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                    className="absolute bottom-10 right-0 bg-white rounded-2xl p-2 w-36 shadow-2xl border border-black/5"
+                  >
+                    <p className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-muted">Playback Speed</p>
+                    {[0.5, 1, 1.5, 2].map(s => (
+                      <button 
+                        key={s} 
+                        onClick={() => { setSpeed(s); setShowSettings(false); }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-colors ${speed === s ? 'bg-black text-white' : 'text-black hover:bg-surface-low'}`}
+                      >
+                        {s}x
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <button onClick={() => containerRef.current.requestFullscreen()} className="hover:text-brand-orange transition-colors">
+              <Maximize size={18} />
             </button>
           </div>
         </div>
       </motion.div>
-
-      {/* MINI PLAYER CLOSE */}
-      {isMini && (
-        <button 
-          onClick={() => setIsMini(false)}
-          className="absolute top-2 left-2 p-1 bg-black/50 text-white rounded-full hover:bg-black transition-colors z-40"
-        >
-          <ChevronUp className="w-4 h-4" />
-        </button>
-      )}
     </div>
   );
 };

@@ -14,47 +14,57 @@ const api = axios.create({
 export const uploadVideo = (formData, config = {}) => {
     return api.post("/api/video/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        ...config   // ✅ THIS FIXES PROGRESS
+        ...config
     });
 };
-
 
 export const getMyVideos = () => {
   return api.get("/api/video/me");
 };
 
-
-// Get all videos
 export const getAllVideos = () => {
     return api.get("/api/video");
 };
 
-// Search videos
 export const searchVideos = (query) => {
     return api.get(`/api/video/search?q=${encodeURIComponent(query)}`);
 };
 
-// Get single video
 export const getVideoById = (id) => {
     return api.get(`/api/video/${id}`);
 };
 
-// Add view
 export const addView = (videoId) => {
     return api.post(`/api/video/${videoId}/view`);
 };
 
-// Update watch time
 export const updateWatchTime = async (videoId, time) => {
   return api.post(`/api/video/${videoId}/watch`, {
     videoId,
-    time   // ✅ FIXED (not watchTime)
+    time
   });
 };
 
-// ✅ GET RESUME TIME
 export const getWatchTime = (videoId) => {
   return api.get(`/api/video/${videoId}/watch`);
+};
+
+// ✅ UPDATE VIDEO (METADATA)
+export const updateVideo = (id, data) => {
+    const headers = data instanceof FormData ? { "Content-Type": "multipart/form-data" } : {};
+    return api.patch(`/api/video/${id}`, data, { headers });
+};
+
+// ✅ DELETE VIDEO
+export const deleteVideo = (id) => {
+    return api.delete(`/api/video/${id}`);
+};
+
+/**
+ * 📊 ANALYTICS
+ */
+export const getStudioStats = () => {
+    return api.get("/api/analytics/studio");
 };
 
 
