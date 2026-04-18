@@ -16,17 +16,14 @@ const CreateProducts = () => {
     priceAmount: "",
     priceCurrency: "INR",
   });
+
   
-  // We'll simulate file uploads since using true files without an actual file input is annoying to mock here.
-  // But wait, the backend specifically uses `upload.array("images",7)` expecting actual multipart/form-data files.
-  // We need to provide a file input type for actual file buffer reading.
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     
-    // Create preview URLs
     const newPreviewUrls = files.map(file => URL.createObjectURL(file));
     setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
     setImages(prev => [...prev, ...files]);

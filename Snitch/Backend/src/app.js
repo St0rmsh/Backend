@@ -15,7 +15,7 @@ app.use(cookieParser());
 
 // // CORS — allow the Vite dev server to talk to the API
 // app.use(cors({
-//   origin: ['http://localhost:5173', 'http://localhost:3000'],
+//   origin: ['http://localhost:5173'],
 //   credentials: true,          // needed for cookies (JWT)
 //   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 //   allowedHeaders: ['Content-Type', 'Authorization'],

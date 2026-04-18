@@ -174,9 +174,6 @@ const getStrength = (pw) => {
   return s;
 };
 
-/* ════════════════════════════════════════════════════════════
-   REGISTER PAGE
-════════════════════════════════════════════════════════════ */
 const RegisterPage = () => {
   const { handleRegister, user, loading } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -197,7 +194,6 @@ const RegisterPage = () => {
     return <Navigate to="/" replace />;
   }
 
-  /* Client-side validation mirrors backend rules */
   const validate = () => {
     const e = {};
     if (!form.fullname.trim()) e.fullname = 'Full name is required';
@@ -242,14 +238,12 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#080b14] transition-colors duration-300">
-      {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-60 -left-40 w-[500px] h-[500px] bg-violet-400/8 dark:bg-violet-600/15 rounded-full blur-3xl" />
         <div className="absolute -bottom-60 -right-40 w-[500px] h-[500px] bg-indigo-400/8 dark:bg-indigo-600/15 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-violet-300/5 dark:bg-violet-900/10 rounded-full blur-3xl" />
       </div>
 
-      {/* Theme toggle */}
       <div className="fixed top-4 right-4 z-50">
         <button
           onClick={toggleTheme}
@@ -264,9 +258,7 @@ const RegisterPage = () => {
         </button>
       </div>
 
-      {/* Page content */}
       <div className="relative z-10 flex flex-col items-center justify-start min-h-screen px-4 py-10 sm:py-16">
-        {/* Logo */}
         <div className="flex items-center gap-2.5 mb-8">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
             <span className="text-white font-black text-xl leading-none">S</span>
@@ -274,7 +266,6 @@ const RegisterPage = () => {
           <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Snitch</span>
         </div>
 
-        {/* Card */}
         <div className="w-full max-w-lg bg-white dark:bg-white/5 backdrop-blur-xl
           border border-slate-200 dark:border-white/10
           rounded-2xl shadow-xl dark:shadow-black/30 p-6 sm:p-8">
@@ -284,7 +275,6 @@ const RegisterPage = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Join Snitch and start shopping the latest trends</p>
           </div>
 
-          {/* Server error */}
           {serverErr && (
             <div className="flex items-start gap-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-xl mb-5">
               <svg className="w-5 h-5 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -295,7 +285,6 @@ const RegisterPage = () => {
           )}
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-            {/* Row: Full name */}
             <Field label="Full Name" error={errors.fullname}>
               <input
                 id="fullname" name="fullname" type="text"
@@ -305,7 +294,6 @@ const RegisterPage = () => {
               />
             </Field>
 
-            {/* Row: Email */}
             <Field label="Email Address" error={errors.email}>
               <input
                 id="email" name="email" type="email"
@@ -315,7 +303,6 @@ const RegisterPage = () => {
               />
             </Field>
 
-            {/* Row: Password */}
             <Field label="Password" error={errors.password}>
               <div className="relative">
                 <input
@@ -335,7 +322,6 @@ const RegisterPage = () => {
                 </button>
               </div>
 
-              {/* Strength meter */}
               {form.password && (
                 <div className="mt-2 space-y-1">
                   <div className="flex gap-1.5">
@@ -353,7 +339,6 @@ const RegisterPage = () => {
               )}
             </Field>
 
-            {/* Row: Phone */}
             <Field label="Phone Number" error={errors.number}>
               <div className="flex gap-2 items-start">
                 <CountryPicker
@@ -369,7 +354,6 @@ const RegisterPage = () => {
               </div>
             </Field>
 
-            {/* Row: Role */}
             <div className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-slate-600 dark:text-slate-300">I want to</span>
               <div className="grid grid-cols-2 gap-3">
@@ -385,11 +369,9 @@ const RegisterPage = () => {
                           : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-violet-300 dark:hover:border-violet-500/50'
                         }`}
                     >
-                      {/* Active glow */}
                       {active && (
                         <div className="absolute inset-0 bg-gradient-to-b from-violet-500/5 to-transparent pointer-events-none" />
                       )}
-                      {/* Check badge */}
                       {active && (
                         <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -408,7 +390,6 @@ const RegisterPage = () => {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               id="register-submit" type="submit" disabled={loading}
               className="mt-1 h-12 w-full rounded-xl font-semibold text-sm text-white

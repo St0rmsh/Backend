@@ -1,7 +1,9 @@
 import ProductModel from "../models/product.model.js";
 import {uploadFile} from "../services/storage.service.js";
-import jwt from "jsonwebtoken";
-import { config } from "../config/config.js";
+
+
+
+
 
 export const createProduct = async(req,res)=> {
     
@@ -187,7 +189,7 @@ export const createProductReview = async (req, res) => {
         }
 
         const review = {
-            name: user.firstName + " " + user.lastName || "User",
+            name: user.fullname || "User",
             rating: Number(rating),
             comment,
             user: user._id || user.id,

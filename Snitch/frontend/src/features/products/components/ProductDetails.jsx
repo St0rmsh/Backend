@@ -3,8 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProduct } from '../hook/useProduct';
 import { useSelector } from 'react-redux';
 import { useTheme } from '../../../context/ThemeContext';
+import { useCart } from '../../../context/CartContext';
 
-/* ─── Static Star Row (memoized) ───────────────────────── */
 const Stars = memo(({ rating, size = 'w-4 h-4' }) => (
   <div className="flex gap-0.5">
     {[1,2,3,4,5].map(s => (
@@ -16,7 +16,6 @@ const Stars = memo(({ rating, size = 'w-4 h-4' }) => (
 ));
 Stars.displayName = 'Stars';
 
-/* ─── Interactive Star Picker ──────────────────────────── */
 const StarPicker = memo(({ value, onSelect, size = 'w-7 h-7' }) => {
   const [hover, setHover] = useState(0);
   return (
@@ -38,12 +37,8 @@ const StarPicker = memo(({ value, onSelect, size = 'w-7 h-7' }) => {
 });
 StarPicker.displayName = 'StarPicker';
 
-/* ─── SYMBOLS ──────────────────────────────────────────── */
 const SYM = { INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
 
-/* ═══════════════════════════════════════════════════════════
-   MAIN COMPONENT
-   ═══════════════════════════════════════════════════════════ */
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -51,25 +46,20 @@ const ProductDetails = () => {
   const { product, loading, error } = useSelector(s => s.product);
   const user = useSelector(s => s.auth.user);
   const { isDark, toggleTheme } = useTheme();
+  const { addToCart, cartCount } = useCart();
 
-  // Image gallery
   const [activeImg, setActiveImg] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Review creation
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [reviewMsg, setReviewMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  // Edit review
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({ rating: 5, comment: '' });
 
-  // Delete modal
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Quantity
   const [qty, setQty] = useState(1);
 
   useEffect(() => { if (id) handleFetchPublicProductById(id); }, [id]);
@@ -80,7 +70,6 @@ const ProductDetails = () => {
   const userReview = product?.reviews?.find(r => r.user === user?._id || r.user === user?.id);
   const sym = SYM[product?.price?.currency] || product?.price?.currency || '';
 
-  /* review distribution */
   const dist = useMemo(() => {
     const d = [0,0,0,0,0];
     product?.reviews?.forEach(r => { if (r.rating >= 1 && r.rating <= 5) d[r.rating-1]++; });
@@ -88,7 +77,6 @@ const ProductDetails = () => {
   }, [product?.reviews]);
   const total = product?.numReviews || 0;
 
-  /* ── Actions ──────────────────────────────── */
   const handleBuy = useCallback(() => { if (!user) navigate('/login'); }, [user, navigate]);
 
   const submitReview = async (e) => {
@@ -129,7 +117,6 @@ const ProductDetails = () => {
     finally { setDeleting(false); }
   };
 
-  /* ── Loading ──────────────────────────────── */
   if (loading && !product) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#0a0a0a]' : 'bg-[#f4f4ef]'}`}>
@@ -155,7 +142,6 @@ const ProductDetails = () => {
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0a] text-[#f0f0f0]' : 'bg-[#f4f4ef] text-[#1a1a1a]'} font-sans`}>
 
-      {/* ── Navbar ───────────────────────────────── */}
       <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1e1e1e]' : 'bg-[#f4f4ef]/95 border-[#ddd]'}`}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link to="/products" className="text-xl font-black italic tracking-[-0.04em]">SNITCH</Link>
@@ -167,6 +153,19 @@ const ProductDetails = () => {
                 <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
               )}
             </button>
+            <Link
+              to="/cart"
+              className={`p-2 rounded-lg relative ${isDark ? 'hover:bg-[#1a1a1a]' : 'hover:bg-[#e8e8e3]'}`}
+            >
+              <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-red-600 text-white text-[9px] font-bold flex items-center justify-center scale-110">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
             {user ? (
               <span className={`text-sm font-medium ${isDark ? 'text-[#aaa]' : 'text-[#555]'}`}>Hi, {user.fullname?.split(' ')[0]}</span>
             ) : (
@@ -177,19 +176,15 @@ const ProductDetails = () => {
       </nav>
 
       <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
-        {/* ── Breadcrumb ─────────────────────────── */}
         <div className={`flex items-center gap-1.5 text-xs mb-5 ${isDark ? 'text-[#555]' : 'text-[#999]'}`}>
           <Link to="/products" className="hover:underline">Products</Link>
           <span>›</span>
           <span className={isDark ? 'text-[#888]' : 'text-[#666]'}>{product.title?.slice(0, 50)}</span>
         </div>
 
-        {/* ═══ PRODUCT SECTION ═══════════════════════ */}
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
-          {/* ── LEFT: Image Gallery (Amazon style — thumbs on left, main on right) ── */}
           <div className="w-full lg:w-[55%] flex flex-col-reverse sm:flex-row gap-3">
-            {/* Vertical thumbnails */}
             {images.length > 1 && (
               <div className="flex sm:flex-col gap-2 sm:w-[72px] overflow-x-auto sm:overflow-y-auto sm:max-h-[520px] scrollbar-hide shrink-0 pb-1 sm:pb-0">
                 {images.map((img, i) => (
@@ -209,7 +204,6 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Main image */}
             <div className={`relative flex-1 aspect-[4/5] sm:aspect-auto sm:h-[520px] rounded-xl overflow-hidden border ${isDark ? 'bg-[#111] border-[#1e1e1e]' : 'bg-white border-[#e5e5df]'}`}>
               {!imgLoaded && images.length > 0 && (
                 <div className={`absolute inset-0 animate-pulse ${isDark ? 'bg-[#161616]' : 'bg-[#eee]'}`} />
@@ -228,7 +222,6 @@ const ProductDetails = () => {
                 </div>
               )}
 
-              {/* Image counter */}
               {images.length > 1 && (
                 <span className={`absolute bottom-3 right-3 text-[10px] font-semibold px-2 py-1 rounded ${isDark ? 'bg-black/70 text-white' : 'bg-white/80 text-black'}`}>
                   {activeImg + 1} / {images.length}
@@ -237,12 +230,8 @@ const ProductDetails = () => {
             </div>
           </div>
 
-          {/* ── RIGHT: Product Info ─────────────────── */}
           <div className="w-full lg:w-[45%] flex flex-col">
-            {/* Title */}
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight leading-snug mb-3">{product.title}</h1>
-
-            {/* Rating row */}
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               {total > 0 && (
                 <>
@@ -259,10 +248,8 @@ const ProductDetails = () => {
               )}
             </div>
 
-            {/* Divider */}
             <div className={`border-t mb-4 ${isDark ? 'border-[#1e1e1e]' : 'border-[#e5e5df]'}`} />
 
-            {/* Price */}
             <div className="mb-4">
               <div className="flex items-baseline gap-1">
                 <span className={`text-sm ${isDark ? 'text-[#888]' : 'text-[#666]'}`}>{sym}</span>
@@ -271,10 +258,8 @@ const ProductDetails = () => {
               <p className={`text-xs mt-1 ${isDark ? 'text-[#555]' : 'text-[#999]'}`}>Inclusive of all taxes</p>
             </div>
 
-            {/* Divider */}
             <div className={`border-t mb-4 ${isDark ? 'border-[#1e1e1e]' : 'border-[#e5e5df]'}`} />
 
-            {/* Description */}
             <div className="mb-5">
               <h3 className={`text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-[#888]' : 'text-[#999]'}`}>About this product</h3>
               <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isDark ? 'text-[#bbb]' : 'text-[#444]'}`}>
@@ -284,7 +269,6 @@ const ProductDetails = () => {
 
             <div className={`border-t mb-4 ${isDark ? 'border-[#1e1e1e]' : 'border-[#e5e5df]'}`} />
 
-            {/* Quantity */}
             <div className="flex items-center gap-3 mb-5">
               <span className={`text-sm font-medium ${isDark ? 'text-[#888]' : 'text-[#666]'}`}>Qty:</span>
               <div className={`flex items-center border rounded-lg overflow-hidden ${isDark ? 'border-[#333]' : 'border-[#ddd]'}`}>
@@ -294,35 +278,33 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            {/* CTA Buttons */}
             <div className="flex flex-col gap-2.5">
               <button
-                onClick={handleBuy}
+                onClick={() => {
+                  addToCart(product, qty);
+                  navigate('/payment');
+                }}
                 className={`w-full py-3 rounded-lg font-bold text-sm tracking-wide transition-colors ${isDark ? 'bg-white text-black hover:bg-[#e0e0e0]' : 'bg-[#1a1a1a] text-white hover:bg-[#333]'}`}
               >
                 Buy Now
               </button>
               <button
-                onClick={handleBuy}
+                onClick={() => {
+                  addToCart(product, qty);
+                }}
                 className={`w-full py-3 rounded-lg font-bold text-sm tracking-wide border transition-colors ${isDark ? 'border-[#444] hover:bg-[#161616]' : 'border-[#ccc] hover:bg-white'}`}
               >
                 Add to Cart
               </button>
             </div>
 
-            {/* Meta */}
-            <div className={`mt-5 pt-4 border-t text-xs space-y-1 ${isDark ? 'border-[#1e1e1e] text-[#555]' : 'border-[#e5e5df] text-[#999]'}`}>
-              <p>Product ID: <span className="font-mono">{product._id}</span></p>
-              <p>Listed: {new Date(product.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
+           
           </div>
         </div>
 
-        {/* ═══ REVIEWS SECTION ═══════════════════════ */}
         <div className={`mt-10 rounded-2xl border p-6 sm:p-8 ${isDark ? 'bg-[#111] border-[#1e1e1e]' : 'bg-white border-[#e5e5df]'}`}>
           <h2 className="text-lg sm:text-xl font-bold mb-6">Customer Reviews</h2>
 
-          {/* Rating summary */}
           {total > 0 && (
             <div className={`flex flex-col sm:flex-row gap-6 mb-8 p-5 rounded-xl ${isDark ? 'bg-[#0a0a0a] border border-[#1e1e1e]' : 'bg-[#fafaf7] border border-[#e5e5df]'}`}>
               <div className="flex flex-col items-center justify-center min-w-[80px]">
@@ -349,7 +331,6 @@ const ProductDetails = () => {
             </div>
           )}
 
-          {/* Feedback toast */}
           {reviewMsg && (
             <div className={`mb-4 px-4 py-2.5 rounded-lg text-sm font-medium border ${
               reviewMsg.toLowerCase().includes('fail')
@@ -358,7 +339,6 @@ const ProductDetails = () => {
             }`}>{reviewMsg}</div>
           )}
 
-          {/* Write review (buyer only, haven't reviewed yet) */}
           {isBuyer && !userReview && (
             <form onSubmit={submitReview} className={`mb-8 p-5 rounded-xl border ${isDark ? 'border-[#1e1e1e] bg-[#0a0a0a]' : 'border-[#e5e5df] bg-[#fafaf7]'}`}>
               <h3 className={`text-xs font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-[#666]' : 'text-[#999]'}`}>Write a Review</h3>
@@ -392,7 +372,6 @@ const ProductDetails = () => {
             </div>
           )}
 
-          {/* Reviews list */}
           <div className="space-y-3">
             {product.reviews?.length > 0 ? product.reviews.map(review => {
               const isOwner = user && (review.user === user._id || review.user === user.id);
@@ -452,7 +431,6 @@ const ProductDetails = () => {
         </div>
       </main>
 
-      {/* ── Delete Confirmation Modal ────────────── */}
       {deleteId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteId(null)} />

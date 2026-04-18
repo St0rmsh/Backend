@@ -49,7 +49,6 @@ const ResetPasswordPage = () => {
 
         const result = await handleResetPassword(token, password);
         if (result.success) {
-            // Auto-login is handled in handleResetPassword (it sets the user state)
             navigate('/', { replace: true });
         } else {
             setError(result.error || 'Failed to reset password. The link may have expired.');
@@ -58,13 +57,11 @@ const ResetPasswordPage = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#080b14] transition-colors duration-300 flex items-center justify-center p-4">
-            {/* Background decorations */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-60 -right-40 w-[500px] h-[500px] bg-violet-400/8 dark:bg-violet-600/15 rounded-full blur-3xl" />
                 <div className="absolute -bottom-60 -left-40 w-[500px] h-[500px] bg-indigo-400/8 dark:bg-indigo-600/15 rounded-full blur-3xl" />
             </div>
 
-            {/* Theme toggle */}
             <div className="fixed top-4 right-4 z-50">
                 <button
                     onClick={toggleTheme}

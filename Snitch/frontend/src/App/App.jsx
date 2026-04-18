@@ -18,7 +18,6 @@ function App() {
           dispatch(setUser(data.user));
         }
       } catch (error) {
-        // Silent catch for hydration failures
       } finally {
         setHydrating(false);
       }

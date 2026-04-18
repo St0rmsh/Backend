@@ -9,7 +9,6 @@ const ProtectedRoute = () => {
         return <Navigate to="/login" replace />;
     }
 
-    // Redirect to profile completion if contact is missing
     if (!user.contact || (typeof user.contact === 'string' && user.contact.trim() === '')) {
         return <Navigate to="/complete-profile" replace />;
     }

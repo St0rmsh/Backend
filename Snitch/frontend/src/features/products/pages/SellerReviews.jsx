@@ -17,7 +17,6 @@ const SellerReviews = () => {
         handleGetAllProducts();
     }, []);
 
-    // Aggregate all reviews with product info
     const allReviews = sellerProducts.flatMap(product =>
         (product.reviews || []).map(review => ({
             ...review,
@@ -27,13 +26,10 @@ const SellerReviews = () => {
         }))
     );
 
-    // Filter reviews
     const filteredReviews = allReviews
         .filter(r => filterProduct === 'all' || r.productId === filterProduct)
         .filter(r => filterRating === 'all' || r.rating === Number(filterRating))
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    // Aggregate stats
     const totalReviews = allReviews.length;
     const averageRating = totalReviews > 0 ? allReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews : 0;
     const ratingDistribution = [0, 0, 0, 0, 0];
@@ -51,7 +47,6 @@ const SellerReviews = () => {
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-[#0f0f0f] text-[#f5f5f5]' : 'bg-[#f5f5ef] text-[#1a1a1a]'} px-6 py-10 lg:px-12 transition-colors duration-300 font-sans`}>
-            {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 pb-6 border-b border-opacity-20 dark:border-opacity-100" style={{ borderColor: isDark ? '#333' : '#ddd' }}>
                 <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -74,7 +69,6 @@ const SellerReviews = () => {
                 </div>
             ) : (
                 <>
-                    {/* Stats Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                         <div className={`p-5 rounded-xl border ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>
                             <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-[#666]' : 'text-[#999]'}`}>Total Reviews</p>
@@ -108,7 +102,6 @@ const SellerReviews = () => {
                         </div>
                     </div>
 
-                    {/* Filters */}
                     <div className="flex flex-col sm:flex-row gap-3 mb-6">
                         <select
                             value={filterProduct}
@@ -135,7 +128,6 @@ const SellerReviews = () => {
                         </span>
                     </div>
 
-                    {/* Reviews List */}
                     {filteredReviews.length === 0 ? (
                         <div className={`p-12 rounded-xl text-center border border-dashed ${isDark ? 'border-[#333] text-[#555]' : 'border-[#ccc] text-[#888]'}`}>
                             <svg className="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
@@ -149,7 +141,6 @@ const SellerReviews = () => {
                             {filteredReviews.map((review, idx) => (
                                 <div key={review._id || idx} className={`p-5 rounded-xl border transition-all ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>
                                     <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                                        {/* Product Thumbnail */}
                                         <Link to={`/seller/${review.productId}`} className={`shrink-0 w-14 h-14 rounded-lg overflow-hidden border ${isDark ? 'border-[#333] bg-[#1a1a1a]' : 'border-[#e0e0dc] bg-[#f5f5ef]'}`}>
                                             {review.productImage ? (
                                                 <img src={review.productImage} alt="" className="w-full h-full object-cover" />

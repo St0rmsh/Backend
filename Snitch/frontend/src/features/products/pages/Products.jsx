@@ -3,16 +3,11 @@ import { useSelector } from 'react-redux';
 import { useProduct } from '../hook/useProduct';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
+import { useCart } from '../../../context/CartContext';
 
-/* ══════════════════════════════════════════════════════════
-   CURRENCY HELPER
-   ══════════════════════════════════════════════════════════ */
 const SYM = { INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
 
-/* ══════════════════════════════════════════════════════════
-   PRODUCT CARD  (memoized — skips re-render if props same)
-   ══════════════════════════════════════════════════════════ */
-const ProductCard = memo(({ product, isDark }) => {
+const ProductCard = memo(({ product, isDark, addToCart }) => {
   const [hovering, setHovering] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -55,7 +50,6 @@ const ProductCard = memo(({ product, isDark }) => {
                   ${hovering ? 'scale-[1.04]' : 'scale-100'}
                 `}
               />
-              {/* multi-image indicator */}
               {images.length > 1 && (
                 <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-[5px]">
                   {images.slice(0, Math.min(images.length, 5)).map((_, i) => (
@@ -76,15 +70,12 @@ const ProductCard = memo(({ product, isDark }) => {
           )}
         </div>
 
-        {/* ── Info ────────────────────────── */}
         <div className="flex flex-col gap-1 p-3 sm:p-3.5 flex-1">
-          {/* Title */}
           <h3 className={`text-[13px] leading-[1.4] font-medium line-clamp-2 min-h-[36px]
             ${isDark ? 'text-[#ccc] group-hover:text-white' : 'text-[#222] group-hover:text-black'}`}>
             {product.title}
           </h3>
 
-          {/* Rating badge */}
           {count > 0 ? (
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className={`inline-flex items-center gap-[3px] text-[10.5px] font-bold leading-none px-[6px] py-[3.5px] rounded-[4px] text-white
@@ -98,12 +89,25 @@ const ProductCard = memo(({ product, isDark }) => {
             </div>
           ) : null}
 
-          {/* Price */}
-          <div className="mt-auto pt-1.5">
+          <div className="mt-auto pt-1.5 flex items-end justify-between">
             <span className={`text-[17px] sm:text-[19px] font-bold tracking-tight leading-none
               ${isDark ? 'text-white' : 'text-[#111]'}`}>
               {sym}{amount?.toLocaleString()}
             </span>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addToCart(product);
+              }}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95
+                ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
+              title="Add to Cart"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -112,14 +116,13 @@ const ProductCard = memo(({ product, isDark }) => {
 });
 ProductCard.displayName = 'ProductCard';
 
-/* ══════════════════════════════════════════════════════════
-   PRODUCTS PAGE
-   ══════════════════════════════════════════════════════════ */
 const Products = () => {
   const { handleFetchAllPublicProducts } = useProduct();
   const products = useSelector(s => s?.product?.products || []);
   const { loading } = useSelector(s => s.product);
+  const user = useSelector(s => s.auth.user);
   const { isDark, toggleTheme } = useTheme();
+  const { addToCart, cartCount } = useCart();
 
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -137,12 +140,10 @@ const Products = () => {
       case 'reviews':    return list.sort((a, b) => (b.numReviews || 0) - (a.numReviews || 0));
       case 'newest':
       default:
-        // Backend already sorts newest-first; fallback to _id (MongoDB ObjectId encodes timestamp)
         return list.sort((a, b) => {
           const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           if (da && db) return db - da;
-          // fallback: compare _id strings (later _id = newer)
           return (b._id || '').localeCompare(a._id || '');
         });
     }
@@ -151,7 +152,6 @@ const Products = () => {
   const onSearch = useCallback(e => setSearch(e.target.value), []);
   const onSort   = useCallback(e => setSortBy(e.target.value), []);
 
-  /* ── Skeleton grid ──────────── */
   const Skeleton = () => (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
       {Array.from({ length: 10 }).map((_, i) => (
@@ -170,16 +170,13 @@ const Products = () => {
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0a] text-[#eee]' : 'bg-[#f5f5f0] text-[#111]'} font-sans`}>
 
-      {/* ═══ NAVBAR ══════════════════════════════ */}
       <nav className={`sticky top-0 z-50 backdrop-blur-xl ${isDark ? 'bg-[#0a0a0a]/95 border-b border-[#1a1a1a]' : 'bg-[#f5f5f0]/95 border-b border-[#e0e0db]'}`}>
         <div className="max-w-[1360px] mx-auto flex items-center h-[56px] px-4 sm:px-6 gap-4">
 
-          {/* Brand */}
           <Link to="/products" className="shrink-0 mr-2">
             <span className="text-[22px] font-black italic tracking-[-0.05em]">SNITCH</span>
           </Link>
 
-          {/* Search (desktop) */}
           <div className="hidden sm:flex flex-1 max-w-lg">
             <div className="relative w-full">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-[15px] h-[15px] opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -210,17 +207,36 @@ const Products = () => {
                 <svg className="w-[17px] h-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
               )}
             </button>
+
             <Link
-              to="/login"
-              className={`h-[36px] px-5 rounded-full text-[13px] font-semibold flex items-center transition-colors
-                ${isDark ? 'bg-white text-black hover:bg-[#e0e0e0]' : 'bg-[#111] text-white hover:bg-[#333]'}`}
+              to="/cart"
+              className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors relative ${isDark ? 'hover:bg-[#1e1e1e]' : 'hover:bg-[#e8e8e0]'}`}
             >
-              Sign In
+              <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center scale-110">
+                  {cartCount}
+                </span>
+              )}
             </Link>
+            {user ? (
+              <span className={`text-[13px] font-semibold px-4 py-2 rounded-full ${isDark ? 'bg-[#1a1a1a] text-[#aaa]' : 'bg-[#e8e8e0] text-[#555]'}`}>
+                Hi, {user.fullname?.split(' ')[0]}
+              </span>
+            ) : (
+              <Link
+                to="/login"
+                className={`h-[36px] px-5 rounded-full text-[13px] font-semibold flex items-center transition-colors
+                  ${isDark ? 'bg-white text-black hover:bg-[#e0e0e0]' : 'bg-[#111] text-white hover:bg-[#333]'}`}
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* Search (mobile) */}
         <div className="sm:hidden px-4 pb-3">
           <div className="relative">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-[15px] h-[15px] opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -241,10 +257,8 @@ const Products = () => {
         </div>
       </nav>
 
-      {/* ═══ MAIN ════════════════════════════════ */}
       <main className="max-w-[1360px] mx-auto px-4 sm:px-6 py-5 sm:py-6">
 
-        {/* Toolbar */}
         <div className="flex items-end justify-between mb-5 gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
@@ -273,7 +287,6 @@ const Products = () => {
           </select>
         </div>
 
-        {/* Grid */}
         {loading ? (
           <Skeleton />
         ) : filtered.length === 0 ? (
@@ -298,7 +311,7 @@ const Products = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {filtered.map(product => (
-              <ProductCard key={product._id} product={product} isDark={isDark} />
+              <ProductCard key={product._id} product={product} isDark={isDark} addToCart={addToCart} />
             ))}
           </div>
         )}

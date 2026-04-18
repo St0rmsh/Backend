@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { config } from "../config/config.js";
 import UserModel from '../models/user.model.js';
 
-export const authMiddleware = (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
     const token = req.cookies?.token;
 
     if (!token) {
@@ -13,7 +13,15 @@ export const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, config.JWT_SECRET);
-        req.user = decoded;
+        const user = await UserModel.findById(decoded.id);
+
+        if (!user) {
+            return res.status(401).json({
+                message: "User not found"
+            });
+        }
+
+        req.user = user;
         next();
     } catch (error) {
         return res.status(401).json({

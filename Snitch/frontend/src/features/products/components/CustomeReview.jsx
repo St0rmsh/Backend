@@ -40,7 +40,6 @@ const CustomeReview = ({
 
     const inputClass = `w-full px-3 py-2 rounded-lg border outline-none text-sm transition-all ${isDark ? 'bg-[#1a1a1a] border-[#333] focus:border-[#555] text-white' : 'bg-white border-[#ddd] focus:border-[#999] text-black'}`;
 
-    // Interactive stars
     const InteractiveStars = ({ value, hover, onHover, onLeave, onClick, size = 'w-6 h-6' }) => (
         <div className="flex gap-0.5" onMouseLeave={onLeave}>
             {[1, 2, 3, 4, 5].map(star => (
@@ -112,7 +111,6 @@ const CustomeReview = ({
                     </div>
                 )}
 
-                {/* Write Review Form */}
                 {isBuyer && !userReview && onSubmitReview && (
                     <form onSubmit={onSubmitReview} className={`mb-8 p-5 rounded-xl border ${isDark ? 'border-[#222] bg-[#0f0f0f]' : 'border-[#e5e5df] bg-[#fafaf7]'}`}>
                         <h3 className="text-sm font-bold uppercase tracking-widest opacity-60 mb-4">Write a Review</h3>
@@ -152,7 +150,6 @@ const CustomeReview = ({
                     </form>
                 )}
 
-                {/* Reviews List */}
                 <div className="space-y-4">
                     {reviews && reviews.length > 0 ? (
                         reviews.map((review) => {
@@ -240,7 +237,6 @@ const CustomeReview = ({
                 </div>
             </div>
 
-            {/* Delete Modal */}
             {deleteModalId && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteModalId(null)}></div>

@@ -26,8 +26,11 @@ import SellerReviews from "../features/products/pages/SellerReviews";
 import Products from "../features/products/pages/Products";
 import ProductDetails from "../features/products/components/ProductDetails";
 
+// Cart Suite
+import CartPage from "../features/cart/pages/CartPage";
+import PaymentPage from "../features/cart/pages/PaymentPage";
+
 export const router = createBrowserRouter([
-    // ─── PUBLIC ROUTES (no auth required) ───────────
     {
         path: "/",
         element: <Navigate to="/products" replace />
@@ -39,6 +42,14 @@ export const router = createBrowserRouter([
     {
         path: "/products/:id",
         element: <ProductDetails />
+    },
+    {
+        path: "/cart",
+        element: <CartPage />
+    },
+    {
+        path: "/payment",
+        element: <PaymentPage />
     },
 
     // ─── BUYER ROUTES (auth + buyer role) ───────────

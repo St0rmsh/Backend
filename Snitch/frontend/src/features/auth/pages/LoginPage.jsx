@@ -39,9 +39,6 @@ const inputCls = (hasError) =>
     : 'border-slate-200 dark:border-white/10 focus:border-violet-500 focus:ring-violet-500/20'
   }`;
 
-/* ════════════════════════════════════════════════════════════
-   LOGIN PAGE
-════════════════════════════════════════════════════════════ */
 const LoginPage = () => {
   const { handleLogin, user, loading } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -90,13 +87,10 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#080b14] transition-colors duration-300">
-      {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-60 -right-40 w-[500px] h-[500px] bg-violet-400/8 dark:bg-violet-600/15 rounded-full blur-3xl" />
         <div className="absolute -bottom-60 -left-40 w-[500px] h-[500px] bg-indigo-400/8 dark:bg-indigo-600/15 rounded-full blur-3xl" />
       </div>
-
-      {/* Theme toggle */}
       <div className="fixed top-4 right-4 z-50">
         <button
           onClick={toggleTheme}
@@ -111,19 +105,15 @@ const LoginPage = () => {
         </button>
       </div>
 
-      {/* Two-column layout on lg+ */}
       <div className="relative z-10 flex min-h-screen">
 
-        {/* ── Left panel: branding (hidden on mobile) ────────── */}
         <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0
           bg-gradient-to-br from-violet-700 via-violet-600 to-indigo-700
           dark:from-violet-900 dark:via-violet-800 dark:to-indigo-900
           p-12 relative overflow-hidden">
-          {/* Decorative circles */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/3" />
 
-          {/* Logo */}
           <div className="relative">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
@@ -133,7 +123,6 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Hero copy */}
           <div className="relative space-y-6">
             <div>
               <h2 className="text-4xl font-black text-white leading-tight">
@@ -145,7 +134,6 @@ const LoginPage = () => {
               </p>
             </div>
 
-            {/* Feature list */}
             <ul className="space-y-3">
               {[
                 { icon: '🚚', text: 'Free delivery on orders above ₹499' },
@@ -161,15 +149,12 @@ const LoginPage = () => {
             </ul>
           </div>
 
-          {/* Bottom tagline */}
           <p className="relative text-xs text-violet-300">© 2026 Snitch. Crafted with ❤️</p>
         </div>
 
-        {/* ── Right panel: login form ───────────────────────── */}
         <div className="flex-1 flex items-center justify-center px-4 py-12 sm:px-8">
           <div className="w-full max-w-md">
 
-            {/* Mobile logo */}
             <div className="flex items-center gap-2.5 mb-8 lg:hidden">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
                 <span className="text-white font-black text-xl leading-none">S</span>
@@ -177,7 +162,6 @@ const LoginPage = () => {
               <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Snitch</span>
             </div>
 
-            {/* Card */}
             <div className="bg-white dark:bg-white/5 backdrop-blur-xl
               border border-slate-200 dark:border-white/10
               rounded-2xl shadow-xl dark:shadow-black/30 p-6 sm:p-8">
@@ -187,7 +171,6 @@ const LoginPage = () => {
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Sign in to your Snitch account</p>
               </div>
 
-              {/* Server error */}
               {serverErr && (
                 <div className="flex items-start gap-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-xl mb-5">
                   <svg className="w-5 h-5 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -198,7 +181,6 @@ const LoginPage = () => {
               )}
 
               <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-                {/* Email */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="email" className="text-sm font-medium text-slate-600 dark:text-slate-300">
                     Email Address
@@ -219,7 +201,6 @@ const LoginPage = () => {
                   )}
                 </div>
 
-                {/* Password */}
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
                     <label htmlFor="password" className="text-sm font-medium text-slate-600 dark:text-slate-300">
@@ -258,7 +239,6 @@ const LoginPage = () => {
                   )}
                 </div>
 
-                {/* Submit */}
                 <button
                   id="login-submit" type="submit" disabled={loading}
                   className="mt-1 h-12 w-full rounded-xl font-semibold text-sm text-white
@@ -280,14 +260,12 @@ const LoginPage = () => {
                 </button>
               </form>
 
-              {/* Divider */}
               <div className="flex items-center gap-3 my-5">
                 <hr className="flex-1 border-slate-200 dark:border-white/10" />
                 <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">OR</span>
                 <hr className="flex-1 border-slate-200 dark:border-white/10" />
               </div>
 
-              {/* Google Login */}
               <button
                 type="button"
                 onClick={() => window.location.href = 'http://localhost:3000/api/auth/google'}
@@ -305,12 +283,10 @@ const LoginPage = () => {
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Continue with Google</span>
               </button>
 
-              {/* Feature pills divider */}
               <div className="flex items-center gap-3 my-5">
                 <hr className="flex-1 border-slate-200 dark:border-white/10" />
               </div>
 
-              {/* Feature pills */}
               <div className="flex flex-wrap justify-center gap-2 mb-5">
                 {FEATURES.map((f) => (
                   <span key={f} className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1.5 rounded-full font-medium">

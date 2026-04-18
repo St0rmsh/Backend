@@ -13,11 +13,9 @@ const OneProduct = () => {
 
     const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
-    // Delete modal
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     
-    // Edit state
     const [isEditing, setIsEditing] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [editData, setEditData] = useState({
@@ -36,7 +34,7 @@ const OneProduct = () => {
         }
     }, [id]);
 
-    // Initialize edit form when entering edit mode
+
     useEffect(() => {
         if (isEditing && product) {
             setEditData({
@@ -50,7 +48,7 @@ const OneProduct = () => {
         }
     }, [isEditing, product]);
 
-    // ─── Delete ────────────────────────────────
+
     const onDelete = async () => {
         setIsDeleting(true);
         try {
@@ -63,7 +61,6 @@ const OneProduct = () => {
         }
     };
 
-    // ─── Image Handling (click + drag-and-drop) ─
     const addFiles = (files) => {
         const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
         if (validFiles.length === 0) return;
@@ -87,7 +84,6 @@ const OneProduct = () => {
         });
     };
 
-    // Drag and drop handlers
     const onDragOver = useCallback((e) => { e.preventDefault(); setIsDragging(true); }, []);
     const onDragLeave = useCallback((e) => { e.preventDefault(); setIsDragging(false); }, []);
     const onDrop = useCallback((e) => {
@@ -96,7 +92,6 @@ const OneProduct = () => {
         if (e.dataTransfer.files) addFiles(e.dataTransfer.files);
     }, [newImages.length]);
 
-    // ─── Update ────────────────────────────────
     const onUpdate = async (e) => {
         e.preventDefault();
         setIsUpdating(true);
@@ -121,7 +116,6 @@ const OneProduct = () => {
         }
     };
 
-    // ─── Star Rendering ────────────────────────
     const StaticStars = ({ rating, size = 'w-4 h-4' }) => (
         <div className="flex gap-0.5">
             {[1, 2, 3, 4, 5].map(star => (
@@ -172,7 +166,6 @@ const OneProduct = () => {
     return (
         <div className={`min-h-screen ${isDark ? 'bg-[#0f0f0f] text-[#f5f5f5]' : 'bg-[#f5f5ef] text-[#1a1a1a]'} px-6 py-10 lg:px-12 transition-colors duration-300 font-sans flex justify-center`}>
             <div className="w-full max-w-5xl">
-                {/* Top Bar */}
                 <div className="mb-8 flex items-center justify-between">
                     <Link to="/seller" className={`flex items-center gap-2 p-2 px-4 rounded-full border text-sm font-medium transition-colors ${
                         isDark ? 'border-[#333] hover:bg-[#1a1a1a]' : 'border-[#ddd] hover:bg-white'
@@ -204,10 +197,8 @@ const OneProduct = () => {
                     </div>
                 </div>
 
-                {/* Product Card */}
                 <div className={`flex flex-col lg:flex-row gap-10 lg:gap-16 p-8 rounded-2xl border ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>
                     
-                    {/* Image Section */}
                     <div className="w-full lg:w-1/2 flex flex-col gap-4">
                         <div className={`aspect-[4/5] rounded-xl overflow-hidden ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e5e5]'}`}>
                             {!isEditing ? (
@@ -217,7 +208,6 @@ const OneProduct = () => {
                                     <div className="w-full h-full flex items-center justify-center opacity-30">No Media Available</div>
                                 )
                             ) : (
-                                /* Drag & Drop Upload Zone */
                                 <div
                                     onDragOver={onDragOver}
                                     onDragLeave={onDragLeave}
@@ -229,7 +219,6 @@ const OneProduct = () => {
                                     }`}
                                 >
                                     {previewUrls.length === 0 ? (
-                                        /* Empty drop zone */
                                         <div className="flex flex-col items-center text-center">
                                             <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${isDark ? 'bg-[#222]' : 'bg-[#ddd]'}`}>
                                                 <svg className="w-8 h-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -247,7 +236,6 @@ const OneProduct = () => {
                                             <p className={`text-xs mt-3 ${isDark ? 'text-[#555]' : 'text-[#aaa]'}`}>Up to 7 images · PNG, JPG, WEBP</p>
                                         </div>
                                     ) : (
-                                        /* Preview grid */
                                         <>
                                             <div className="flex flex-wrap gap-2 justify-center">
                                                 {previewUrls.map((url, i) => (
@@ -297,7 +285,6 @@ const OneProduct = () => {
                         )}
                     </div>
 
-                    {/* Product Details / Edit Form */}
                     <div className="w-full lg:w-1/2 flex flex-col py-2">
                         {isEditing ? (
                             <form onSubmit={onUpdate} className="flex flex-col h-full">
@@ -373,13 +360,11 @@ const OneProduct = () => {
                     </div>
                 </div>
 
-                {/* Seller Reviews Section */}
                 <div className={`mt-10 p-6 sm:p-8 rounded-2xl border ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>
                     <h2 className="text-xl sm:text-2xl font-bold mb-6">Customer Reviews</h2>
 
                     {totalReviews > 0 ? (
                         <>
-                            {/* Rating Overview */}
                             <div className={`flex flex-col sm:flex-row gap-6 sm:gap-10 mb-8 p-5 rounded-xl ${isDark ? 'bg-[#0f0f0f] border border-[#222]' : 'bg-[#fafaf7] border border-[#e5e5df]'}`}>
                                 <div className="flex flex-col items-center justify-center">
                                     <span className="text-4xl font-bold">{(product.averageRating || 0).toFixed(1)}</span>
@@ -404,7 +389,6 @@ const OneProduct = () => {
                                 </div>
                             </div>
 
-                            {/* Reviews List */}
                             <div className="space-y-4">
                                 {product.reviews.map((review) => (
                                     <div key={review._id} className={`p-5 rounded-xl border ${isDark ? 'border-[#222] bg-[#0f0f0f]' : 'border-[#e5e5df] bg-[#fafaf7]'}`}>
@@ -439,7 +423,6 @@ const OneProduct = () => {
                 </div>
             </div>
 
-            {/* Delete Confirmation Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteModal(false)}></div>
