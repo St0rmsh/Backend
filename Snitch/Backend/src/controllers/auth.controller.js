@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { config } from "../config/config.js";
 import sendEmail from "../utils/sendEmail.js";
 import crypto from 'crypto';
-
+import redisClient from "../config/cache.js";
 
 const sendTokenResponse = (user, res, message, redirectUrl = null) => {
     const token = jwt.sign({ id: user._id }, config.JWT_SECRET, {
@@ -248,7 +248,6 @@ export const forgotPassword = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
     try {
-        // Get hashed token
         const resetPasswordToken = crypto
             .createHash('sha256')
             .update(req.params.token)
@@ -274,6 +273,31 @@ export const resetPassword = async (req, res) => {
 
     } catch (error) {
         console.error("Error in resetPassword:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+
+export const logoutUser = async (req, res) => {
+    try {
+
+        const token = req.cookies.token;
+
+        if (!token) {
+            return res.status(401).json({ message: "No token found" });
+        }
+
+        await redisClient.set(`blacklist:${token}`, "true", "EX", 60 * 60);
+
+        res.clearCookie("token");
+
+        res.status(200).json({ success: true, message: "Logged out successfully" });
+
+    } catch (error) {
+
+        console.error("Error logging out user:", error);
+
         res.status(500).json({ message: "Internal server error" });
     }
 };

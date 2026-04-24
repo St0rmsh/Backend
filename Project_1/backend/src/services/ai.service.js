@@ -1,12 +1,18 @@
 import { ChatMistralAI } from "@langchain/mistralai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import config from "../config/config.js";
 import { searchInternet } from "./internet.service.js";
 import { HumanMessage, SystemMessage, createAgent, tool } from "langchain";
 import * as z from "zod";
 
-const model = new ChatMistralAI({
-    model: "mistral-small-latest",
-    apiKey: config.MISTRAL_API_KEY
+// const model = new ChatMistralAI({
+//     model: "mistral-small-latest",
+//     apiKey: config.MISTRAL_API_KEY
+// });
+
+const model = new ChatGoogleGenerativeAI({
+    model: "gemini-2.5-flash",
+    apiKey: config.GOOGLE_API_KEY
 });
 
 const searchTool = tool(searchInternet, {
@@ -16,6 +22,8 @@ const searchTool = tool(searchInternet, {
         query: z.string()
     })
 });
+
+
 
 const agent = createAgent({
     model,
@@ -129,7 +137,7 @@ Return STRICT JSON:
             parsed = null;
         }
 
-        // 🛡 fallback (VERY IMPORTANT)
+        //  fallback (VERY IMPORTANT)
         if (!parsed) {
             parsed = {
                 summary: "AI failed to return structured output",

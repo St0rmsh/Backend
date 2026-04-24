@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { registerValidator, loginValidator, completeProfileValidator, forgotPasswordValidator, resetPasswordValidator } from "../validators/auth.validator.js";
-import { registerUser, loginUser, getMe, googleAuth, completeProfile, forgotPassword, resetPassword } from "../controllers/auth.controller.js";
+import { registerUser, loginUser, getMe, googleAuth, completeProfile, forgotPassword, resetPassword, logoutUser } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../Middleware/auth.middleware.js";
 import passport from "passport";
 import { config } from "../config/config.js";
@@ -46,5 +46,10 @@ authRouter.get('/google', passport.authenticate('google', { scope: ['profile', '
 // @route GET /api/auth/google/callback
 // @access Public
 authRouter.get('/google/callback', passport.authenticate('google', { failureRedirect: config.NODE_ENV === 'development' ? 'http://localhost:5173/login' : '/login', session: false }), googleAuth);
+
+// @desc Logout user
+// @route POST /api/auth/logout
+// @access Private
+authRouter.post('/logout', authMiddleware, logoutUser);
 
 export default authRouter;

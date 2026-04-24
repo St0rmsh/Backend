@@ -1,4 +1,8 @@
 import mongoose from "mongoose";
+import priceSchema from "./price.schema.js";
+
+
+
 
 const reviewSchema = new mongoose.Schema({
     user: {
@@ -16,11 +20,24 @@ const reviewSchema = new mongoose.Schema({
         min: 1,
         max: 5
     },
+     reply: {
+        text: {
+            type: String
+        },
+        seller: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        createdAt: {
+            type: Date
+        }
+    },
     comment: {
         type: String,
         required: true
     }
 }, { timestamps: true });
+
 const productSchema = new mongoose.Schema({
     title: {
         type:String,
@@ -29,22 +46,15 @@ const productSchema = new mongoose.Schema({
     description: {
         type: String,
         required: true
-    },
+    }, 
     seller: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
     price: {
-        amount: {
-            type: Number,
-            required: true
-        },
-        currency: {
-            type: String,
-            enum: ["USD", "EUR", "GBP", "INR","JPY"],
-            required: true
-        }
+        type: priceSchema,
+        required: true
     },
     images: [
         {
@@ -63,8 +73,40 @@ const productSchema = new mongoose.Schema({
     numReviews: {
         type: Number,
         default: 0
-    }
-}, {
+    }, 
+    stock: {
+        type: Number,
+        required: true
+    },
+    variants: [
+        {
+            image: [{
+                url: {
+                    type: String,
+                    required: true
+                }
+            }],
+            stock: {
+                type: Number,
+                required: true
+            },
+            value: {
+                type: String,
+                required: true
+            },
+            price: {
+               type: priceSchema,
+               required: true
+            },
+            
+            attributes: {
+                type: Map,
+                of: String
+            }
+        }
+    ]
+},
+ {
     timestamps: true
 })
 

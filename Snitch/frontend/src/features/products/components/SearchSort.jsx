@@ -35,7 +35,6 @@ const SearchSort = ({
         <div className="w-full space-y-4 mb-8">
             <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
                 
-                {/* Search Input */}
                 <div className="w-full md:max-w-md relative group">
                     <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-opacity ${isDark ? 'opacity-30 group-focus-within:opacity-100' : 'opacity-40 group-focus-within:opacity-100'}`}>
                         <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -55,17 +54,14 @@ const SearchSort = ({
                     />
                 </div>
 
-                {/* Sort and Count */}
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     
-                    {/* Results Count */}
                     <div className="hidden lg:block">
                         <span className={`text-[11px] font-black tracking-[0.15em] uppercase opacity-30`}>
                             {resultsCount} PRODUCT{resultsCount !== 1 ? 'S' : ''} FOUND
                         </span>
                     </div>
 
-                    {/* Custom Dropdown */}
                     <div className="relative w-full md:w-[200px]" ref={dropdownRef}>
                         <button
                             onClick={() => setIsOpen(!isOpen)}
@@ -110,7 +106,6 @@ const SearchSort = ({
                 
             </div>
             
-            {/* Active Filters / Chips could go here */}
         </div>
     );
 };

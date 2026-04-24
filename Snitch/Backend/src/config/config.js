@@ -27,6 +27,18 @@ if (!process.env.IMAGEKIT_PRIVATE_KEY ) {
     throw new Error('IMAGEKIT_PRIVATE_KEY is not defined in the environment variables');
 }
 
+if (!process.env.REDIS_HOST ) {
+    throw new Error('REDIS_HOST is not defined in the environment variables');
+}
+
+if (!process.env.REDIS_PORT ) {
+    throw new Error('REDIS_PORT is not defined in the environment variables');
+}
+
+if (!process.env.REDIS_PASSWORD ) {
+    throw new Error('REDIS_PASSWORD is not defined in the environment variables');
+}
+
 
 export const config = {
     JWT_SECRET: process.env.JWT_SECRET,
@@ -36,4 +48,7 @@ export const config = {
     GOOGLE_SECRET: process.env.GOOGLE_SECRET,
     NODE_ENV: process.env.NODE_ENV || 'development',
     IMAGEKIT_PRIVATE_KEY: process.env.IMAGEKIT_PRIVATE_KEY,
+    REDIS_HOST: process.env.REDIS_HOST,
+    REDIS_PORT: process.env.REDIS_PORT,
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
 };

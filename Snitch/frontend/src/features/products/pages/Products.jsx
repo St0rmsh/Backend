@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
 import { useCart } from '../../../context/CartContext';
 import SearchSort from '../components/SearchSort';
+import LogoutButton from '../components/LogoutButton';
+
 
 const SYM = { INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
 
@@ -166,7 +168,14 @@ const Products = () => {
         </div>
       ))}
     </div>
+
+    
   );
+const [open, setOpen] = useState(false);
+  const UserMenu = ({ user, isDark }) => {
+  const [open, setOpen] = useState(false);
+  }
+  
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0a] text-[#eee]' : 'bg-[#f5f5f0] text-[#111]'} font-sans`}>
@@ -204,9 +213,30 @@ const Products = () => {
               )}
             </Link>
             {user ? (
-              <span className={`text-[13px] font-semibold px-4 py-2 rounded-full ${isDark ? 'bg-[#1a1a1a] text-[#aaa]' : 'bg-[#e8e8e0] text-[#555]'}`}>
-                Hi, {user.fullname?.split(' ')[0]}
-              </span>
+              <div className="relative inline-block">
+      
+      {/* YOUR EXISTING SPAN (now clickable) */}
+      <span
+        onClick={() => setOpen(!open)}
+        className={`cursor-pointer text-[13px] font-semibold px-4 py-2 rounded-full ${
+          isDark
+            ? "bg-[#1a1a1a] text-[#aaa]"
+            : "bg-[#e8e8e0] text-[#555]"
+        }`}
+      >
+        Hi, {user.fullname?.split(" ")[0]}
+      </span>
+
+      {/* DROPDOWN */}
+      {open && (
+        <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-xl p-2 z-50">
+          
+          {/* 🔥 Use LogoutButton here */}
+          <LogoutButton onSuccess={() => setOpen(false)} />
+
+        </div>
+      )}
+    </div>
             ) : (
               <Link
                 to="/login"

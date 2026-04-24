@@ -32,6 +32,16 @@ export const getMe = async () => {
     }
 };
 
+
+export const logoutUser = async () => {
+    try {
+        const response = await api.post('/logout');
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Logout failed');
+    }
+};
+
 export const completeProfile = async ({ contact, role, password }) => {
     try {
         const response = await api.put('/complete-profile', { contact, role, password });

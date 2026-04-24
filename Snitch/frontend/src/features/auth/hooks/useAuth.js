@@ -1,4 +1,4 @@
-import { registerUser, loginUser, completeProfile, forgotPassword, resetPassword } from "../services/api.service";
+import { registerUser, loginUser, completeProfile, forgotPassword, resetPassword, logoutUser } from "../services/api.service";
 import { setUser, setLoading, setError } from "../state/auth.slice";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -28,6 +28,20 @@ export const useAuth = () => {
             const data = await loginUser({ email, password });
             dispatch(setUser(data.user));
             return { success: true, user: data.user };
+        } catch (err) {
+            dispatch(setError(err.message));
+            return { success: false, error: err.message };
+        } finally {
+            dispatch(setLoading(false));
+        }
+    };
+
+    const handleLogout = async () => {
+        dispatch(setLoading(true));
+        try {
+            const data = await logoutUser();
+            dispatch(setUser(null));
+            return { success: true, message: data.message };
         } catch (err) {
             dispatch(setError(err.message));
             return { success: false, error: err.message };
@@ -84,5 +98,5 @@ export const useAuth = () => {
 
     const clearError = () => dispatch(setError(null));
 
-    return { handleRegister, handleLogin, handleCompleteProfile, handleForgotPassword, handleResetPassword, clearError, user, loading, error };
+    return { handleRegister, handleLogin, handleLogout, handleCompleteProfile, handleForgotPassword, handleResetPassword, clearError, user, loading, error };
 };
