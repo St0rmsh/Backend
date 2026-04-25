@@ -1,14 +1,35 @@
 import { useDispatch } from "react-redux";
-import { createProduct, getAllProducts, getProductById, updateProduct, deleteProduct, createProductReview, fetchAllPublicProducts, fetchPublicProductById, getProductReviews, updateReview, deleteReview } from "../services/product.service";
-import { setProducts, setProduct, setLoading, setError, removeProduct, updateProductState } from "../state/product.slice";
-
-
+import { useCallback } from "react";
+import { 
+    createProduct, 
+    getAllProducts, 
+    getProductById, 
+    updateProduct, 
+    deleteProduct, 
+    createProductReview, 
+    fetchAllPublicProducts, 
+    fetchPublicProductById, 
+    getProductReviews, 
+    getSellerReviews, 
+    updateReview, 
+    deleteReview, 
+    addProductVariant, 
+    deleteProductVariant 
+} from "../services/product.service";
+import { 
+    setProducts, 
+    setPagination, 
+    setProduct, 
+    setLoading, 
+    setError, 
+    removeProduct, 
+    updateProductState 
+} from "../state/product.slice";
 
 export const useProduct = () => {
-
     const dispatch = useDispatch();
 
-    const handleCreateProduct = async (formData) => {
+    const handleCreateProduct = useCallback(async (formData) => {
         try {
             dispatch(setLoading(true));
             const response = await createProduct(formData);
@@ -24,9 +45,9 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
-    const handleGetAllProducts = async () => {
+    const handleGetAllProducts = useCallback(async () => {
         try {
             dispatch(setLoading(true));
             const data = await getAllProducts();
@@ -34,23 +55,21 @@ export const useProduct = () => {
             return data.products;
         } catch (error) {
             const formattedError = {
-            message: error.response?.data?.message || error.message,
-            status: error.response?.status,
-        };
-
-        dispatch(setError(formattedError));
-        throw formattedError;
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            dispatch(setError(formattedError));
+            throw formattedError;
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
-    const handleGetProductById = async (productId) => {
+    const handleGetProductById = useCallback(async (productId) => {
         try {
             dispatch(setLoading(true));
             const response = await getProductById(productId);
             dispatch(setProduct(response.product));
-            
             return response.product;
         } catch (error) {
             const formattedError = {
@@ -62,9 +81,9 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false))
         }
-    };
+    }, [dispatch]);
 
-    const handleUpdateProduct = async (productId, data) => {
+    const handleUpdateProduct = useCallback(async (productId, data) => {
         try {
             dispatch(setLoading(true));
             const response = await updateProduct(productId, data);
@@ -80,9 +99,9 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
-    const handleDeleteProduct = async (productId) => {
+    const handleDeleteProduct = useCallback(async (productId) => {
         try {
             dispatch(setLoading(true));
             await deleteProduct(productId);
@@ -97,9 +116,45 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
-    const handleAddReview = async (productId, reviewData) => {
+    const handleAddProductVariant = useCallback(async (productId, data) => {
+        try {
+            dispatch(setLoading(true));
+            const response = await addProductVariant(productId, data);
+            dispatch(updateProductState(response.product));
+            return response.product;
+        } catch (error) {
+            const formattedError = {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            dispatch(setError(formattedError));
+            throw formattedError;
+        } finally {
+            dispatch(setLoading(false));
+        }
+    }, [dispatch]);
+
+    const handleDeleteProductVariant = useCallback(async (productId, variantId) => {
+        try {
+            dispatch(setLoading(true));
+            const response = await deleteProductVariant(productId, variantId);
+            dispatch(updateProductState(response.product));
+            return response.product;
+        } catch (error) {
+            const formattedError = {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            dispatch(setError(formattedError));
+            throw formattedError;
+        } finally {
+            dispatch(setLoading(false));
+        }
+    }, [dispatch]);
+
+    const handleAddReview = useCallback(async (productId, reviewData) => {
         try {
             dispatch(setLoading(true));
             const response = await createProductReview(productId, reviewData);
@@ -115,16 +170,22 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
     // ─── PUBLIC HANDLERS ────────────────────────────────
 
-    const handleFetchAllPublicProducts = async () => {
+    const handleFetchAllPublicProducts = useCallback(async (params = {}) => {
         try {
             dispatch(setLoading(true));
-            const data = await fetchAllPublicProducts();
+            const data = await fetchAllPublicProducts(params);
             dispatch(setProducts(data.products));
-            return data.products;
+            if (data.pagination) {
+                dispatch(setPagination({
+                    total: data.pagination.total,
+                    pages: data.pagination.pages
+                }));
+            }
+            return data;
         } catch (error) {
             const formattedError = {
                 message: error.response?.data?.message || error.message,
@@ -135,9 +196,9 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
-    const handleFetchPublicProductById = async (productId) => {
+    const handleFetchPublicProductById = useCallback(async (productId) => {
         try {
             dispatch(setLoading(true));
             const data = await fetchPublicProductById(productId);
@@ -153,14 +214,14 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
     // ─── REVIEW CRUD HANDLERS ───────────────────────────
 
-    const handleGetReviews = async (productId) => {
+    const handleGetReviews = useCallback(async (productId) => {
         try {
             const data = await getProductReviews(productId);
-            return data.reviews;
+            return data;
         } catch (error) {
             const formattedError = {
                 message: error.response?.data?.message || error.message,
@@ -168,9 +229,26 @@ export const useProduct = () => {
             };
             throw formattedError;
         }
-    };
+    }, []);
 
-    const handleUpdateReview = async (productId, reviewId, data) => {
+    const handleGetSellerReviews = useCallback(async () => {
+        try {
+            dispatch(setLoading(true));
+            const data = await getSellerReviews();
+            return data;
+        } catch (error) {
+            const formattedError = {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status,
+            };
+            dispatch(setError(formattedError));
+            throw formattedError;
+        } finally {
+            dispatch(setLoading(false));
+        }
+    }, [dispatch]);
+
+    const handleUpdateReview = useCallback(async (productId, reviewId, data) => {
         try {
             dispatch(setLoading(true));
             const response = await updateReview(productId, reviewId, data);
@@ -186,9 +264,9 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
-    const handleDeleteReview = async (productId, reviewId) => {
+    const handleDeleteReview = useCallback(async (productId, reviewId) => {
         try {
             dispatch(setLoading(true));
             const response = await deleteReview(productId, reviewId);
@@ -204,7 +282,7 @@ export const useProduct = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };
+    }, [dispatch]);
 
     return {
         handleCreateProduct,
@@ -218,5 +296,8 @@ export const useProduct = () => {
         handleGetReviews,
         handleUpdateReview,
         handleDeleteReview,
+        handleGetSellerReviews,
+        handleAddProductVariant,
+        handleDeleteProductVariant
     };
 }

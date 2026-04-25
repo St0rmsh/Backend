@@ -15,11 +15,21 @@ const CreateProducts = () => {
     description: "",
     priceAmount: "",
     priceCurrency: "INR",
+    stock: "",
   });
 
   
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [showCurrency, setShowCurrency] = useState(false);
+
+  const currencies = [
+      { code: "INR", symbol: "₹", name: "Rupee" },
+      { code: "USD", symbol: "$", name: "USD" },
+      { code: "EUR", symbol: "€", name: "Euro" },
+      { code: "GBP", symbol: "£", name: "Pound" },
+      { code: "JPY", symbol: "¥", name: "Yen" }
+  ];
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -47,6 +57,7 @@ const CreateProducts = () => {
     submitData.append("description", formData.description);
     submitData.append("priceAmount", formData.priceAmount);
     submitData.append("priceCurrency", formData.priceCurrency);
+    submitData.append("stock", formData.stock);
     
     images.forEach(img => {
       submitData.append("images", img);
@@ -115,10 +126,10 @@ const CreateProducts = () => {
           </div>
 
           <div className={`p-6 rounded-xl border ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>
-            <h2 className="text-lg font-semibold mb-4">Pricing</h2>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <h2 className="text-lg font-semibold mb-4">Pricing & Inventory</h2>
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1.5 opacity-80">Amount</label>
+                <label className="block text-sm font-medium mb-1.5 opacity-80">Price Amount</label>
                 <input 
                   required
                   type="number" 
@@ -131,16 +142,56 @@ const CreateProducts = () => {
               </div>
               <div className="w-full sm:w-1/3">
                 <label className="block text-sm font-medium mb-1.5 opacity-80">Currency</label>
-                <select 
-                  value={formData.priceCurrency} 
-                  onChange={e => setFormData({...formData, priceCurrency: e.target.value})}
-                  className={`${inputClass} appearance-none cursor-pointer`}
-                >
-                  {["USD", "EUR", "GBP", "INR", "JPY"].map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div 
+                      onClick={() => setShowCurrency(!showCurrency)}
+                      className={`${inputClass} flex items-center justify-between cursor-pointer`}
+                  >
+                      <span className="flex items-center gap-2">
+                          <span className={`font-medium ${isDark ? 'text-[#888]' : 'text-[#999]'}`}>
+                              {currencies.find(c => c.code === formData.priceCurrency)?.symbol}
+                          </span>
+                          <span className="font-semibold">{formData.priceCurrency}</span>
+                      </span>
+                      <svg className={`w-4 h-4 opacity-50 transition-transform ${showCurrency ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
+                  </div>
+                  
+                  {showCurrency && (
+                      <>
+                          <div className="fixed inset-0 z-10" onClick={() => setShowCurrency(false)}></div>
+                          <div className={`absolute z-20 w-full mt-2 rounded-xl border shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${isDark ? 'bg-[#1a1a1a] border-[#333]' : 'bg-white border-[#e5e5df]'}`}>
+                              {currencies.map(c => (
+                                  <div 
+                                      key={c.code}
+                                      onClick={() => { setFormData({...formData, priceCurrency: c.code}); setShowCurrency(false); }}
+                                      className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${
+                                          formData.priceCurrency === c.code 
+                                              ? (isDark ? 'bg-[#333] text-white' : 'bg-[#f5f5ef] text-black') 
+                                              : (isDark ? 'hover:bg-[#222]' : 'hover:bg-[#fafaf7]')
+                                      }`}
+                                  >
+                                      <span className={`w-5 text-center font-medium ${isDark ? 'text-[#888]' : 'text-[#999]'}`}>{c.symbol}</span>
+                                      <span className="font-semibold">{c.code}</span>
+                                      <span className={`text-xs ml-auto ${isDark ? 'text-[#555]' : 'text-[#999]'}`}>{c.name}</span>
+                                  </div>
+                              ))}
+                          </div>
+                      </>
+                  )}
+                </div>
               </div>
+            </div>
+            <div className="w-full sm:w-1/2">
+                <label className="block text-sm font-medium mb-1.5 opacity-80">Base Stock</label>
+                <input 
+                  required
+                  type="number" 
+                  min="0"
+                  value={formData.stock} 
+                  onChange={e => setFormData({...formData, stock: e.target.value})}
+                  className={inputClass}
+                  placeholder="0"
+                />
             </div>
           </div>
 

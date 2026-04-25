@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {createProduct,getAllProducts,getProductById, updateProduct, deleteProduct, createProductReview, getProductReviews, updateProductReview, deleteProductReview, fetchAllProducts, fetchProductById} from "../controllers/product.controller.js";
+import {createProduct,getAllProducts,getProductById, updateProduct, deleteProduct, createProductReview, getProductReviews, updateProductReview, deleteProductReview, fetchAllProducts, fetchProductById, getSellerReviews, addProductVariant, deleteProductVariant} from "../controllers/product.controller.js";
 import {validateCreateProduct} from "../validators/product.validate.js";
 import {authSeller, authMiddleware} from "../Middleware/auth.middleware.js";
 import multer from "multer";
@@ -47,6 +47,21 @@ router.put("/:id", authSeller, upload.array("images", 7), updateProduct);
 // @route DELETE /api/product/:id
 // @access Private Seller
 router.delete("/:id", authSeller, deleteProduct);
+
+// @desc Add Product Variant
+// @route POST /api/product/:id/variants
+// @access Private Seller
+router.post("/:id/variants", authSeller, upload.array("images", 7), addProductVariant);
+
+// @desc Delete Product Variant
+// @route DELETE /api/product/:id/variants/:variantId
+// @access Private Seller
+router.delete("/:id/variants/:variantId", authSeller, deleteProductVariant);
+
+// @desc Get Seller Reviews
+// @route GET /api/product/seller/reviews
+// @access Private Seller
+router.get("/seller/reviews", authSeller, getSellerReviews);
 
 // ─── REVIEW ROUTES ─────────────────────────────────────────
 

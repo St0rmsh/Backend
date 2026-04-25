@@ -18,6 +18,7 @@ function App() {
           dispatch(setUser(data.user));
         }
       } catch (error) {
+        console.log(error);
       } finally {
         setHydrating(false);
       }

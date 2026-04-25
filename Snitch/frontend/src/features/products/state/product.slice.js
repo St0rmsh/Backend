@@ -1,20 +1,26 @@
-import {createSlice } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
     products: [],
     product: null,
     loading: false,
-    error: null
-}
+    error: null,
+    totalResults: 0,
+    totalPages: 1
+};
 
 const productSlice = createSlice({
     name: "product",
     initialState,
     reducers: {
-        setProducts:(state,action)=>{
+        setProducts: (state, action) => {
             state.products = action.payload;
         },
-        setProduct:(state,action)=>{
+        setPagination: (state, action) => {
+            state.totalResults = action.payload.total;
+            state.totalPages = action.payload.pages;
+        },
+        setProduct: (state, action) => {
             state.product = action.payload;
         },
         removeProduct: (state, action) => {
@@ -29,15 +35,23 @@ const productSlice = createSlice({
                 state.product = action.payload;
             }
         },
-        setLoading:(state,action)=>{
+        setLoading: (state, action) => {
             state.loading = action.payload;
         },
-        setError:(state,action)=>{
+        setError: (state, action) => {
             state.error = action.payload;
         }
     }
-})
+});
 
-export const {setProducts,setProduct,removeProduct,updateProductState,setLoading,setError} = productSlice.actions;
+export const { 
+    setProducts, 
+    setPagination, 
+    setProduct, 
+    removeProduct, 
+    updateProductState, 
+    setLoading, 
+    setError 
+} = productSlice.actions;
 
 export default productSlice.reducer;

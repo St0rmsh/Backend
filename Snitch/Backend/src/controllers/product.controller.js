@@ -1,130 +1,70 @@
-import ProductModel from "../models/product.model.js";
-import {uploadFile} from "../services/storage.service.js";
+import productService from "../services/product.service.js";
+import reviewService from "../services/review.service.js";
+import { uploadFile } from "../services/storage.service.js";
 
+export const createProduct = async (req, res) => {
+    try {
+        const { title, description, priceAmount, priceCurrency, stock, category, type } = req.body;
+        const seller = req.user;
 
+        const images = await Promise.all(req.files.map(async (file) => {
+            const result = await uploadFile({
+                buffer: file.buffer,
+                fileName: file.originalname,
+            });
+            return result;
+        }));
 
+        const product = await productService.createProduct({
+            title,
+            description,
+            price: { amount: Number(priceAmount), currency: priceCurrency },
+            stock: Number(stock),
+            category,
+            type,
+            seller: seller._id,
+            images: images.map(img => ({ url: img.url }))
+        });
 
-
-export const createProduct = async(req,res)=> {
-    
-    const {title,description,priceAmount,priceCurrency} = req.body;
-    const seller = req.user
-
-    const images = await Promise.all(req.files.map(async (file)=> {
-        const result = await uploadFile({
-            buffer:file.buffer,
-            fileName:file.originalname,
-        })
-        return result;
-    }))
-
-
-    const product = await ProductModel.create({
-        title,
-        description,
-        price: {
-            amount: priceAmount,
-            currency: priceCurrency
-        },
-        images,
-        seller:seller._id
-    })
-
-    res.status(201).json({
-        message: "Product created successfully",
-        product
-    })
-
-    
-}
-
-
-
-export const getAllProducts = async (req,res)=> {
-
-   try {
-     const sellerId = req.user._id;
-
-    if(!sellerId){
-        return res.status(401).json({
-            message: "Unauthorized"
-        })
+        res.status(201).json({
+            message: "Product created successfully",
+            success: true,
+            product
+        });
+    } catch (error) {
+        console.error("Error creating product:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
+};
 
-    if(req.user.role !== "seller"){
-        return res.status(403).json({
-            message: "Forbidden"
-        })
-    }
-
-    const products = await ProductModel.find({seller:sellerId})
-
-    if(!products){
-        return res.status(404).json({
-            message: "No products found"
-        })
-    }
-
-    if (products.length === 0) {
-        return res.status(404).json({
-            message: "No products found"
-        })
-    }
-
-    res.status(200).json({
-        message: "Products fetched successfully",
-        success: true,
-        products
-    })
-   } catch (error) {
-    console.error("Error fetching products:", error);
-    res.status(500).json({
-        message: "Internal server error"
-    })
-   }
-}
-
-
-
-
-
-
-
-
-
-
-
-export const getProductById = async (req,res)=> {
-
-    const product = await ProductModel.findById(req.params.id)
-
-    if (!product) {
-        return res.status(404).json({
-            message: "Product not found"
-        })
-    }
-
-    res.status(200).json({
-        message: "Product fetched successfully",
-        success: true,
-        product
-    })
-}
-
-export const deleteProduct = async (req, res) => {
+export const getAllProducts = async (req, res) => {
     try {
         const sellerId = req.user._id;
-        const productId = req.params.id;
+        const products = await productService.getAllProducts({ seller: sellerId });
+        res.status(200).json({
+            message: "Products fetched successfully",
+            success: true,
+            products
+        });
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
 
-        const product = await ProductModel.findOne({ _id: productId, seller: sellerId });
+export const getProductById = async (req, res) => {
+    try {
+        const product = await productService.getProductById(req.params.id);
         if (!product) {
-            return res.status(404).json({ message: "Product not found or unauthorized to delete" });
+            return res.status(404).json({ message: "Product not found" });
         }
-
-        await ProductModel.findByIdAndDelete(productId);
-        res.status(200).json({ message: "Product deleted successfully", success: true });
-    } catch(error) {
-        console.error("Error deleting product:", error);
+        res.status(200).json({
+            message: "Product fetched successfully",
+            success: true,
+            product
+        });
+    } catch (error) {
+        console.error("Error fetching product:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -133,169 +73,197 @@ export const updateProduct = async (req, res) => {
     try {
         const sellerId = req.user._id;
         const productId = req.params.id;
-        const { title, description, priceAmount, priceCurrency } = req.body;
-
-        const product = await ProductModel.findOne({ _id: productId, seller: sellerId });
-        if (!product) {
-            return res.status(404).json({ message: "Product not found or unauthorized to update" });
-        }
+        const { title, description, priceAmount, priceCurrency, stock } = req.body;
 
         const updateData = {};
         if (title) updateData.title = title;
         if (description) updateData.description = description;
+        if (stock !== undefined) updateData.stock = Number(stock);
         if (priceAmount || priceCurrency) {
             updateData.price = {
-                amount: priceAmount || product.price.amount,
-                currency: priceCurrency || product.price.currency
+                amount: Number(priceAmount),
+                currency: priceCurrency
             };
         }
 
         if (req.files && req.files.length > 0) {
-            const images = await Promise.all(req.files.map(async (file)=> {
+            const images = await Promise.all(req.files.map(async (file) => {
                 const result = await uploadFile({
-                    buffer:file.buffer,
-                    fileName:file.originalname,
-                })
+                    buffer: file.buffer,
+                    fileName: file.originalname,
+                });
                 return result;
             }));
             updateData.images = images;
         }
 
-        const updatedProduct = await ProductModel.findByIdAndUpdate(productId, updateData, { new: true });
+        const updatedProduct = await productService.updateProduct(productId, updateData, sellerId);
         res.status(200).json({ message: "Product updated successfully", success: true, product: updatedProduct });
-    } catch(error) {
+    } catch (error) {
         console.error("Error updating product:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+export const deleteProduct = async (req, res) => {
+    try {
+        const sellerId = req.user._id;
+        const productId = req.params.id;
+        await productService.deleteProduct(productId, sellerId);
+        res.status(200).json({ message: "Product deleted successfully", success: true });
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+export const addProductVariant = async (req, res) => {
+    try {
+        const sellerId = req.user._id;
+        const productId = req.params.id;
+        const { value, stock, priceAmount, priceCurrency } = req.body;
+
+        let images = [];
+        if (req.files && req.files.length > 0) {
+            images = await Promise.all(req.files.map(async (file) => {
+                const result = await uploadFile({
+                    buffer: file.buffer,
+                    fileName: file.originalname,
+                });
+                return { url: result.url };
+            }));
+        }
+
+        const variantData = {
+            value,
+            stock: Number(stock),
+            price: {
+                amount: Number(priceAmount),
+                currency: priceCurrency
+            },
+            image: images
+        };
+
+        const product = await productService.addVariant(productId, variantData, sellerId);
+        res.status(201).json({ message: "Variant added successfully", success: true, product });
+    } catch (error) {
+        console.error("Error adding variant:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+export const deleteProductVariant = async (req, res) => {
+    try {
+        const sellerId = req.user._id;
+        const { id: productId, variantId } = req.params;
+        const product = await productService.deleteVariant(productId, variantId, sellerId);
+        res.status(200).json({ message: "Variant deleted successfully", success: true, product });
+    } catch (error) {
+        console.error("Error deleting variant:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
     }
 };
 
 export const createProductReview = async (req, res) => {
     try {
-        const { rating, comment } = req.body;
+        const { rating, comment, parentId } = req.body;
         const productId = req.params.id;
         const user = req.user;
 
-        const product = await ProductModel.findById(productId);
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
+        if (parentId) {
+            // This is a reply
+            const product = await reviewService.replyToReview(user._id, parentId, comment, user._id); 
+            return res.status(201).json({ message: "Reply added", success: true, product });
         }
 
-        const alreadyReviewed = product.reviews.find(
-            (r) => r.user.toString() === user._id.toString() || r.user.toString() === user.id.toString()
-        );
-
-        if (alreadyReviewed) {
-            return res.status(400).json({ message: "Product already reviewed" });
-        }
-
-        const review = {
-            name: user.fullname || "User",
-            rating: Number(rating),
-            comment,
-            user: user._id || user.id,
-        };
-
-        product.reviews.push(review);
-        product.numReviews = product.reviews.length;
-        product.averageRating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
-
-        await product.save();
+        const product = await reviewService.addReview(user._id, productId, { rating: Number(rating), comment });
         res.status(201).json({ message: "Review added", success: true, product });
     } catch (error) {
         console.error("Error creating review:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: error.message || "Internal server error" });
     }
 };
-
-
-
 
 export const getProductReviews = async (req, res) => {
     try {
         const productId = req.params.id;
-        const product = await ProductModel.findById(productId);
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-        }
-        res.status(200).json({ message: "Product reviews fetched successfully", success: true, reviews: product.reviews });
+        const { limit = 10, skip = 0 } = req.query;
+        const { reviews, total } = await reviewService.getReviewsByProduct(productId, { 
+            limit: Number(limit), 
+            skip: Number(skip) 
+        });
+        res.status(200).json({ 
+            message: "Product reviews fetched successfully", 
+            success: true, 
+            reviews,
+            total 
+        });
     } catch (error) {
         console.error("Error fetching product reviews:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
 
-export const updateProductReview = async (req, res) => {
+export const getSellerReviews = async (req, res) => {
     try {
-        const { rating, comment } = req.body;
-        const productId = req.params.id;
-        const reviewId = req.params.reviewId;
-        const userId = req.user._id || req.user.id;
-
-        const product = await ProductModel.findById(productId);
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-        }
-
-        const review = product.reviews.id(reviewId);
-        if (!review) {
-            return res.status(404).json({ message: "Review not found" });
-        }
-
-        if (review.user.toString() !== userId.toString()) {
-            return res.status(403).json({ message: "You can only edit your own reviews" });
-        }
-
-        if (rating) review.rating = Number(rating);
-        if (comment) review.comment = comment;
-
-        product.averageRating = product.reviews.reduce((acc, r) => r.rating + acc, 0) / product.reviews.length;
-
-        await product.save();
-        res.status(200).json({ message: "Review updated", success: true, product });
+        const sellerId = req.user._id;
+        const reviews = await reviewService.getSellerReviews(sellerId);
+        res.status(200).json({ message: "Seller reviews fetched", success: true, reviews });
     } catch (error) {
-        console.error("Error updating review:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
-export const deleteProductReview = async (req, res) => {
-    try {
-        const productId = req.params.id;
-        const reviewId = req.params.reviewId;
-        const userId = req.user._id || req.user.id;
-
-        const product = await ProductModel.findById(productId);
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-        }
-
-        const review = product.reviews.id(reviewId);
-        if (!review) {
-            return res.status(404).json({ message: "Review not found" });
-        }
-
-        if (review.user.toString() !== userId.toString()) {
-            return res.status(403).json({ message: "You can only delete your own reviews" });
-        }
-
-        product.reviews.pull(reviewId);
-        product.numReviews = product.reviews.length;
-        product.averageRating = product.reviews.length > 0
-            ? product.reviews.reduce((acc, r) => r.rating + acc, 0) / product.reviews.length
-            : 0;
-
-        await product.save();
-        res.status(200).json({ message: "Review deleted", success: true, product });
-    } catch (error) {
-        console.error("Error deleting review:", error);
+        console.error("Error fetching seller reviews:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
 
 export const fetchAllProducts = async (req, res) => {
     try {
-        const products = await ProductModel.find().sort({ createdAt: -1 });
-        res.status(200).json({ message: "Products fetched successfully", success: true, products });
+        const { search, minPrice, maxPrice, rating, category, sort, page = 1, limit = 10 } = req.query;
+        
+        const filters = {};
+        if (minPrice || maxPrice) {
+            filters["price.amount"] = {};
+            if (minPrice) filters["price.amount"].$gte = Number(minPrice);
+            if (maxPrice) filters["price.amount"].$lte = Number(maxPrice);
+        }
+        if (rating) {
+            filters.averageRating = { $gte: Number(rating) };
+        }
+        if (category && category !== 'All') {
+            filters.category = category;
+        }
+
+        const options = {
+            limit: Number(limit),
+            skip: (Number(page) - 1) * Number(limit),
+            sort: {}
+        };
+
+        if (sort === "price_low") options.sort["price.amount"] = 1;
+        else if (sort === "price_high") options.sort["price.amount"] = -1;
+        else if (sort === "rating") options.sort.averageRating = -1;
+        else options.sort.createdAt = -1;
+
+        const fullFilters = { ...filters };
+        if (search) {
+            fullFilters.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        const products = await productService.searchProducts(search, filters, options);
+        const total = await productService.countProducts(fullFilters);
+
+        res.status(200).json({ 
+            message: "Products fetched successfully", 
+            success: true, 
+            products,
+            pagination: {
+                total,
+                page: Number(page),
+                pages: Math.ceil(total / Number(limit))
+            }
+        });
     } catch (error) {
         console.error("Error fetching products:", error);
         res.status(500).json({ message: "Internal server error" });
@@ -304,8 +272,7 @@ export const fetchAllProducts = async (req, res) => {
 
 export const fetchProductById = async (req, res) => {
     try {
-        const productId = req.params.id;
-        const product = await ProductModel.findById(productId);
+        const product = await productService.getProductById(req.params.id);
         if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
@@ -313,5 +280,32 @@ export const fetchProductById = async (req, res) => {
     } catch (error) {
         console.error("Error fetching product:", error);
         res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const updateProductReview = async (req, res) => {
+    try {
+        const { rating, comment } = req.body;
+        const { id: productId, reviewId } = req.params;
+        const userId = req.user._id;
+        
+        const product = await reviewService.updateReview(userId, reviewId, { rating, comment }); 
+        res.status(200).json({ message: "Review updated", success: true, product });
+    } catch (error) {
+        console.error("Error updating review:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+export const deleteProductReview = async (req, res) => {
+    try {
+        const { id: productId, reviewId } = req.params;
+        const userId = req.user._id;
+        
+        const product = await reviewService.deleteReview(userId, reviewId);
+        res.status(200).json({ message: "Review deleted", success: true, product });
+    } catch (error) {
+        console.error("Error deleting review:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
     }
 };

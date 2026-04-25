@@ -7,7 +7,7 @@ import { useTheme } from '../../../context/ThemeContext';
 const OneProduct = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { handleGetProductById, handleDeleteProduct, handleUpdateProduct } = useProduct();
+    const { handleGetProductById, handleDeleteProduct, handleUpdateProduct, handleAddProductVariant, handleDeleteProductVariant } = useProduct();
     const { product, loading, error } = useSelector(state => state.product);
     const { isDark } = useTheme();
 
@@ -22,11 +22,34 @@ const OneProduct = () => {
         title: "",
         description: "",
         priceAmount: "",
-        priceCurrency: "INR"
+        priceCurrency: "INR",
+        stock: ""
     });
     const [newImages, setNewImages] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
+    const [showCurrency, setShowCurrency] = useState(false);
+
+    // Variant State
+    const [showAddVariant, setShowAddVariant] = useState(false);
+    const [isAddingVariant, setIsAddingVariant] = useState(false);
+    const [showVariantCurrency, setShowVariantCurrency] = useState(false);
+    const [variantData, setVariantData] = useState({
+        value: "",
+        stock: "",
+        priceAmount: "",
+        priceCurrency: "INR"
+    });
+    const [variantImages, setVariantImages] = useState([]);
+    const [variantPreviewUrls, setVariantPreviewUrls] = useState([]);
+
+    const currencies = [
+        { code: "INR", symbol: "₹", name: "Rupee" },
+        { code: "USD", symbol: "$", name: "USD" },
+        { code: "EUR", symbol: "€", name: "Euro" },
+        { code: "GBP", symbol: "£", name: "Pound" },
+        { code: "JPY", symbol: "¥", name: "Yen" }
+    ];
 
     useEffect(() => {
         if (id) {
@@ -41,7 +64,8 @@ const OneProduct = () => {
                 title: product.title || "",
                 description: product.description || "",
                 priceAmount: product.price?.amount || "",
-                priceCurrency: product.price?.currency || "INR"
+                priceCurrency: product.price?.currency || "INR",
+                stock: product.stock !== undefined ? product.stock : ""
             });
             setNewImages([]);
             setPreviewUrls([]);
@@ -101,6 +125,7 @@ const OneProduct = () => {
             formData.append("description", editData.description);
             formData.append("priceAmount", editData.priceAmount);
             formData.append("priceCurrency", editData.priceCurrency);
+            formData.append("stock", editData.stock);
             
             newImages.forEach(img => {
                 formData.append("images", img);
@@ -114,6 +139,59 @@ const OneProduct = () => {
         } finally {
             setIsUpdating(false);
         }
+    };
+
+    const handleAddVariant = async (e) => {
+        e.preventDefault();
+        setIsAddingVariant(true);
+        try {
+            const formData = new FormData();
+            formData.append("value", variantData.value);
+            formData.append("stock", variantData.stock);
+            formData.append("priceAmount", variantData.priceAmount);
+            formData.append("priceCurrency", variantData.priceCurrency);
+            variantImages.forEach(img => {
+                formData.append("images", img);
+            });
+            await handleAddProductVariant(id, formData);
+            setShowAddVariant(false);
+            setVariantData({ value: "", stock: "", priceAmount: "", priceCurrency: "INR" });
+            setVariantImages([]);
+            setVariantPreviewUrls([]);
+        } catch (err) {
+            console.error("Variant add failed", err);
+        } finally {
+            setIsAddingVariant(false);
+        }
+    };
+
+    const onDeleteVariant = async (variantId) => {
+        if (window.confirm("Delete this variant?")) {
+            try {
+                await handleDeleteProductVariant(id, variantId);
+            } catch (err) {
+                console.error("Variant delete failed", err);
+            }
+        }
+    };
+
+    const onAddVariantFiles = (files) => {
+        const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+        if (validFiles.length === 0) return;
+        const remaining = 7 - variantImages.length;
+        const toAdd = validFiles.slice(0, remaining);
+        const urls = toAdd.map(file => URL.createObjectURL(file));
+        setVariantPreviewUrls(prev => [...prev, ...urls]);
+        setVariantImages(prev => [...prev, ...toAdd]);
+    };
+
+    const removeVariantImage = (index) => {
+        setVariantImages(prev => prev.filter((_, i) => i !== index));
+        setVariantPreviewUrls(prev => {
+            const newUrls = [...prev];
+            URL.revokeObjectURL(newUrls[index]);
+            return newUrls.filter((_, i) => i !== index);
+        });
     };
 
     const StaticStars = ({ rating, size = 'w-4 h-4' }) => (
@@ -293,18 +371,53 @@ const OneProduct = () => {
                                         <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Title</label>
                                         <input required type="text" value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} className={inputClass} />
                                     </div>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
+                                    <div className="flex flex-wrap gap-4">
+                                        <div className="flex-1 min-w-[120px]">
                                             <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Amount</label>
-                                            <input required type="number" value={editData.priceAmount} onChange={e => setEditData({...editData, priceAmount: e.target.value})} className={inputClass} />
+                                            <input required type="number" min="0" value={editData.priceAmount} onChange={e => setEditData({...editData, priceAmount: e.target.value})} className={inputClass} />
                                         </div>
-                                        <div className="w-1/3">
+                                        <div className="w-1/3 min-w-[100px]">
                                             <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Currency</label>
-                                            <select value={editData.priceCurrency} onChange={e => setEditData({...editData, priceCurrency: e.target.value})} className={inputClass}>
-                                                {["INR", "USD", "EUR", "GBP", "JPY"].map(c => (
-                                                    <option key={c} value={c}>{c}</option>
-                                                ))}
-                                            </select>
+                                            <div className="relative">
+                                                <div 
+                                                    onClick={() => setShowCurrency(!showCurrency)}
+                                                    className={`${inputClass} flex items-center justify-between cursor-pointer`}
+                                                >
+                                                    <span className="flex items-center gap-2">
+                                                        <span className={`font-medium ${isDark ? 'text-[#888]' : 'text-[#999]'}`}>
+                                                            {currencies.find(c => c.code === editData.priceCurrency)?.symbol}
+                                                        </span>
+                                                        <span className="font-semibold">{editData.priceCurrency}</span>
+                                                    </span>
+                                                    <svg className={`w-4 h-4 opacity-50 transition-transform ${showCurrency ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
+                                                </div>
+                                                
+                                                {showCurrency && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-10" onClick={() => setShowCurrency(false)}></div>
+                                                        <div className={`absolute z-20 w-full mt-2 rounded-xl border shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${isDark ? 'bg-[#1a1a1a] border-[#333]' : 'bg-white border-[#e5e5df]'}`}>
+                                                            {currencies.map(c => (
+                                                                <div 
+                                                                    key={c.code}
+                                                                    onClick={() => { setEditData({...editData, priceCurrency: c.code}); setShowCurrency(false); }}
+                                                                    className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${
+                                                                        editData.priceCurrency === c.code 
+                                                                            ? (isDark ? 'bg-[#333] text-white' : 'bg-[#f5f5ef] text-black') 
+                                                                            : (isDark ? 'hover:bg-[#222]' : 'hover:bg-[#fafaf7]')
+                                                                    }`}
+                                                                >
+                                                                    <span className={`w-5 text-center font-medium ${isDark ? 'text-[#888]' : 'text-[#999]'}`}>{c.symbol}</span>
+                                                                    <span className="font-semibold">{c.code}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="w-full sm:w-1/3 min-w-[120px]">
+                                            <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Base Stock</label>
+                                            <input required type="number" min="0" value={editData.stock} onChange={e => setEditData({...editData, stock: e.target.value})} className={inputClass} />
                                         </div>
                                     </div>
                                     <div className="flex-1">
@@ -349,6 +462,9 @@ const OneProduct = () => {
                                 
                                 <div className="mt-auto pt-4 flex flex-col gap-2">
                                     <p className={`text-xs ${isDark ? 'text-[#666]' : 'text-[#999]'}`}>
+                                        Base Stock: <span className="font-mono text-current">{product.stock}</span>
+                                    </p>
+                                    <p className={`text-xs ${isDark ? 'text-[#666]' : 'text-[#999]'}`}>
                                         ID: <span className="font-mono">{product._id}</span>
                                     </p>
                                     <p className={`text-xs ${isDark ? 'text-[#666]' : 'text-[#999]'}`}>
@@ -358,6 +474,146 @@ const OneProduct = () => {
                             </>
                         )}
                     </div>
+                </div>
+
+                {/* Variants Section */}
+                <div className={`mt-10 p-6 sm:p-8 rounded-2xl border ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl sm:text-2xl font-bold">Product Variants</h2>
+                        <button 
+                            onClick={() => setShowAddVariant(!showAddVariant)}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                                showAddVariant 
+                                ? (isDark ? 'bg-white text-black border-white' : 'bg-black text-white border-black')
+                                : (isDark ? 'border-[#444] hover:border-[#666]' : 'border-[#ccc] hover:border-[#999]')
+                            }`}
+                        >
+                            {showAddVariant ? 'Cancel' : '+ Add Variant'}
+                        </button>
+                    </div>
+
+                    {showAddVariant && (
+                        <form onSubmit={handleAddVariant} className={`mb-8 p-6 rounded-xl border ${isDark ? 'bg-[#0a0a0a] border-[#333]' : 'bg-[#fafaf7] border-[#dcdchb]'}`}>
+                            <h3 className="text-lg font-semibold mb-4">New Variant Details</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Variant Name (e.g. Red, XL)</label>
+                                    <input required type="text" value={variantData.value} onChange={e => setVariantData({...variantData, value: e.target.value})} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Stock</label>
+                                    <input required type="number" min="0" value={variantData.stock} onChange={e => setVariantData({...variantData, stock: e.target.value})} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Amount</label>
+                                    <input required type="number" min="0" value={variantData.priceAmount} onChange={e => setVariantData({...variantData, priceAmount: e.target.value})} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Currency</label>
+                                    <div className="relative">
+                                        <div 
+                                            onClick={() => setShowVariantCurrency(!showVariantCurrency)}
+                                            className={`${inputClass} flex items-center justify-between cursor-pointer`}
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <span className={`font-medium ${isDark ? 'text-[#888]' : 'text-[#999]'}`}>
+                                                    {currencies.find(c => c.code === variantData.priceCurrency)?.symbol}
+                                                </span>
+                                                <span className="font-semibold">{variantData.priceCurrency}</span>
+                                            </span>
+                                            <svg className={`w-4 h-4 opacity-50 transition-transform ${showVariantCurrency ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </div>
+                                        
+                                        {showVariantCurrency && (
+                                            <>
+                                                <div className="fixed inset-0 z-10" onClick={() => setShowVariantCurrency(false)}></div>
+                                                <div className={`absolute z-20 w-full mt-2 rounded-xl border shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${isDark ? 'bg-[#1a1a1a] border-[#333]' : 'bg-white border-[#e5e5df]'}`}>
+                                                    {currencies.map(c => (
+                                                        <div 
+                                                            key={c.code}
+                                                            onClick={() => { setVariantData({...variantData, priceCurrency: c.code}); setShowVariantCurrency(false); }}
+                                                            className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${
+                                                                variantData.priceCurrency === c.code 
+                                                                    ? (isDark ? 'bg-[#333] text-white' : 'bg-[#f5f5ef] text-black') 
+                                                                    : (isDark ? 'hover:bg-[#222]' : 'hover:bg-[#fafaf7]')
+                                                            }`}
+                                                        >
+                                                            <span className={`w-5 text-center font-medium ${isDark ? 'text-[#888]' : 'text-[#999]'}`}>{c.symbol}</span>
+                                                            <span className="font-semibold">{c.code}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="block text-xs font-bold uppercase tracking-widest opacity-50 mb-2">Variant Images</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {variantPreviewUrls.map((url, i) => (
+                                        <div key={i} className={`relative w-20 h-24 border rounded-lg overflow-hidden group ${isDark ? 'border-[#444]' : 'border-[#ccc]'}`}>
+                                            <img src={url} className="w-full h-full object-cover" />
+                                            <button 
+                                                type="button"
+                                                onClick={() => removeVariantImage(i)} 
+                                                className="absolute top-1 right-1 p-1 bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {variantImages.length < 7 && (
+                                        <label className={`w-20 h-24 border-2 border-dashed flex flex-col items-center justify-center rounded-lg cursor-pointer opacity-60 hover:opacity-100 transition-opacity ${isDark ? 'border-[#555] hover:border-white' : 'border-[#aaa] hover:border-black'}`}>
+                                            <svg className="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
+                                            <span className="text-[10px] font-medium">Add</span>
+                                            <input type="file" multiple accept="image/*" className="hidden" onChange={e => onAddVariantFiles(e.target.files)} />
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+                            <button 
+                                type="submit" 
+                                disabled={isAddingVariant}
+                                className={`w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold tracking-wide transition-colors ${
+                                    isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'
+                                } disabled:opacity-50`}
+                            >
+                                {isAddingVariant ? 'Saving...' : 'Save Variant'}
+                            </button>
+                        </form>
+                    )}
+
+                    {product.variants && product.variants.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {product.variants.map((variant) => (
+                                <div key={variant._id} className={`flex flex-col p-4 rounded-xl border ${isDark ? 'border-[#333] bg-[#161616]' : 'border-[#e5e5df] bg-[#fafaf7]'}`}>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <h4 className="font-bold text-lg">{variant.value}</h4>
+                                        <button onClick={() => onDeleteVariant(variant._id)} className="text-red-500 opacity-60 hover:opacity-100">
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                    <div className={`text-sm mb-3 space-y-1 ${isDark ? 'text-[#aaa]' : 'text-[#666]'}`}>
+                                        <p>Stock: <span className="font-medium text-current">{variant.stock}</span></p>
+                                        <p>Price: <span className="font-medium text-current">{variant.price?.currency} {variant.price?.amount}</span></p>
+                                    </div>
+                                    {variant.image && variant.image.length > 0 && (
+                                        <div className="flex gap-2 mt-auto overflow-x-auto pb-1 scrollbar-hide">
+                                            {variant.image.map((img, i) => (
+                                                <img key={i} src={img.url} alt={variant.value} className="w-12 h-12 object-cover rounded border border-[#333]" />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className={`p-8 text-center rounded-xl border border-dashed ${isDark ? 'border-[#333] text-[#666]' : 'border-[#ccc] text-[#888]'}`}>
+                            <p>No variants added yet.</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className={`mt-10 p-6 sm:p-8 rounded-2xl border ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>

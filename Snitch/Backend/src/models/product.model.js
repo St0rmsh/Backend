@@ -4,39 +4,7 @@ import priceSchema from "./price.schema.js";
 
 
 
-const reviewSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
-    name: {
-        type: String,
-        required: true
-    },
-    rating: {
-        type: Number,
-        required: true,
-        min: 1,
-        max: 5
-    },
-     reply: {
-        text: {
-            type: String
-        },
-        seller: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User"
-        },
-        createdAt: {
-            type: Date
-        }
-    },
-    comment: {
-        type: String,
-        required: true
-    }
-}, { timestamps: true });
+
 
 const productSchema = new mongoose.Schema({
     title: {
@@ -65,7 +33,12 @@ const productSchema = new mongoose.Schema({
           
         }
     ],
-    reviews: [reviewSchema],
+    reviews: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Review"
+        }
+    ],
     averageRating: {
         type: Number,
         default: 0
@@ -104,7 +77,16 @@ const productSchema = new mongoose.Schema({
                 of: String
             }
         }
-    ]
+    ],
+    category: {
+        type: String,
+        default: "Uncategorized"
+    },
+    type: {
+        type: String,
+        enum: ["simple", "variant_required", "variant_optional"],
+        default: "simple"
+    }
 },
  {
     timestamps: true

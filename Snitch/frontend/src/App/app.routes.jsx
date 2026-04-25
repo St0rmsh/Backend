@@ -29,6 +29,7 @@ import ProductDetails from "../features/products/components/ProductDetails";
 // Cart Suite
 import CartPage from "../features/cart/pages/CartPage";
 import PaymentPage from "../features/cart/pages/PaymentPage";
+import WishlistPage from "../features/wishlist/pages/WishlistPage";
 
 export const router = createBrowserRouter([
     {
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
     {
         path: "/cart",
         element: <CartPage />
+    },
+    {
+        path: "/wishlist",
+        element: <WishlistPage />
     },
     {
         path: "/payment",
