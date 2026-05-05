@@ -33,8 +33,33 @@
 }
 
 * {
-  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.4s cubic-bezier(0.2, 0, 0, 1), 
+              border-color 0.4s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.4s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.group:hover, .group:active {
+  will-change: transform, box-shadow;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) translateZ(0); }
+  100% { transform: translateX(100%) translateZ(0); }
+}
+
+.shimmer-gpu {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 body {
@@ -85,14 +110,17 @@ h1, h2, h3, h4, .font-display {
 /* AI Glow Effects */
 .ai-glow-orange {
   filter: drop-shadow(0 0 8px rgba(255, 77, 0, 0.5));
+  will-change: filter;
 }
 
 .ai-glow-green {
   filter: drop-shadow(0 0 8px rgba(0, 200, 83, 0.5));
+  will-change: filter;
 }
 
 .ai-glow-red {
   filter: drop-shadow(0 0 8px rgba(213, 0, 0, 0.5));
+  will-change: filter;
 }
 
 /* Cinema Ambient Mode */
@@ -104,12 +132,7 @@ h1, h2, h3, h4, .font-display {
   opacity: 0.25;
   transition: opacity 1.5s ease-in-out;
   pointer-events: none;
+  will-change: opacity, filter;
 }
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+

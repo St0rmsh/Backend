@@ -9,6 +9,12 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 export const registerValidation = [
+    body("name")
+        .trim()
+        .notEmpty().withMessage("Full name is required")
+        .isString().withMessage("Name must be a text string")
+        .isLength({ min: 2, max: 50 }).withMessage("Name must be between 2 and 50 characters"),
+
     body("username")
         .trim()
         .notEmpty().withMessage("Username is required")

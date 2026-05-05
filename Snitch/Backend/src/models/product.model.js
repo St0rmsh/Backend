@@ -53,12 +53,14 @@ const productSchema = new mongoose.Schema({
     },
     variants: [
         {
-            image: [{
-                url: {
-                    type: String,
-                    required: true
+            image: [
+                {
+                    url: {
+                        type: String,
+                        required: true
+                    }
                 }
-            }],
+            ],
             stock: {
                 type: Number,
                 required: true

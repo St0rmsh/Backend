@@ -1,17 +1,19 @@
 import { useAuth } from "../hook/useAuth.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { ShieldCheck, ArrowRight, RefreshCcw } from "lucide-react";
 
 const VerifyOTP = () => {
-
   const { handleVerifyOTP } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const email = location.state?.email || "";
   const [otp, setOtp] = useState("");
+  const [focused, setFocused] = useState(false);
 
-  // 🔥 Prevent access without email (refresh case)
+  // Prevent access without email (refresh case)
   useEffect(() => {
     if (!email) {
       navigate("/register");
@@ -22,98 +24,131 @@ const VerifyOTP = () => {
     e.preventDefault();
 
     if (otp.length !== 6) {
-      alert("Please enter a valid 6-digit OTP");
       return;
     }
 
     try {
       await handleVerifyOTP({ email, otp });
-
-      // ✅ after success
       navigate("/");
-
     } catch (error) {
       console.log(error);
-      alert(error?.response?.data?.message || "Verification failed");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 relative overflow-hidden">
-
-      {/* Background blur */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full blur-[120px] opacity-20"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600 rounded-full blur-[120px] opacity-20"></div>
-
-      <div className="w-full max-w-md bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-10 relative z-10">
-
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-semibold text-white mb-2">
-            Verify your account
-          </h2>
-          <p className="text-gray-400 text-sm">
-            Enter the 6-digit code sent to your email
-          </p>
-        </div>
-
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          {/* Email (disabled) */}
-          <div>
-            <input
-              value={email}
-              disabled
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 text-center"
-            />
-          </div>
-
-          {/* OTP */}
-          <div>
-            <input
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              autoFocus
-              placeholder="------"
-              className="w-full px-4 py-4 bg-gray-900/50 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none text-white placeholder-gray-600 transition-all text-center text-2xl tracking-[1em] font-mono"
-            />
-          </div>
-
-          {/* Button */}
-          <button
-            type="submit"
-            className="w-full py-3 mt-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 active:scale-[0.98] text-white font-medium rounded-xl transition-all"
-          >
-            Verify Code
-          </button>
-        </form>
-
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-400 text-sm">
-            Didn’t receive the code?{" "}
-            <button
-              type="button"
-              className="text-blue-400 hover:underline"
-              onClick={() => console.log("Resend OTP")}
-            >
-              Resend
-            </button>
-          </p>
-
-          <button
-            onClick={() => navigate("/login")}
-            className="mt-3 text-gray-500 hover:text-gray-300 text-xs"
-          >
-            ← Back to login
-          </button>
-        </div>
-
+    <div className="min-h-screen w-full flex flex-col bg-[#000000] font-sans overflow-x-hidden relative selection:bg-[#FF4D00] selection:text-white">
+      {/* Editorial Background Text */}
+      <div className="absolute top-10 left-10 opacity-[0.03] pointer-events-none select-none">
+        <h1 className="text-[18vw] font-black leading-none tracking-tighter text-white uppercase">
+          VERIFY
+        </h1>
       </div>
+
+      <main className="flex-1 flex items-center justify-center p-6 md:p-12 z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-0 border border-white/10 bg-white/[0.02] backdrop-blur-3xl overflow-hidden"
+        >
+          {/* Left: Metadata Section */}
+          <div className="md:col-span-5 p-8 md:p-12 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-16">
+                <div className="w-1 h-8 bg-[#FF4D00]"></div>
+                <span className="text-sm font-black tracking-[0.3em] text-white uppercase">Auth.Verification</span>
+              </div>
+              
+              <h2 className="text-5xl font-black text-white leading-[0.9] tracking-tighter mb-8 uppercase">
+                Identity <br /> <span className="text-[#00C853]">Validation</span> <br /> Node
+              </h2>
+              
+              <div className="space-y-4">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Email Target:</p>
+                <div className="p-4 border border-white/5 bg-white/[0.01] text-xs font-mono text-[#00C853] break-all">
+                  {email}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-12">
+              <p className="text-[9px] text-gray-600 uppercase tracking-[0.3em] leading-relaxed">
+                Verification Protocol v1.0 <br />
+                Challenge: 6-DIGIT_OTP
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Interaction Section */}
+          <div className="md:col-span-7 p-8 md:p-16 flex flex-col justify-center">
+            <header className="mb-12">
+              <p className="text-[#FF4D00] text-[10px] font-black uppercase tracking-[0.4em] mb-4">Input Required</p>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight">Enter Code</h3>
+            </header>
+
+            <form onSubmit={handleSubmit} className="space-y-12">
+              <div className="relative">
+                <label className={`text-[10px] font-black uppercase tracking-[0.3em] mb-4 block transition-all duration-300 ${focused ? 'text-[#FF4D00]' : 'text-gray-500'}`}>
+                  Verification Signal
+                </label>
+                <input
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  autoFocus
+                  placeholder="000000"
+                  className="w-full bg-transparent border-b border-white/10 py-6 text-white font-black placeholder:text-white/5 outline-none transition-all duration-500 focus:border-[#FF4D00] text-5xl tracking-[0.5em] font-mono text-center sm:text-left"
+                />
+              </div>
+
+              <div className="pt-6">
+                <motion.button
+                  whileHover={{ backgroundColor: "#FFFFFF", color: "#000000" }}
+                  type="submit"
+                  disabled={otp.length !== 6}
+                  className={`w-full py-6 px-8 flex items-center justify-between transition-colors duration-500 ${otp.length === 6 ? 'bg-[#00C853] text-black' : 'bg-white/5 text-gray-500 cursor-not-allowed'}`}
+                >
+                  <span className="text-sm font-black uppercase tracking-[0.3em]">
+                    Verify Signal
+                  </span>
+                  <ArrowRight size={20} />
+                </motion.button>
+              </div>
+            </form>
+
+            <footer className="mt-16 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-t border-white/5 pt-8">
+              <div className="space-y-1">
+                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Didn't receive signal?</p>
+                <button 
+                  className="flex items-center gap-2 text-white text-[9px] font-black uppercase tracking-[0.2em] hover:text-[#FF4D00] transition-colors"
+                  onClick={() => console.log("Resend OTP")}
+                >
+                  <RefreshCcw size={12} />
+                  Resend Code
+                </button>
+              </div>
+              <button
+                onClick={() => navigate("/login")}
+                className="text-gray-600 text-[10px] font-black uppercase tracking-[0.2em] hover:text-white transition-all border-b border-transparent hover:border-white/20 pb-1"
+              >
+                Return to Login
+              </button>
+            </footer>
+          </div>
+        </motion.div>
+      </main>
+
+      {/* Footer Branding */}
+      <footer className="p-10 flex justify-between items-end border-t border-white/5 bg-black">
+        <div className="space-y-2">
+          <p className="text-[10px] font-black text-white tracking-[0.5em] uppercase">STITCH // AUTH</p>
+          <p className="text-[8px] text-gray-700 tracking-[0.3em] uppercase">Verified Identity Node</p>
+        </div>
+      </footer>
     </div>
   );
 };

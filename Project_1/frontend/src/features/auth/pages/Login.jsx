@@ -3,6 +3,7 @@ import { useAuth } from "../hook/useAuth.js";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
+import { Mail, Lock, LogIn, ShieldCheck, ArrowRight } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ const Login = () => {
     email: "",
     password: ""
   });
+
+  const [focused, setFocused] = useState(null);
 
   const handleChange = (e) => {
     setForm({
@@ -32,142 +35,147 @@ const Login = () => {
       });
       navigate("/");
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] p-4 font-sans text-white">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-4xl bg-white/5 backdrop-blur-2xl rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col md:flex-row overflow-hidden border border-white/10"
-      >
-        {/* Left Form */}
-        <div className="w-full md:w-7/12 p-8 sm:p-12 flex flex-col justify-center order-2 md:order-1 relative z-10">
-          <div className="w-full max-w-md mx-auto">
-            <motion.h3 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-4xl font-extrabold bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-2"
-            >
-              Welcome Back
-            </motion.h3>
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-gray-400 mb-8"
-            >
-              Please enter your details to sign in and continue.
-            </motion.p>
+    <div className="min-h-screen w-full flex flex-col bg-[#000000] font-sans overflow-x-hidden relative selection:bg-[#FF4D00] selection:text-white">
+      {/* Editorial Background Text */}
+      <div className="absolute top-10 left-10 opacity-[0.03] pointer-events-none select-none">
+        <h1 className="text-[20vw] font-black leading-none tracking-tighter text-white uppercase">
+          ANTIGRAVITY
+        </h1>
+      </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                <label className="text-sm font-medium text-gray-300 ml-1">Email address</label>
-                <div className="mt-1 relative group">
-                  <div className="absolute -inset-0.5 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
+      <main className="flex-1 flex items-center justify-center p-6 md:p-12 z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-0 border border-white/10 bg-white/[0.02] backdrop-blur-3xl overflow-hidden"
+        >
+          {/* Left: Metadata Section (Editorial Style) */}
+          <div className="md:col-span-5 p-8 md:p-12 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-16">
+                <div className="w-1 h-8 bg-[#FF4D00]"></div>
+                <span className="text-sm font-black tracking-[0.3em] text-white uppercase">Identity.Protocol</span>
+              </div>
+              
+              <h2 className="text-5xl font-black text-white leading-[0.9] tracking-tighter mb-8 uppercase">
+                Access <br /> <span className="text-[#FF4D00]">Verified</span> <br /> Node
+              </h2>
+              
+              <div className="space-y-6 text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">
+                <p className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-[#00C853] rounded-full"></span>
+                  Forensic Mode: Enabled
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+                  Signal Status: encrypted
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-12">
+              <p className="text-[9px] text-gray-600 uppercase tracking-[0.3em] leading-relaxed">
+                Auth code: 0x99281-AG <br />
+                Location: [REDACTED]
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Interaction Section */}
+          <div className="md:col-span-7 p-8 md:p-16 flex flex-col justify-center">
+            <header className="mb-12">
+              <p className="text-[#00C853] text-[10px] font-black uppercase tracking-[0.4em] mb-4">Secure Access</p>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight">Login</h3>
+            </header>
+
+            <form onSubmit={handleSubmit} className="space-y-10">
+              <div className="space-y-8">
+                <div className="relative group">
+                  <label className={`text-[10px] font-black uppercase tracking-[0.3em] mb-3 block transition-all duration-300 ${focused === 'email' ? 'text-[#FF4D00]' : 'text-gray-500'}`}>
+                    Email or Username
+                  </label>
                   <input
                     name="email"
                     type="email"
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="john@example.com"
-                    className="relative w-full px-5 py-3.5 bg-gray-900/50 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-white placeholder-gray-500 transition-all hover:bg-gray-900/80"
+                    onFocus={() => setFocused('email')}
+                    onBlur={() => setFocused(null)}
+                    placeholder="Enter your email"
+                    className="w-full bg-transparent border-b border-white/10 py-4 text-white font-bold placeholder:text-white/5 outline-none transition-all duration-500 focus:border-[#FF4D00] text-sm tracking-widest"
                     required
                   />
                 </div>
-              </motion.div>
 
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                <label className="text-sm font-medium text-gray-300 ml-1">Password</label>
-                <div className="mt-1 relative group">
-                  <div className="absolute -inset-0.5 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                <div className="relative group">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className={`text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-300 ${focused === 'password' ? 'text-[#FF4D00]' : 'text-gray-500'}`}>
+                      Password
+                    </label>
+                    <button type="button" className="text-[9px] font-bold text-gray-600 hover:text-white transition-colors uppercase tracking-widest">Forgot Password?</button>
+                  </div>
                   <input
                     name="password"
                     type="password"
                     value={form.password}
                     onChange={handleChange}
-                    placeholder="••••••••"
-                    className="relative w-full px-5 py-3.5 bg-gray-900/50 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-white placeholder-gray-500 transition-all hover:bg-gray-900/80"
+                    onFocus={() => setFocused('password')}
+                    onBlur={() => setFocused(null)}
+                    placeholder="Enter your password"
+                    className="w-full bg-transparent border-b border-white/10 py-4 text-white font-bold placeholder:text-white/5 outline-none transition-all duration-500 focus:border-[#FF4D00] text-sm tracking-widest"
                     required
                   />
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div 
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                className="flex items-center justify-between text-sm mt-2"
-              >
-                <label className="flex items-center text-gray-400 cursor-pointer hover:text-white transition">
-                  <input type="checkbox" className="w-4 h-4 rounded border-gray-600 mr-2 bg-gray-800 text-blue-500 focus:ring-blue-500" />
-                  Remember me
-                </label>
-                <a href="#" className="font-medium text-blue-400 hover:text-blue-300 hover:underline transition-colors">
-                  Forgot password?
-                </a>
-              </motion.div>
-
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 mt-4 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all flex justify-center items-center gap-2"
-              >
-                {loading ? (
-                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                ) : (
-                  "Sign in"
-                )}
-              </motion.button>
+              <div className="pt-6">
+                <motion.button
+                  whileHover={{ backgroundColor: "#FFFFFF", color: "#000000" }}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#FF4D00] text-white py-6 px-8 flex items-center justify-between transition-colors duration-500"
+                >
+                  <span className="text-sm font-black uppercase tracking-[0.3em]">
+                    {loading ? "Logging In..." : "Login"}
+                  </span>
+                  {!loading && <ArrowRight size={20} />}
+                </motion.button>
+              </div>
             </form>
 
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="text-gray-400 text-sm mt-8 text-center"
-            >
-              Don't have an account?{" "}
+            <footer className="mt-16 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-t border-white/5 pt-8">
+              <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                Don't have an account?
+              </p>
               <button
                 onClick={() => navigate("/register")}
-                className="text-purple-400 font-medium hover:text-purple-300 hover:underline transition-all"
+                className="text-white text-[10px] font-black uppercase tracking-[0.2em] border-b border-white/20 hover:border-[#00C853] hover:text-[#00C853] transition-all pb-1"
               >
-                Sign up now
+                Register
               </button>
-            </motion.p>
+            </footer>
           </div>
-        </div>
+        </motion.div>
+      </main>
 
-        {/* Right Graphic */}
-        <div className="w-full md:w-5/12 p-10 flex flex-col justify-center items-center relative overflow-hidden order-1 md:order-2 bg-gray-900/40 border-l border-white/5">
-          <div className="absolute inset-0 z-0">
-            <div className="absolute -top-20 -right-20 w-80 h-80 bg-purple-600 rounded-full mix-blend-screen filter blur-[120px] opacity-30 animate-pulse"></div>
-            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-600 rounded-full mix-blend-screen filter blur-[120px] opacity-30" style={{animation: "pulse 3.5s infinite reverse"}}></div>
-          </div>
-          
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="relative z-10 text-center"
-          >
-            <div className="w-24 h-24 mx-auto bg-white/5 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 mb-6 shadow-2xl">
-              <svg className="w-12 h-12 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-            </div>
-            <h2 className="text-3xl font-bold mb-4 text-white">Secure Access</h2>
-            <p className="text-gray-300 text-sm max-w-[250px] mx-auto leading-relaxed">
-              Log in to manage your professional presence and engage with creators.
-            </p>
-          </motion.div>
+      {/* Footer Branding */}
+      <footer className="p-10 flex justify-between items-end border-t border-white/5 bg-black">
+        <div className="space-y-2">
+          <p className="text-[10px] font-black text-white tracking-[0.5em] uppercase">ANTIGRAVITY // 2026</p>
+          <p className="text-[8px] text-gray-700 tracking-[0.3em] uppercase">Forensic AI Intelligence Pipeline</p>
         </div>
-      </motion.div>
+        <div className="flex gap-8 text-[9px] font-bold text-gray-600 uppercase tracking-widest">
+          <span className="hover:text-white cursor-pointer transition-colors">Protocol</span>
+          <span className="hover:text-white cursor-pointer transition-colors">Safety</span>
+          <span className="hover:text-white cursor-pointer transition-colors">Terminals</span>
+        </div>
+      </footer>
     </div>
   );
 };

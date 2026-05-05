@@ -12,8 +12,8 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(morgan("dev"))
 app.use(cors({
-    origin:"http://localhost:5173",
-    credentials:true
+  origin: "http://localhost:5173",
+  credentials: true
 }))
 
 
@@ -21,39 +21,39 @@ app.use(cors({
 // auth
 // Routes
 import authRoutes from "./routes/auth.routes.js"
-app.use("/api/auth",authRoutes)
+app.use("/api/auth", authRoutes)
 
 
 
 // channel
 // Routes
 import channelRoutes from "./routes/channel.route.js"
-app.use("/api/channel",channelRoutes)
+app.use("/api/channel", channelRoutes)
 
 
 // video
 // Routes
 import videoRoutes from "./routes/video.routes.js"
-app.use("/api/video",videoRoutes)
+app.use("/api/video", videoRoutes)
 
 
 
 // comment
 // Routes
 import commentRoutes from "./routes/comment.routes.js"
-app.use("/api/comment",commentRoutes)
+app.use("/api/comment", commentRoutes)
 
 
 // like
 // Routes
 import likeRoutes from "./routes/like.routes.js"
-app.use("/api/like",likeRoutes)
+app.use("/api/like", likeRoutes)
 
 
 // subscription
 // Routes
 import subscriptionRoutes from "./routes/subscriber.routes.js"
-app.use("/api/subscription",subscriptionRoutes)
+app.use("/api/subscription", subscriptionRoutes)
 
 // analytics
 import analyticsRoutes from "./routes/analytics.routes.js"
@@ -82,16 +82,16 @@ setInterval(async () => {
   } catch (err) {
     console.log("Cleanup cron error:", err.message);
   }
-}, 60 * 60 * 1000); 
+}, 60 * 60 * 1000);
 
 
 
 
 app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError || err.message.includes("Invalid file")) {
-        return res.status(400).json({ message: err.message });
-    }
-    next(err);
+  if (err instanceof multer.MulterError || err.message.includes("Invalid file")) {
+    return res.status(400).json({ message: err.message });
+  }
+  next(err);
 });
 
 

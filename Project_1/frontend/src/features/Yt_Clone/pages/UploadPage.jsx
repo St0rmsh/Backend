@@ -1,11 +1,11 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  UploadCloud, 
-  Video, 
-  Image as ImageIcon, 
-  X, 
-  CheckCircle2, 
+import {
+  UploadCloud,
+  Video,
+  Image as ImageIcon,
+  X,
+  CheckCircle2,
   AlertCircle,
   ArrowRight,
   Sparkles,
@@ -18,7 +18,7 @@ import { Button, Input } from "../components/UI/Index";
 
 export const UploadPage = () => {
   const navigate = useNavigate();
-  
+
   // State
   const [videoFile, setVideoFile] = useState(null);
   const [thumbFile, setThumbFile] = useState(null);
@@ -101,7 +101,7 @@ export const UploadPage = () => {
         duration: 5000,
         icon: '🎬'
       });
-      
+
       setTimeout(() => navigate("/studio"), 1500);
 
     } catch (err) {
@@ -114,8 +114,8 @@ export const UploadPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 md:py-16">
-      
-      <motion.div 
+
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12"
@@ -130,43 +130,43 @@ export const UploadPage = () => {
           </h1>
           <p className="text-muted mt-2 font-medium">Broadcast your vision to the neural network.</p>
         </div>
-        
+
         {videoFile && (
-           <Button 
-             onClick={handleUpload} 
-             disabled={uploading}
-             className="w-full md:w-auto h-14 px-10 bg-gradient-to-r from-brand-indigo to-brand-purple shadow-xl shadow-brand-indigo/20 text-sm font-black uppercase tracking-widest rounded-2xl"
-           >
-             {uploading ? `Archiving ${progress}%` : "Publish Content"}
-             {!uploading && <ArrowRight className="ml-2 w-5 h-5" />}
-           </Button>
+          <Button
+            onClick={handleUpload}
+            disabled={uploading}
+            className="w-full md:w-auto h-14 px-10 bg-gradient-to-r from-brand-indigo to-brand-purple shadow-xl shadow-brand-indigo/20 text-sm font-black uppercase tracking-widest rounded-2xl"
+          >
+            {uploading ? `Archiving ${progress}%` : "Publish Content"}
+            {!uploading && <ArrowRight className="ml-2 w-5 h-5" />}
+          </Button>
         )}
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        
+
         <div className="lg:col-span-2 space-y-8">
-          
+
           {/* VIDEO UPLOAD ZONE */}
-          <motion.div 
+          <motion.div
             whileHover={!videoFile ? { scale: 1.005 } : {}}
             onDragOver={onDragOverVideo}
             onDragLeave={onDragLeaveVideo}
             onDrop={onDropVideo}
             onClick={() => !uploading && videoInputRef.current.click()}
             className={`relative border-2 border-dashed rounded-[2.5rem] p-12 md:p-24 text-center transition-all cursor-pointer overflow-hidden
-              ${videoFile 
-                ? "border-brand-emerald/50 bg-brand-emerald/5" 
-                : isDraggingVideo 
+              ${videoFile
+                ? "border-brand-emerald/50 bg-brand-emerald/5"
+                : isDraggingVideo
                   ? "border-brand-indigo bg-brand-indigo/10 scale-[1.02]"
                   : "border-main bg-surface-low hover:border-brand-indigo/50 shadow-inner"}
             `}
           >
             <input type="file" hidden ref={videoInputRef} accept="video/*" onChange={handleVideoSelect} />
-            
+
             <AnimatePresence mode="wait">
               {videoFile ? (
-                <motion.div 
+                <motion.div
                   key="success"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -177,7 +177,7 @@ export const UploadPage = () => {
                   </div>
                   <h2 className="text-xl font-display font-black text-main mb-1 truncate max-w-md">{videoFile.name}</h2>
                   <p className="text-brand-emerald text-xs font-black uppercase tracking-widest">Signal Ready • {(videoFile.size / (1024 * 1024)).toFixed(1)} MB</p>
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); setVideoFile(null); }}
                     className="mt-8 text-xs font-black text-muted hover:text-brand-crimson uppercase tracking-widest transition-colors"
                   >
@@ -185,7 +185,7 @@ export const UploadPage = () => {
                   </button>
                 </motion.div>
               ) : (
-                <motion.div 
+                <motion.div
                   key="empty"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -200,7 +200,7 @@ export const UploadPage = () => {
                     {isDraggingVideo ? "Release Signal" : "Select Video Stream"}
                   </h2>
                   <p className="text-muted font-medium max-w-xs mx-auto text-sm leading-relaxed">Drag and drop high-fidelity video files or click to initialize.</p>
-                  
+
                   <div className="mt-12 flex flex-wrap justify-center gap-6 text-[10px] font-black text-muted uppercase tracking-[0.2em]">
                     <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-brand-emerald" /> 8K ARCHIVE</span>
                     <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-brand-indigo" /> MP4 / MOV</span>
@@ -211,17 +211,20 @@ export const UploadPage = () => {
             </AnimatePresence>
 
             {uploading && (
-              <div className="absolute inset-0 glass-heavy flex flex-col items-center justify-center p-12 z-30">
-                 <div className="w-full max-w-sm h-1.5 bg-main rounded-full overflow-hidden shadow-inner">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress}%` }}
-                      className="h-full bg-gradient-to-r from-brand-indigo to-brand-purple shadow-lg shadow-brand-indigo/50"
-                    />
-                 </div>
-                 <p className="mt-6 font-black text-xs text-brand-indigo animate-pulse uppercase tracking-[0.4em]">
-                   Transmission in Progress... {progress}%
-                 </p>
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-12 z-[100]">
+                <div className="w-full max-w-md h-2 bg-stitch-grey rounded-full overflow-hidden shadow-inner">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    className="h-full bg-gradient-to-r from-brand-indigo to-brand-purple shadow-[0_0_20px_rgba(102,103,171,0.5)]"
+                  />
+                </div>
+                <p className="mt-8 font-black text-sm text-brand-indigo animate-pulse uppercase tracking-[0.4em]">
+                  Transmission in Progress... {progress}%
+                </p>
+                <p className="mt-4 text-xs font-bold text-muted uppercase tracking-widest text-center max-w-sm">
+                  Do not navigate away. Please wait while the signal is securely archived.
+                </p>
               </div>
             )}
           </motion.div>
@@ -232,21 +235,21 @@ export const UploadPage = () => {
               <AlertCircle className="w-6 h-6 text-brand-indigo" />
               Content Metadata
             </h3>
-            
+
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] font-black uppercase text-muted tracking-widest mb-2 block">Curation Title</label>
-                <Input 
-                  placeholder="The signal's name..." 
+                <Input
+                  placeholder="The signal's name..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="h-14 bg-surface-low border-main rounded-2xl font-bold"
                 />
               </div>
-              
+
               <div>
                 <label className="text-[10px] font-black uppercase text-muted tracking-widest mb-2 block">Brief Synopsis</label>
-                <textarea 
+                <textarea
                   placeholder="What stories lie within the signal?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -256,7 +259,7 @@ export const UploadPage = () => {
               </div>
 
               {/* AI DISCLOSURE */}
-              <div 
+              <div
                 onClick={() => setIsAiGenerated(!isAiGenerated)}
                 className={`p-6 rounded-[2rem] border cursor-pointer transition-all flex items-center justify-between gap-4
                   ${isAiGenerated ? 'bg-brand-purple/10 border-brand-purple/30' : 'bg-surface-low border-main hover:border-brand-purple/20'}
@@ -281,67 +284,67 @@ export const UploadPage = () => {
 
         {/* RIGHT COLUMN: PREVIEW & TIPS */}
         <div className="space-y-8">
-           <div className="glass-heavy rounded-[2.5rem] p-8 border border-main space-y-8">
-              <h3 className="text-xl font-display font-black text-main flex items-center gap-3 uppercase italic">
-                <ImageIcon className="w-6 h-6 text-brand-indigo" />
-                Keyface
-              </h3>
-              
-              <div 
-                onClick={() => !uploading && thumbInputRef.current.click()}
-                onDragOver={onDragOverThumb}
-                onDragLeave={onDragLeaveThumb}
-                onDrop={onDropThumb}
-                className={`group relative aspect-video rounded-3xl border-2 border-dashed overflow-hidden cursor-pointer transition-all
-                  ${thumbFile 
-                    ? "border-brand-emerald bg-brand-emerald/5" 
-                    : isDraggingThumb
-                      ? "border-brand-indigo bg-brand-indigo/10 scale-[1.05]"
-                      : "border-main bg-surface-low hover:border-brand-indigo shadow-inner"}
+          <div className="glass-heavy rounded-[2.5rem] p-8 border border-main space-y-8">
+            <h3 className="text-xl font-display font-black text-main flex items-center gap-3 uppercase italic">
+              <ImageIcon className="w-6 h-6 text-brand-indigo" />
+              Keyface
+            </h3>
+
+            <div
+              onClick={() => !uploading && thumbInputRef.current.click()}
+              onDragOver={onDragOverThumb}
+              onDragLeave={onDragLeaveThumb}
+              onDrop={onDropThumb}
+              className={`group relative aspect-video rounded-3xl border-2 border-dashed overflow-hidden cursor-pointer transition-all
+                  ${thumbFile
+                  ? "border-brand-emerald bg-brand-emerald/5"
+                  : isDraggingThumb
+                    ? "border-brand-indigo bg-brand-indigo/10 scale-[1.05]"
+                    : "border-main bg-surface-low hover:border-brand-indigo shadow-inner"}
                 `}
-              >
-                <input type="file" hidden ref={thumbInputRef} accept="image/*" onChange={handleThumbSelect} />
-                
-                {thumbPreview ? (
-                  <div className="relative w-full h-full">
-                    <img src={thumbPreview} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="thumb-preview" />
-                    <div className="absolute inset-0 bg-brand-indigo/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <ImageIcon className="text-white w-8 h-8 drop-shadow-lg" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted p-6 text-center">
-                    <ImageIcon className={`w-8 h-8 mb-3 transition-colors ${isDraggingThumb ? 'text-brand-indigo' : 'opacity-30'}`} />
-                    <p className="text-[10px] font-black uppercase tracking-widest">{isDraggingThumb ? "Release Keyface" : "Select Signal Thumbnail"}</p>
-                    <p className="text-[9px] mt-2 font-bold opacity-50 uppercase tracking-tighter">or drop file</p>
-                  </div>
-                )}
-              </div>
+            >
+              <input type="file" hidden ref={thumbInputRef} accept="image/*" onChange={handleThumbSelect} />
 
-              <div className="bg-brand-indigo/5 p-4 rounded-2xl mt-4">
-                 <p className="text-xs font-bold text-muted leading-relaxed">
-                   High-fidelity thumbnails increase resonance with the curator network by <span className="text-brand-indigo font-black">40%</span>.
-                 </p>
-              </div>
-           </div>
+              {thumbPreview ? (
+                <div className="relative w-full h-full">
+                  <img src={thumbPreview} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="thumb-preview" />
+                  <div className="absolute inset-0 bg-brand-indigo/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <ImageIcon className="text-white w-8 h-8 drop-shadow-lg" />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-muted p-6 text-center">
+                  <ImageIcon className={`w-8 h-8 mb-3 transition-colors ${isDraggingThumb ? 'text-brand-indigo' : 'opacity-30'}`} />
+                  <p className="text-[10px] font-black uppercase tracking-widest">{isDraggingThumb ? "Release Keyface" : "Select Signal Thumbnail"}</p>
+                  <p className="text-[9px] mt-2 font-bold opacity-50 uppercase tracking-tighter">or drop file</p>
+                </div>
+              )}
+            </div>
 
-           {/* CURATOR GUIDELINES */}
-           <div className="glass rounded-[2.5rem] p-8 border border-main">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-indigo mb-6">Redline Protocol</h4>
-              <ul className="space-y-4">
-                {[
-                  "Enforce high dynamic range (HDR) for maximum impact.",
-                  "Zero tolerance for deepfake impersonation without disclosure.",
-                  "Verify all data sources before transmission.",
-                  "Metadata must accurately reflect signal contents."
-                ].map((tip, i) => (
-                  <li key={i} className="flex gap-4 items-start text-[11px] font-bold text-muted">
-                    <ShieldCheck className="w-4 h-4 text-brand-indigo shrink-0" />
-                    <span className="leading-snug">{tip}</span>
-                  </li>
-                ))}
-              </ul>
-           </div>
+            <div className="bg-brand-indigo/5 p-4 rounded-2xl mt-4">
+              <p className="text-xs font-bold text-muted leading-relaxed">
+                High-fidelity thumbnails increase resonance with the curator network by <span className="text-brand-indigo font-black">40%</span>.
+              </p>
+            </div>
+          </div>
+
+          {/* CURATOR GUIDELINES */}
+          <div className="glass rounded-[2.5rem] p-8 border border-main">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-indigo mb-6">Redline Protocol</h4>
+            <ul className="space-y-4">
+              {[
+                "Enforce high dynamic range (HDR) for maximum impact.",
+                "Zero tolerance for deepfake impersonation without disclosure.",
+                "Verify all data sources before transmission.",
+                "Metadata must accurately reflect signal contents."
+              ].map((tip, i) => (
+                <li key={i} className="flex gap-4 items-start text-[11px] font-bold text-muted">
+                  <ShieldCheck className="w-4 h-4 text-brand-indigo shrink-0" />
+                  <span className="leading-snug">{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
       </div>

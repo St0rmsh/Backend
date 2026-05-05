@@ -141,7 +141,7 @@ export const updateChannel = async (req, res) => {
         avatar: avatarUrl,
         banner: bannerUrl
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     // ✅ SYNC WITH USER MODEL
@@ -184,7 +184,7 @@ export const getChannelVideos = async (req, res) => {
         const userId = req.user?._id;
         const isOwner = userId && channel.owner.toString() === userId.toString();
 
-        const query = { channel: channel._id, status: { $ne: "PROCESSING" } };
+        const query = { channel: channel._id, status: { $in: ["ready", null] } };
         if (!isOwner) {
             query.visibility = "public";
         }

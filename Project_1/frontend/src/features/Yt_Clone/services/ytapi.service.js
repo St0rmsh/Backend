@@ -19,7 +19,7 @@ export const uploadVideo = (formData, config = {}) => {
 };
 
 export const getMyVideos = () => {
-  return api.get("/api/video/me");
+    return api.get("/api/video/me");
 };
 
 export const getAllVideos = () => {
@@ -39,14 +39,14 @@ export const addView = (videoId) => {
 };
 
 export const updateWatchTime = async (videoId, time) => {
-  return api.post(`/api/video/${videoId}/watch`, {
-    videoId,
-    time
-  });
+    return api.post(`/api/video/${videoId}/watch`, {
+        videoId,
+        time
+    });
 };
 
 export const getWatchTime = (videoId) => {
-  return api.get(`/api/video/${videoId}/watch`);
+    return api.get(`/api/video/${videoId}/watch`);
 };
 
 // ✅ UPDATE VIDEO (METADATA)
@@ -89,7 +89,7 @@ export const deleteComment = (commentId) => {
 };
 
 export const reactToComment = (commentId, emoji) =>
-  api.post(`/api/comment/${commentId}/react`, { emoji });
+    api.post(`/api/comment/${commentId}/react`, { emoji });
 
 
 // =======================
@@ -98,7 +98,7 @@ export const reactToComment = (commentId, emoji) =>
 
 // Toggle like/dislike
 export const toggleReaction = (videoId, type) => {
-    return api.post(`/api/like/${videoId}/react`, { type }); 
+    return api.post(`/api/like/${videoId}/react`, { type });
     // type: "like" | "dislike"
 };
 
@@ -137,11 +137,11 @@ export const getChannelVideos = (handle) => {
 
 // Update channel
 export const updateChannel = (formData) => {
-  return api.put("/api/channel/update", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data"
-    }
-  });
+    return api.put("/api/channel/update", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
 };
 
 

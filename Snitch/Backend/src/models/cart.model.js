@@ -17,7 +17,8 @@ const cartSchema = new mongoose.Schema({
             },
             variant: {
                 type: mongoose.Schema.Types.ObjectId,
-                required: false
+                required: false,
+
             },
             productName: {
                 type: String,
@@ -31,6 +32,11 @@ const cartSchema = new mongoose.Schema({
                 type: Number,
                 required: true,
                 default: 1
+            },
+            variantKey: {
+                type: String,
+                required: true,
+                default: "BASE"
             },
             price: {
                 type: priceSchema,

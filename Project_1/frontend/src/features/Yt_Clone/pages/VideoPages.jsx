@@ -60,39 +60,70 @@ const VideoPages = () => {
         const res = await getVideoById(id);
         videoDuration = res.data.video?.duration || 0;
         // Also dispatch to handle global state
-        fetchVideo(id); 
-      } catch (err) { fetchVideo(id); }
+        fetchVideo(id);
+      } catch (err) {
+        console.warn("Direct metadata fetch failed, falling back to slice fetch");
+        fetchVideo(id);
+      }
 
       fetchVideos();
       fetchComments(id);
       fetchUserReaction(id);
       addView(id);
-      
-      // ⌚ RESTORE POSITION
-      try {
-        const timeRes = await getWatchTime(id);
-        const savedTime = timeRes.data.time || 0;
 
-        // 🔄 RESTART IF FINISHED: 
-        // If the saved position is within 5 seconds of completion, start from beginning
-        if (videoDuration > 0 && savedTime >= (videoDuration - 5)) {
+      // ⌚ RESTORE POSITION (Only if logged in)
+      if (user) {
+        try {
+          const timeRes = await getWatchTime(id);
+          const savedTime = timeRes.data.time || 0;
+
+          // 🔄 RESTART IF FINISHED: 
+          // If the saved position is within 5 seconds of completion, start from beginning
+          if (videoDuration > 0 && savedTime >= (videoDuration - 5)) {
             setInitialTime(0);
-        } else {
+          } else {
             setInitialTime(savedTime);
-        }
-      } catch (err) { console.warn("Failed to restore signal position"); }
+          }
+        } catch (err) { console.warn("Failed to restore signal position"); }
+      }
     };
 
     load();
 
     const socket = socketRef.current;
-    if (!socket) return;
-    socket.emit("join-video", id);
-    return () => socket.emit("leave-video", id);
+    if (socket) {
+      socket.emit("join-video", id);
+    }
+    
+    return () => {
+      if (socket) socket.emit("leave-video", id);
+    };
   }, [id]);
+
+
+  // 🔄 REAL-TIME STATUS POLLING
+  useEffect(() => {
+    if (!id || video?.status === "ready" || video?.status === "failed") return;
+
+    const poll = setInterval(async () => {
+       try {
+         const res = await getVideoById(id);
+         if (res.data.video?.status === "ready" || res.data.video?.status === "failed") {
+           fetchVideo(id); // Update global state
+           clearInterval(poll);
+         }
+       } catch (err) {
+         console.error("Polling failed:", err);
+       }
+    }, 3000);
+
+    return () => clearInterval(poll);
+  }, [id, video?.status]);
+
 
   useEffect(() => {
     if (!video?.channel?._id) return;
+
     const loadSubData = async () => {
       try {
         const [subRes, countRes] = await Promise.all([
@@ -164,24 +195,46 @@ const VideoPages = () => {
 
   return (
     <div className="w-full px-4 py-4 sm:px-6 lg:px-10 flex flex-col lg:flex-row gap-6 lg:gap-10">
-      
+
       {/* LEFT: CONTENT HUB */}
       <div className="flex-1 flex flex-col gap-6 sm:gap-8">
-        
+
         {/* PLAYER STAGE */}
         <div className="w-full relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stitch-grey shadow-sm">
-          {video.videoUrl ? (
+          {video.status === "ready" && video.videoUrl ? (
             <CustomPlayer
               autoPlay
               sources={videoSources}
+              hlsUrl={video?.hlsUrl}
               onEnd={handleAutoNext}
               onWatchTime={handleWatchTime}
               videoData={video}
               initialTime={initialTime}
             />
+
+          ) : video.status === "failed" ? (
+            <div className="aspect-video flex flex-col items-center justify-center bg-red-50/50 p-10 text-center gap-4">
+              <AlertTriangle size={48} className="text-red-500 opacity-20" />
+              <div className="space-y-2">
+                <p className="text-sm font-black text-red-900 uppercase tracking-widest">Broadcast Signal Lost</p>
+                <p className="text-[10px] font-bold text-red-700/60 uppercase">The data integrity check failed. Please re-upload this signal.</p>
+              </div>
+              <button onClick={() => window.location.reload()} className="mt-4 px-8 py-3 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all shadow-xl shadow-red-200">Retry Injection</button>
+            </div>
           ) : (
-            <div className="aspect-video flex items-center justify-center text-text-muted font-bold text-sm uppercase tracking-widest">
-              Verifying Signal Strength...
+            <div className="aspect-video flex flex-col items-center justify-center text-text-muted gap-6 p-10 text-center">
+              <div className="relative">
+                <div className="w-12 h-12 border-2 border-black/5 rounded-full" />
+                <div className="absolute inset-0 border-2 border-t-black border-transparent rounded-full animate-spin" />
+              </div>
+              <div className="space-y-2">
+                <p className="font-black text-[10px] sm:text-xs uppercase tracking-[0.3em] text-stitch-black">
+                  {video.status === "uploading" ? "Synchronizing Data..." : "Optimizing Visual Feed..."}
+                </p>
+                <p className="text-[9px] font-bold uppercase tracking-widest opacity-40">
+                  {video.status === "uploading" ? "Establishing connection to neural network" : "Performing high-fidelity AI upscaling and verification"}
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -189,14 +242,14 @@ const VideoPages = () => {
         {/* INFO BAR */}
         <div className="space-y-4">
           <div className="flex flex-col gap-3">
-             <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-black text-stitch-black tracking-tight leading-tight">
-               {video.title}
-             </h1>
-             <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-bold text-text-muted uppercase tracking-tighter">
-                <span className="flex items-center gap-1.5"><Eye size={14} /> {video.views?.toLocaleString()} views</span>
-                <span className="w-0.5 h-0.5 rounded-full bg-text-muted opacity-30" />
-                <span className="flex items-center gap-1.5"><Clock size={14} /> {formatTimeAgo(video.createdAt)}</span>
-             </div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-black text-stitch-black tracking-tight leading-tight">
+              {video.title}
+            </h1>
+            <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-bold text-text-muted uppercase tracking-tighter">
+              <span className="flex items-center gap-1.5"><Eye size={14} /> {video.views?.toLocaleString()} views</span>
+              <span className="w-0.5 h-0.5 rounded-full bg-text-muted opacity-30" />
+              <span className="flex items-center gap-1.5"><Clock size={14} /> {formatTimeAgo(video.createdAt)}</span>
+            </div>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 py-5 border-y border-border-main">
@@ -220,14 +273,14 @@ const VideoPages = () => {
 
             <div className="flex items-center gap-3">
               <div className="flex flex-1 items-center bg-white/50 backdrop-blur-md rounded-2xl border border-black/10 p-1 shadow-sm overflow-hidden group/resonance">
-                <motion.button 
+                <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleReaction("LIKE")}
                   className={`
                     flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all
-                    ${liked 
-                      ? 'bg-brand-orange text-white shadow-[0_0_20px_rgba(255,77,0,0.3)]' 
+                    ${liked
+                      ? 'bg-brand-orange text-white shadow-[0_0_20px_rgba(255,77,0,0.3)]'
                       : 'hover:bg-black/5 text-main'
                     }
                   `}
@@ -238,14 +291,14 @@ const VideoPages = () => {
 
                 <div className="w-px h-6 bg-black/10 mx-1" />
 
-                <motion.button 
+                <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleReaction("DISLIKE")}
                   className={`
                     flex items-center justify-center w-12 h-10 rounded-xl transition-all
-                    ${disliked 
-                      ? 'bg-brand-red text-white shadow-[0_0_20px_rgba(213,0,0,0.3)]' 
+                    ${disliked
+                      ? 'bg-brand-red text-white shadow-[0_0_20px_rgba(213,0,0,0.3)]'
                       : 'hover:bg-black/5 text-main'
                     }
                   `}
@@ -265,7 +318,7 @@ const VideoPages = () => {
           <p className={`text-sm leading-relaxed text-stitch-grey-dark font-medium antialiased ${descExpanded ? '' : 'line-clamp-3'}`}>
             {video.description || "The Curator has provided no editorial notes for this signal."}
           </p>
-          <button 
+          <button
             onClick={() => setDescExpanded(!descExpanded)}
             className="mt-4 text-[10px] font-black uppercase tracking-widest text-stitch-earth hover:text-stitch-accent transition-colors"
           >
@@ -279,12 +332,12 @@ const VideoPages = () => {
           <div className="flex gap-3 sm:gap-4">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl bg-stitch-grey border border-border-main flex items-center justify-center font-black text-[10px] sm:text-xs">U</div>
             <div className="flex-1 space-y-3">
-              <textarea 
-                value={newComment} 
-                onChange={(e) => setNewComment(e.target.value)} 
-                placeholder="Participate in the dialogue..." 
-                className="w-full bg-transparent border-b border-border-main outline-none py-2 text-sm font-medium placeholder:text-text-muted focus:border-stitch-black transition-colors" 
-                rows={1} 
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Participate in the dialogue..."
+                className="w-full bg-transparent border-b border-border-main outline-none py-2 text-sm font-medium placeholder:text-text-muted focus:border-stitch-black transition-colors"
+                rows={1}
               />
               <div className="flex justify-end gap-3">
                 <button onClick={() => setNewComment("")} className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-stitch-black">Dismiss</button>

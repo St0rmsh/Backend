@@ -78,7 +78,7 @@ export const toggleReaction = async (req, res) => {
     const updatedVideo = await videoModel.findByIdAndUpdate(
       videoId,
       { $inc: inc },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     // 🔌 Emit real-time update

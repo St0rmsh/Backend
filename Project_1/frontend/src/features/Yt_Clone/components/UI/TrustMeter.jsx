@@ -1,82 +1,67 @@
 import { motion } from "framer-motion";
-import { ShieldCheck, Zap } from "lucide-react";
+import { ShieldCheck, Zap, Activity } from "lucide-react";
 
 const TrustMeter = ({ score = 0, type = "trust" }) => {
   const isTrust = type === "trust";
   const normalizedScore = Math.min(100, Math.max(0, score * 100));
   
-  const getColor = () => {
-    if (isTrust) {
-      if (normalizedScore > 80) return "var(--color-brand-green)";
-      if (normalizedScore > 50) return "var(--color-brand-earth)";
-      return "var(--color-brand-red)";
-    } else {
-      // For AI Generation
-      if (normalizedScore > 70) return "var(--color-brand-orange)";
-      return "var(--color-brand-tan)";
-    }
-  };
-
-  const color = getColor();
+  // Monochrome Forensic Palette
+  const color = "#FFFFFF"; // High-Contrast White for everything in Forensic Editorial
 
   return (
-    <div className="glass rounded-[2rem] p-6 border border-main shadow-sm relative overflow-hidden group">
-      {/* BACKGROUND DECORATION */}
-      <div className="absolute -top-10 -right-10 w-32 h-32 blur-[60px] opacity-10 transition-all duration-700 group-hover:opacity-20" style={{ background: color }} />
+    <div className="bg-white/[0.03] backdrop-blur-3xl p-8 border border-white/5 rounded-sm relative overflow-hidden group h-full flex flex-col justify-center">
+      {/* BACKGROUND DECORATION - SUBTLE GLOW */}
+      <div className="absolute -top-10 -right-10 w-32 h-32 blur-[60px] opacity-5 bg-white transition-all duration-700 group-hover:opacity-10" />
 
-      <div className="flex flex-col items-center gap-4 relative z-10">
-        <div className="relative w-32 h-32 flex items-center justify-center">
+      <div className="flex flex-col items-center gap-8 relative z-10">
+        <div className="relative w-36 h-36 flex items-center justify-center">
           {/* RADIAL TRACK */}
           <svg className="w-full h-full -rotate-90">
             <circle
-              cx="64" cy="64" r="58"
+              cx="72" cy="72" r="68"
               fill="transparent"
-              stroke="currentColor"
-              strokeWidth="6"
-              className="text-black/5"
+              stroke="rgba(255,255,255,0.05)"
+              strokeWidth="2"
             />
-            {/* RADIAL PROGRESS */}
+            {/* RADIAL PROGRESS - High Precision Line */}
             <motion.circle
-              cx="64" cy="64" r="58"
+              cx="72" cy="72" r="68"
               fill="transparent"
               stroke={color}
-              strokeWidth="6"
-              strokeDasharray="364.4"
-              initial={{ strokeDashoffset: 364.4 }}
-              animate={{ strokeDashoffset: 364.4 - (364.4 * normalizedScore) / 100 }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
-              strokeLinecap="round"
+              strokeWidth="2"
+              strokeDasharray="427.04"
+              initial={{ strokeDashoffset: 427.04 }}
+              animate={{ strokeDashoffset: 427.04 - (427.04 * normalizedScore) / 100 }}
+              transition={{ duration: 2, ease: "easeInOut" }}
+              strokeLinecap="butt"
             />
           </svg>
           
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="font-display font-black text-3xl tracking-tighter text-main">
-              {Math.round(normalizedScore)}<span className="text-sm opacity-50">%</span>
+            <span className="text-5xl font-black tracking-tighter text-white leading-none">
+              {Math.round(normalizedScore)}<span className="text-xs opacity-20 ml-1">%</span>
             </span>
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted">
+            <div className="w-8 h-[1px] bg-white/20 my-2" />
+            <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-zinc-500">
               {isTrust ? "Confidence" : "Synthetic"}
             </span>
           </div>
         </div>
 
-        <div className="w-full space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {isTrust ? (
-                <ShieldCheck className="w-4 h-4" style={{ color }} />
-              ) : (
-                <Zap className="w-4 h-4" style={{ color }} />
-              )}
-              <span className="text-[10px] font-black uppercase tracking-widest text-main">
-                {isTrust ? "Fact Check" : "Neural Analysis"}
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div className="flex items-center gap-3">
+              <Activity className="w-3 h-3 text-white/40" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white">
+                {isTrust ? "Confidence Score" : "Verification"}
               </span>
             </div>
           </div>
           
-          <p className="text-[10px] text-muted leading-relaxed font-bold italic">
+          <p className="text-[10px] text-zinc-500 leading-relaxed font-medium uppercase tracking-wider">
             {isTrust 
-              ? "Verified against cross-referenced archival datasets."
-              : "Detected algorithmic patterns consistent with AI synthesis."}
+              ? "Verified against trusted sources. Data integrity confirmed."
+              : "Detected patterns consistent with AI generation."}
           </p>
         </div>
       </div>

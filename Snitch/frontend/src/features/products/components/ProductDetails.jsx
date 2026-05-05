@@ -196,38 +196,75 @@ const ProductDetails = () => {
   const [reviewsSkip, setReviewsSkip] = useState(0);
   const REVIEWS_LIMIT = 5;
 
-  const fetchReviews = useCallback(async (productId, append = false) => {
-    if (!append) setReviewsLoading(true);
-    try {
-      const data = await handleGetReviews(productId, { 
-        limit: REVIEWS_LIMIT, 
-        skip: append ? reviewsSkip + REVIEWS_LIMIT : 0 
-      });
+  // const fetchReviews = useCallback(async (productId, append = false) => {
+  //   if (!append) setReviewsLoading(true);
+  //   try {
+  //     const data = await handleGetReviews(productId, { 
+  //       limit: REVIEWS_LIMIT, 
+  //       skip: append ? reviewsSkip + REVIEWS_LIMIT : 0 
+  //     });
       
-      const newReviews = data?.reviews || [];
-      setReviewsTotal(data?.total || 0);
+  //     const newReviews = data?.reviews || [];
+  //     setReviewsTotal(data?.total || 0);
       
-      if (append) {
-        setReviewsSkip(prev => prev + REVIEWS_LIMIT);
-      } else {
-        setReviewsSkip(0);
-      }
+  //     if (append) {
+  //       setReviewsSkip(prev => prev + REVIEWS_LIMIT);
+  //     } else {
+  //       setReviewsSkip(0);
+  //     }
 
-      const combinedReviews = append ? [...reviews, ...newReviews] : newReviews;
-      setReviews(combinedReviews);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setReviewsLoading(false);
+  //     const combinedReviews = append ? [...reviews, ...newReviews] : newReviews;
+  //     setReviews(combinedReviews);
+  //   } catch (err) {
+  //     console.error(err);
+  //   } finally {
+  //     setReviewsLoading(false);
+  //   }
+  // }, [handleGetReviews, reviews, reviewsSkip]);
+
+const fetchReviews = useCallback(async (productId, append = false) => {
+  if (!append) setReviewsLoading(true);
+
+  try {
+    const data = await handleGetReviews(productId, { 
+      limit: REVIEWS_LIMIT, 
+      skip: append ? reviewsSkip + REVIEWS_LIMIT : 0 
+    });
+
+    const newReviews = data?.reviews || [];
+    setReviewsTotal(data?.total || 0);
+
+    setReviews(prev => append ? [...prev, ...newReviews] : newReviews);
+
+    if (append) {
+      setReviewsSkip(prev => prev + REVIEWS_LIMIT);
+    } else {
+      setReviewsSkip(0);
     }
-  }, [handleGetReviews, reviews, reviewsSkip]);
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setReviewsLoading(false);
+  }
+}, [handleGetReviews, reviewsSkip]); // ❗ removed reviews
+
+
+  // useEffect(() => { 
+  //   if (id) {
+  //     handleFetchPublicProductById(id);
+  //     fetchReviews(id);
+  //   }
+  // }, [id, handleFetchPublicProductById, fetchReviews]);
 
   useEffect(() => { 
-    if (id) {
-      handleFetchPublicProductById(id);
-      fetchReviews(id);
-    }
-  }, [id, handleFetchPublicProductById, fetchReviews]);
+  if (!id) return;
+
+  handleFetchPublicProductById(id);
+  fetchReviews(id);
+
+}, [id]);
+
 
   useEffect(() => { 
     setActiveImg(0); 

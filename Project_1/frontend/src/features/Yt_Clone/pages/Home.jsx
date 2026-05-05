@@ -24,7 +24,7 @@ const Home = () => {
 
   return (
     <div className="max-w-[2200px] mx-auto px-4 sm:px-10 lg:px-12 py-8 sm:py-12">
-      
+
       {/* ===== VIDEOS GRID ===== */}
       <div
         className="
@@ -33,25 +33,24 @@ const Home = () => {
         sm:gap-x-8 sm:gap-y-16
         grid-cols-1 
         sm:grid-cols-2 
-        lg:grid-cols-3 
-        xl:grid-cols-4
-        2xl:grid-cols-5
+        lg:grid-cols-3
+        gap-x-6 gap-y-12
       "
       >
         {loading
           ? Array(9)
-              .fill(0)
-              .map((_, i) => <SkeletonCard key={i} />)
+            .fill(0)
+            .map((_, i) => <SkeletonCard key={i} />)
           : videos.map((v) => (
-              <VideoCard key={v._id} video={v} />
-            ))}
+            <VideoCard key={v._id} video={v} />
+          ))}
       </div>
 
       {/* FOOTER */}
       <div className="mt-32 border-t border-black/5 pt-16 text-center pb-16">
-         <p className="text-[10px] font-black opacity-30 tracking-[0.4em] uppercase">
-            Neural Content Verification Network &copy; 2026
-         </p>
+        <p className="text-[10px] font-black opacity-30 tracking-[0.4em] uppercase">
+          Neural Content Verification Network &copy; 2026
+        </p>
       </div>
 
     </div>

@@ -34,7 +34,7 @@ app.use(cookieParser());
 // CORS — allow the Vite dev server to talk to the API
 app.use(cors({
   origin: true,
-  credentials: true,          // needed for cookies (JWT)
+  credentials: true,         
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -75,18 +75,23 @@ app.get('/', (req, res) => {
 });
 
 // Routes
+// Auth Routes
 import authRouter from './routes/auth.routes.js';
 app.use('/api/auth', authRouter);
 
+// Product Routes
 import productRouter from './routes/product.routes.js';
 app.use('/api/product', productRouter);
 
+// Cart Routes
 import cartRouter from './routes/cart.routes.js';
 app.use('/api/cart', cartRouter);
 
+// Order Routes
 import orderRouter from './routes/order.routes.js';
 app.use('/api/order', orderRouter);
 
+// Wishlist Routes
 import wishlistRouter from './routes/wishlist.routes.js';
 app.use('/api/wishlist', wishlistRouter);
 

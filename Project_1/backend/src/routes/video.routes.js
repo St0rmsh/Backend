@@ -1,16 +1,16 @@
 import { Router } from "express";
 import upload from "../middleware/upload.middleware.js";
-import { videoUpload,getAllVideos,getVideo,getMyVideos,deleteVideo,searchVideos,updateVideo } from "../controllers/video.controller.js";
+import { videoUpload, getAllVideos, getVideo, getMyVideos, deleteVideo, searchVideos, updateVideo } from "../controllers/video.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { optionalAuth } from "../middleware/optionalAuth.middleware.js";
 import { addView } from "../controllers/view.controller.js";
-import { updateWatchTime,getWatchTime } from "../controllers/watch.controller.js";
+import { updateWatchTime, getWatchTime } from "../controllers/watch.controller.js";
 
 const router = Router()
 
 // /api/video/me
 // GET
-router.get("/me", authMiddleware, getMyVideos); 
+router.get("/me", authMiddleware, getMyVideos);
 
 // /api/video/upload
 // POST
@@ -18,7 +18,7 @@ router.post("/upload", authMiddleware, upload.fields([{ name: "video", maxCount:
 
 // /api/video
 // GET
-router.get("/", optionalAuth, getAllVideos);
+router.get("/", getAllVideos);
 
 // /api/video/search?q=...
 // GET
@@ -41,15 +41,15 @@ router.get("/:id", optionalAuth, getVideo);
 
 // /api/video/:videoId/view
 // POST
-router.post("/:videoId/view",authMiddleware,addView);
+router.post("/:videoId/view", authMiddleware, addView);
 
 
 // /api/video/:videoId/watch
 // POST
-router.post("/:videoId/watch",authMiddleware,updateWatchTime);
+router.post("/:videoId/watch", authMiddleware, updateWatchTime);
 
 // /api/video/:videoId/watch
 // GET
-router.get("/:videoId/watch",authMiddleware,getWatchTime);
+router.get("/:videoId/watch", authMiddleware, getWatchTime);
 
 export default router

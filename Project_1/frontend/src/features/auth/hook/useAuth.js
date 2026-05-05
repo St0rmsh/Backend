@@ -10,10 +10,10 @@ export const useAuth = ()=>{
     const dispatch = useDispatch();
 
 
-const handleRegister = async ({ username, email, password }) => {
+const handleRegister = async ({ name, username, email, password }) => {
   try {
     dispatch(setLoading(true));
-    const response = await registerUser({ username, email, password });
+    const response = await registerUser({ name, username, email, password });
 
     toast.success("Registration successful!");
     return response;

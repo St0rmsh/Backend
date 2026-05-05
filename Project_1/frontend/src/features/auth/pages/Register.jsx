@@ -2,7 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hook/useAuth";
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { User, Mail, Lock, Shield, ArrowRight, Sparkles } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -10,10 +11,13 @@ const Register = () => {
   const { loading } = useSelector((state) => state.auth);
 
   const [form, setForm] = useState({
+    name: "",
     username: "",
     email: "",
     password: ""
   });
+
+  const [focused, setFocused] = useState(null);
 
   const handleChange = (e) => {
     setForm({
@@ -24,158 +28,145 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const res = await handleRegister({
-  username: form.username,
-  email: form.email,
-  password: form.password
-});
-
-// 🔥 pass email in state
-navigate("/verify-otp", {
-  state: { email: form.email }
-});
-
+      await handleRegister({
+        name: form.name,
+        username: form.username,
+        email: form.email,
+        password: form.password
+      });
+      navigate("/verify-otp", { state: { email: form.email } });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
+  const inputFields = [
+    { name: "name", label: "Full Name", placeholder: "Your full name", type: "text" },
+    { name: "username", label: "Username", placeholder: "Choose a username", type: "text" },
+    { name: "email", label: "Email Address", placeholder: "Enter your email", type: "email" },
+    { name: "password", label: "Password", placeholder: "Create a password", type: "password" },
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] p-4 font-sans text-white">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-4xl bg-white/5 backdrop-blur-2xl rounded-[2rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-white/10"
-      >
-        {/* Left Form */}
-        <div className="w-full md:w-7/12 p-8 sm:p-12 flex flex-col justify-center order-2 md:order-1 relative z-10">
-          <div className="w-full max-w-md mx-auto">
-            <motion.h3 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-4xl font-extrabold bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-2"
-            >
-              Create Account
-            </motion.h3>
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-gray-400 mb-8"
-            >
-              Join the community and unlock your potential.
-            </motion.p>
+    <div className="min-h-screen w-full flex flex-col bg-[#000000] font-sans overflow-x-hidden relative selection:bg-[#00C853] selection:text-black">
+      {/* Editorial Background Text */}
+      <div className="absolute top-10 right-10 opacity-[0.03] pointer-events-none select-none text-right">
+        <h1 className="text-[15vw] font-black leading-none tracking-tighter text-white uppercase">
+          JOIN <br /> ANTIGRAVITY
+        </h1>
+      </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                <label className="text-sm font-medium text-gray-300 ml-1">Username</label>
-                <div className="mt-1 relative group">
-                  <div className="absolute -inset-0.5 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
-                  <input
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    placeholder="johndoe123"
-                    className="relative w-full px-5 py-3.5 bg-gray-900/50 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-white placeholder-gray-500 transition-all hover:bg-gray-900/80"
-                    required
-                  />
-                </div>
-              </motion.div>
+      <main className="flex-1 flex items-center justify-center p-6 md:p-12 z-10">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-0 border border-white/10 bg-white/[0.02] backdrop-blur-3xl overflow-hidden"
+        >
+          {/* Left: Metadata Section (Editorial Style) */}
+          <div className="md:col-span-4 p-8 md:p-12 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between bg-white/[0.01]">
+            <div>
+              <div className="flex items-center gap-3 mb-16">
+                <div className="w-8 h-1 bg-[#00C853]"></div>
+                <span className="text-sm font-black tracking-[0.3em] text-white uppercase">Registration</span>
+              </div>
+              
+              <h2 className="text-5xl font-black text-white leading-[0.9] tracking-tighter mb-8 uppercase">
+                Create <br /> <span className="text-[#00C853]">Your</span> <br /> Account
+              </h2>
+              
+              <div className="space-y-6 text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">
+                <p className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-[#00C853] rounded-full animate-pulse"></span>
+                  Access: Public
+                </p>
+                <p className="flex items-center gap-2 text-white/40">
+                  <span className="w-1 h-1 bg-[#FF4D00] rounded-full"></span>
+                  Secure Encryption
+                </p>
+              </div>
+            </div>
 
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                <label className="text-sm font-medium text-gray-300 ml-1">Email</label>
-                <div className="mt-1 relative group">
-                  <div className="absolute -inset-0.5 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
-                  <input
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="john@example.com"
-                    className="relative w-full px-5 py-3.5 bg-gray-900/50 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-white placeholder-gray-500 transition-all hover:bg-gray-900/80"
-                    required
-                  />
-                </div>
-              </motion.div>
+            <div className="mt-12">
+              <p className="text-[9px] text-gray-600 uppercase tracking-[0.3em] leading-relaxed">
+                Antigravity v1.0 <br />
+                User Protocol: verified
+              </p>
+            </div>
+          </div>
 
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-                <label className="text-sm font-medium text-gray-300 ml-1">Password</label>
-                <div className="mt-1 relative group">
-                  <div className="absolute -inset-0.5 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
-                  <input
-                    name="password"
-                    type="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    className="relative w-full px-5 py-3.5 bg-gray-900/50 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-white placeholder-gray-500 transition-all hover:bg-gray-900/80"
-                    required
-                  />
-                </div>
-              </motion.div>
+          {/* Right: Interaction Section */}
+          <div className="md:col-span-8 p-8 md:p-16 flex flex-col justify-center">
+            <header className="mb-12">
+              <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.4em] mb-4">Account Setup</p>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight">Create Account</h3>
+            </header>
 
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 mt-6 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all flex justify-center items-center gap-2"
-              >
-                {loading ? (
-                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                ) : (
-                  "Create Account"
-                )}
-              </motion.button>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8">
+                {inputFields.map((field) => (
+                  <div key={field.name} className="relative group">
+                    <label className={`text-[10px] font-black uppercase tracking-[0.3em] mb-3 block transition-all duration-300 ${focused === field.name ? 'text-[#00C853]' : 'text-gray-500'}`}>
+                      {field.label}
+                    </label>
+                    <input
+                      name={field.name}
+                      type={field.type}
+                      value={form[field.name]}
+                      onChange={handleChange}
+                      onFocus={() => setFocused(field.name)}
+                      onBlur={() => setFocused(null)}
+                      placeholder={field.placeholder}
+                      className="w-full bg-transparent border-b border-white/10 py-4 text-white font-bold placeholder:text-white/5 outline-none transition-all duration-500 focus:border-[#00C853] text-sm tracking-widest"
+                      required
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-10">
+                <motion.button
+                  whileHover={{ backgroundColor: "#00C853", color: "#000000" }}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-white text-black py-6 px-8 flex items-center justify-between transition-colors duration-500"
+                >
+                  <span className="text-sm font-black uppercase tracking-[0.3em]">
+                    {loading ? "Creating Account..." : "Create Account"}
+                  </span>
+                  {!loading && <ArrowRight size={20} />}
+                </motion.button>
+              </div>
             </form>
 
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="text-gray-400 text-sm mt-8 text-center"
-            >
-              Already have an account?{" "}
+            <footer className="mt-16 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-t border-white/5 pt-8">
+              <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                Already have an account?
+              </p>
               <button
                 onClick={() => navigate("/login")}
-                className="text-blue-400 font-medium hover:text-blue-300 hover:underline transition-all"
+                className="text-white text-[10px] font-black uppercase tracking-[0.2em] border-b border-white/20 hover:border-[#FF4D00] hover:text-[#FF4D00] transition-all pb-1"
               >
-                Sign in instead
+                Sign In
               </button>
-            </motion.p>
+            </footer>
           </div>
-        </div>
+        </motion.div>
+      </main>
 
-        {/* Right Graphic */}
-        <div className="w-full md:w-5/12 p-10 flex flex-col justify-center items-center relative overflow-hidden order-1 md:order-2 bg-gray-900/40 border-l border-white/5">
-          <div className="absolute inset-0 z-0">
-            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-600 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-pulse"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-600 rounded-full mix-blend-screen filter blur-[100px] opacity-30" style={{animation: "pulse 3s infinite reverse"}}></div>
-          </div>
-          
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="relative z-10 text-center"
-          >
-            <div className="w-24 h-24 mx-auto bg-white/5 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 mb-6 shadow-2xl">
-              <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-            </div>
-            <h2 className="text-3xl font-bold mb-4 text-white">Your Journey Starts Here</h2>
-            <p className="text-gray-300 text-sm max-w-[250px] mx-auto leading-relaxed">
-              Experience the next generation platform with premium features and stunning design.
-            </p>
-          </motion.div>
+      {/* Footer Branding */}
+      <footer className="p-10 flex justify-between items-end border-t border-white/5 bg-black">
+        <div className="space-y-2">
+          <p className="text-[10px] font-black text-white tracking-[0.5em] uppercase">STITCH // PROTOCOL</p>
+          <p className="text-[8px] text-gray-700 tracking-[0.3em] uppercase">Secure Decentralized Verification</p>
         </div>
-      </motion.div>
+        <div className="flex gap-8 text-[9px] font-bold text-gray-600 uppercase tracking-widest">
+          <span className="hover:text-white cursor-pointer transition-colors">Manifesto</span>
+          <span className="hover:text-white cursor-pointer transition-colors">Nodes</span>
+          <span className="hover:text-white cursor-pointer transition-colors">Network</span>
+        </div>
+      </footer>
     </div>
   );
 };

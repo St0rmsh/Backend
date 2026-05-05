@@ -26,6 +26,7 @@ transporter.verify()
 
 export async function sendOTP(email, otp) {
   try {
+    console.log(`[EMAIL_SERVICE] Sending OTP ${otp} to ${email}`);
 
     
 

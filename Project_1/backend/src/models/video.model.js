@@ -22,8 +22,13 @@ const videoSchema = new mongoose.Schema({
         default: ""
     },
 
+    hlsUrl: {
+        type: String,
+        default: ""
+    },
+
     duration: {
-        type: Number, 
+        type: Number,
         default: 0
     },
 
@@ -55,8 +60,8 @@ const videoSchema = new mongoose.Schema({
         default: 0,
     },
     commentsCount: {
-    type: Number,
-    default: 0
+        type: Number,
+        default: 0
     },
 
     tags: {
@@ -79,42 +84,42 @@ const videoSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    
+
     status: {
         type: String,
-        enum: ["PROCESSING", "COMPLETED", "FAILED"],
-        default: "PROCESSING"
+        enum: ["uploading", "processing", "ready", "failed"],
+        default: "uploading"
     },
 
-   verification: {
-    summary: String,
+    verification: {
+        summary: String,
 
-    claims: [
-        {
-            text: String,
-            verdict: String,
-            confidence: Number,
-            explanation: String,
-            sources: [String]
-        }
-    ],
+        claims: [
+            {
+                text: String,
+                verdict: String,
+                confidence: Number,
+                explanation: String,
+                sources: [String]
+            }
+        ],
 
-    finalVerdict: {
-        type: String,
-        enum: ["TRUE", "PARTIALLY TRUE", "FALSE", "MISINFORMATION", "DISINFORMATION", "UNKNOWN"],
-        default: "UNKNOWN"
+        finalVerdict: {
+            type: String,
+            enum: ["TRUE", "PARTIALLY TRUE", "FALSE", "MISINFORMATION", "DISINFORMATION", "UNKNOWN"],
+            default: "UNKNOWN"
+        },
+
+        confidence: Number,
+
+        truth: String,
+
+        issues: [String],
+
+        sources: [String],
+
+        checkedAt: Date
     },
-
-    confidence: Number,
-
-    truth: String,
-
-    issues: [String],
-
-    sources: [String],
-
-    checkedAt: Date
-},
 
 
     isFlagged: {
@@ -136,22 +141,22 @@ const videoSchema = new mongoose.Schema({
         confidence: { type: Number, default: 0 }
     },
     transcript: {
-    type: String,
-    default: ""
-},totalWatchTime: {
-    type: Number,
-    default: 0
-},
+        type: String,
+        default: ""
+    }, totalWatchTime: {
+        type: Number,
+        default: 0
+    },
 
-averageWatchTime: {
-    type: Number,
-    default: 0
-},
+    averageWatchTime: {
+        type: Number,
+        default: 0
+    },
 
-trustScore: {
-    type: Number,
-    default: 0
-},
+    trustScore: {
+        type: Number,
+        default: 0
+    },
 
 }, { timestamps: true });
 
@@ -161,6 +166,6 @@ videoSchema.index({
     tags: "text"
 });
 
-const videoModel =  mongoose.model("Video", videoSchema);
+const videoModel = mongoose.model("Video", videoSchema);
 
 export default videoModel

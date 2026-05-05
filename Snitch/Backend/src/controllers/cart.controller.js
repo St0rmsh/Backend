@@ -26,7 +26,7 @@ export const addToCart = async (req, res) => {
 export const updateCartItem = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { productId, variantId } = req.query; // Using productId and variantId to identify item
+        const { productId, variantId } = req.query;
         const { quantity } = req.body;
         const cart = await cartService.updateQuantity(userId, productId, variantId, Number(quantity));
         res.status(200).json({ message: "Cart updated successfully", success: true, cart });

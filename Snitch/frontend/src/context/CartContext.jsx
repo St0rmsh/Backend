@@ -18,37 +18,47 @@ export const CartProvider = ({ children }) => {
         try {
             const res = await cartApi.get('/');
             if (res.data.success && res.data.cart) {
-                const mappedItems = res.data.cart.items.map(item => {
+               const mappedItems = res.data.cart.items.map(item => {
                     const product = item.product;
-                    if (!product || typeof product === 'string') {
-                        return {
-                            productId: item.product.toString(),
-                            itemId: item._id.toString(),
-                            productName: item.productName || 'Unknown Product',
-                            variantName: item.variantName,
-                            quantity: item.quantity,
-                            price: item.price,
-                            stock: 0,
-                            images: []
-                        };
+
+                    const variantId = item.variantKey || "BASE";
+
+                    let variantDetails = null;
+
+                    if (
+                        product &&
+                        typeof product !== "string" &&
+                        variantId !== "BASE"
+                    ) {
+                        variantDetails = product?.variants?.find(
+                            v => v._id.toString() === variantId
+                        );
                     }
 
-                    const variantId = item.variant ? item.variant.toString() : null;
-                    const variantDetails = product?.variants?.find(v => v._id && v._id.toString() === variantId);
-                    
                     return {
                         ...product,
                         productId: product._id.toString(),
                         variantId: variantId,
-                        variant: variantDetails, 
+
+                        variant: variantDetails,
+
                         productName: item.productName,
                         variantName: item.variantName,
+
                         quantity: item.quantity,
                         price: item.price,
+
                         itemId: item._id.toString(),
-                        stock: variantDetails ? variantDetails.stock : (product.stock || 0)
+
+                        stock: variantDetails
+                            ? variantDetails.stock
+                            : product.stock,
+
+                        images: variantDetails
+                            ? variantDetails.image
+                            : product.images
                     };
-                });
+               });
                 setCartItems(mappedItems);
             }
         } catch (error) {

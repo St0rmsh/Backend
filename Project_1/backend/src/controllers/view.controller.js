@@ -29,7 +29,7 @@ export const addView = async (req, res) => {
     const updatedVideo = await videoModel.findByIdAndUpdate(
       videoId,
       { $inc: { views: 1 } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     let updatedChannel = null;
@@ -37,13 +37,13 @@ export const addView = async (req, res) => {
       updatedChannel = await channelModel.findByIdAndUpdate(
         updatedVideo.channel,
         { $inc: { totalViews: 1 } },
-        { new: true }
+        { returnDocument: 'after' }
       );
     }
 
     const io = getIO();
     io.to(`video_${videoId}`).emit("video:views:update", { videoId, views: updatedVideo.views });
-    
+
     if (updatedChannel) {
       io.to(`channel_${updatedVideo.channel}`).emit("channel:views:update", {
         channelId: updatedVideo.channel,

@@ -16,17 +16,21 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const CustomPlayer = ({
   sources,
+  hlsUrl,
   autoPlay = false,
   onEnd,
   onWatchTime,
   videoData = {},
   initialTime = 0
 }) => {
+
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const progressRef = useRef(null);
   const lastTrackedTimeRef = useRef(0);
   const retryCountRef = useRef(0);
+  const hlsRef = useRef(null);
+
 
   const [volume, setVolume] = useState(() => {
     const saved = localStorage.getItem("signal_volume");
@@ -53,48 +57,105 @@ const CustomPlayer = ({
     localStorage.setItem("signal_volume", volume.toString());
     localStorage.setItem("signal_muted", JSON.stringify(isMuted));
     if (videoRef.current) {
-        videoRef.current.volume = volume;
-        videoRef.current.muted = isMuted;
-        videoRef.current.playbackRate = speed;
+      videoRef.current.volume = volume;
+      videoRef.current.muted = isMuted;
+      videoRef.current.playbackRate = speed;
     }
   }, [volume, isMuted, speed]);
 
   const src = sources?.[quality] || sources?.["720p"];
 
-  // Handle src change and autoplay
+  // Handle src change and autoplay with HLS support
   useEffect(() => {
     retryCountRef.current = 0;
     setError(false);
-    if (autoPlay && videoRef.current) {
-        const attemptPlay = () => {
-            videoRef.current.play().catch(() => {
-                // If blocked (e.g. by browser policy), mute and try again
-                setIsMuted(true);
-                videoRef.current.muted = true;
-                videoRef.current.play().catch(e => console.error("Neural link failed to auto-initiate:", e));
-            });
-        };
-        
-        videoRef.current.load();
-        attemptPlay();
+
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
     }
-  }, [src, autoPlay]);
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (hlsUrl && Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90
+      });
+      hlsRef.current = hls;
+      hls.loadSource(hlsUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (autoPlay) {
+          video.play().catch(() => setIsMuted(true));
+        }
+      });
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          console.warn("⚠️ HLS Fatal Error:", data.type, "- Falling back to MP4");
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hls.recoverMediaError();
+              break;
+            default:
+              // Fatal error that can't be recovered with HLS
+              hls.destroy();
+              hlsRef.current = null;
+              video.src = src;
+              video.load();
+              if (autoPlay) video.play().catch(() => setIsMuted(true));
+              break;
+          }
+        }
+      });
+
+    } else {
+      // Fallback to native MP4
+      video.src = src;
+      video.load();
+      if (autoPlay) {
+        video.play().catch(() => setIsMuted(true));
+      }
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+      }
+    };
+  }, [src, hlsUrl, autoPlay]);
+
 
   // ⌚ RESUME LOGIC
   useEffect(() => {
     if (initialTime > 0 && videoRef.current) {
-        videoRef.current.currentTime = initialTime;
-        lastTrackedTimeRef.current = initialTime;
+      videoRef.current.currentTime = initialTime;
+      lastTrackedTimeRef.current = initialTime;
     }
   }, [initialTime]);
 
   // =========================
   // ANALYTICS TRACKING
   // =========================
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (!v?.duration) return;
-    
+
     const currentPos = v.currentTime;
     setProgress((currentPos / v.duration) * 100);
 
@@ -116,26 +177,26 @@ const CustomPlayer = ({
   // 🔄 RETRY LOGIC
   const handleError = () => {
     if (retryCountRef.current < 3) {
-        retryCountRef.current++;
-        console.warn(`Connection dropped. Retrying signal attempt ${retryCountRef.current}...`);
-        setTimeout(() => {
-            if (videoRef.current) videoRef.current.load();
-        }, 2000 * retryCountRef.current);
+      retryCountRef.current++;
+      console.warn(`Connection dropped. Retrying signal attempt ${retryCountRef.current}...`);
+      setTimeout(() => {
+        if (videoRef.current) videoRef.current.load();
+      }, 2000 * retryCountRef.current);
     } else {
-        setError(true);
+      setError(true);
     }
   };
 
   const togglePlay = () => {
     if (!videoRef.current) return;
     if (videoRef.current.paused) {
-        videoRef.current.play().catch(() => {
-            setIsMuted(true);
-            videoRef.current.muted = true;
-            videoRef.current.play();
-        });
+      videoRef.current.play().catch(() => {
+        setIsMuted(true);
+        videoRef.current.muted = true;
+        videoRef.current.play();
+      });
     } else {
-        videoRef.current.pause();
+      videoRef.current.pause();
     }
     setPlaying(!videoRef.current.paused);
   };
@@ -148,8 +209,8 @@ const CustomPlayer = ({
   };
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       onMouseMove={() => setShowControls(true)}
       onMouseLeave={() => playing && setShowControls(false)}
       className={`relative bg-black group/player overflow-hidden select-none touch-none
@@ -176,7 +237,7 @@ const CustomPlayer = ({
 
       <AnimatePresence>
         {buffering && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 flex items-center justify-center bg-black/20 z-10 pointer-events-none"
           >
@@ -215,13 +276,13 @@ const CustomPlayer = ({
         animate={{ opacity: showControls || !playing ? 1 : 0, y: showControls || !playing ? 0 : 10 }}
         className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-20 pt-16"
       >
-        <div 
+        <div
           ref={progressRef}
           onClick={handleSeek}
           className="group/progress relative h-1 bg-white/20 rounded-full cursor-pointer mb-6 transition-all hover:h-1.5"
         >
           <div className="absolute left-0 top-0 h-full bg-brand-orange rounded-full" style={{ width: `${progress}%` }}>
-             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg scale-0 group-hover/progress:scale-100 transition-transform" />
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg scale-0 group-hover/progress:scale-100 transition-transform" />
           </div>
         </div>
 
@@ -231,16 +292,16 @@ const CustomPlayer = ({
               {playing ? <Pause className="fill-white" size={20} /> : <Play className="fill-white" size={20} />}
             </button>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsMuted(!isMuted)}
                 className="hover:text-brand-orange transition-colors"
               >
                 {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
-              
+
               <div className="group/volume relative w-24 h-6 flex items-center cursor-pointer">
                 {/* VOLUME TRACK CONTAINER */}
-                <div 
+                <div
                   className="w-full h-1 bg-white/20 rounded-full relative overflow-hidden"
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -249,14 +310,14 @@ const CustomPlayer = ({
                     setIsMuted(false);
                   }}
                 >
-                  <motion.div 
+                  <motion.div
                     initial={false}
                     animate={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
                     className="absolute left-0 top-0 h-full bg-brand-orange"
                   />
                 </div>
                 {/* INVISIBLE SCORCH ZONE FOR EASIER DRAGGING/CLICKING */}
-                <div 
+                <div
                   className="absolute inset-0 z-10"
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -285,8 +346,8 @@ const CustomPlayer = ({
                   >
                     <p className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-muted">Playback Speed</p>
                     {[0.5, 1, 1.5, 2].map(s => (
-                      <button 
-                        key={s} 
+                      <button
+                        key={s}
                         onClick={() => { setSpeed(s); setShowSettings(false); }}
                         className={`w-full text-left px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-colors ${speed === s ? 'bg-black text-white' : 'text-black hover:bg-surface-low'}`}
                       >
@@ -297,14 +358,20 @@ const CustomPlayer = ({
                 )}
               </AnimatePresence>
             </div>
-            <button onClick={() => containerRef.current.requestFullscreen()} className="hover:text-brand-orange transition-colors">
+            <button
+              onClick={toggleFullscreen}
+              className="hover:text-brand-orange transition-colors"
+            >
               <Maximize size={18} />
             </button>
+
           </div>
         </div>
       </motion.div>
     </div>
   );
 };
+
+
 
 export default CustomPlayer;

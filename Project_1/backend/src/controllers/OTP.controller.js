@@ -69,23 +69,43 @@ export const sendOtp = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   try {
-    const email = req.body.email?.toLowerCase().trim();
-    const otp = req.body.otp;
+    const { email: rawEmail, otp: rawOtp } = req.body;
+
+    if (!rawEmail || !rawOtp) {
+      return res.status(400).json({ 
+        message: "Email and OTP are required",
+        received: { email: !!rawEmail, otp: !!rawOtp }
+      });
+    }
+
+    const email = rawEmail.toLowerCase().trim();
+    const otp = rawOtp.toString().trim();
+
+    console.log(`[OTP_DEBUG] Verifying: Email=${email}, OTP=${otp}`);
 
     const record = await otpModel.findOne({ email });
 
     if (!record) {
-      return res.status(400).json({ message: "OTP not found" });
+      console.log(`[OTP_DEBUG] No record found for ${email}`);
+      return res.status(400).json({ message: "No registration found for this email. Please register again." });
     }
+
+    console.log(`[OTP_DEBUG] Stored OTP: ${record.otp}, Input OTP: ${otp}`);
 
     if (record.expiresAt < new Date()) {
-      return res.status(400).json({ message: "OTP expired" });
+      console.log(`[OTP_DEBUG] OTP expired for ${email}`);
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
     }
 
-    if (record.otp !== otp) {
-      return res.status(400).json({ message: "Invalid OTP" });
+    if (record.otp.toString().trim() !== otp) {
+      console.log(`[OTP_DEBUG] Mismatch for ${email}: Expected ${record.otp}, got ${otp}`);
+      return res.status(400).json({ message: "The OTP you entered is incorrect." });
     }
 
+    if (!record.tempUser) {
+      console.log(`[OTP_DEBUG] tempUser missing for ${email}`);
+      return res.status(400).json({ message: "Registration session lost. Please register again." });
+    }
 
     const { name, username, password } = record.tempUser;
 
