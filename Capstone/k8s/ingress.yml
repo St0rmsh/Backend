@@ -7,7 +7,8 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
+    - host: "*.preview.localhost"
+      http:
         paths:
           - path: /api/sandbox
             pathType: Prefix
