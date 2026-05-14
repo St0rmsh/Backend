@@ -9,47 +9,82 @@ app.use(morgan("dev"))
 app.use(express.json())
 
 
-app.get("/api/status/healthz", async (req,res) => {
+app.get("/api/status/healthz", async (req, res) => {
    return res.status(200).json({
-    message: "ok",
-    timestamp: new Date().toISOString()
+      message: "ok",
+      timestamp: new Date().toISOString()
    })
 })
 
 
-app.get("/api/status/readyz", async (req,res) => {
+app.get("/api/status/readyz", async (req, res) => {
    return res.status(200).json({
-    message: "ok",
-    timestamp: new Date().toISOString()
+      message: "ok",
+      timestamp: new Date().toISOString()
    })
 })
 
-
-app.use((req,res,next)=> { 
-   
-     const host = req.headers.host
-
-     if(!host){
-        return res.status(400).json({message: "Host header is required"})
-     }
-
-     const sandboxId = host.split(".")[0]
-
-     if(!sandboxId){
-        return res.status(400).json({message: "Invalid host header"})
-     }
-
-     const target = `http://sandbox-service-${sandboxId}.default.svc.cluster.local`
+const proxies = {}
+const agentProxy = {}
 
 
-     createProxyMiddleware({
-       target,
-       changeOrigin: true,
-       ws:true
-     })(req,res,next)
+async function createProxy(sandboxId) {
+   const target = `http://sandbox-service-${sandboxId}.default.svc.cluster.local`
+
+   if (!proxies[sandboxId]) {
+      proxies[sandboxId] = createProxyMiddleware({
+         target,
+         changeOrigin: true,
+         ws: true
+      })
+   }
+
+   return proxies[sandboxId]
+}
 
 
- }) 
+async function getAgentProxy(sandboxId) {
+
+   const target = `http://sandbox-service-${sandboxId}:3000`
+
+   if (!agentProxy[sandboxId]) {
+      agentProxy[sandboxId] = createProxyMiddleware({
+         target,
+         changeOrigin: true,
+         ws: true
+      })
+   }
+
+   return agentProxy[sandboxId]
+
+}
+
+app.use((req, res, next) => {
+
+   const host = req.headers.host
+
+   if (!host) {
+      return res.status(400).json({ message: "Host header is required" })
+   }
+
+   const sandboxId = host.split(".")[0]
+
+   if (!sandboxId) {
+      return res.status(400).json({ message: "Invalid host header" })
+   }
+
+   if (host.split(".")[1] === "agent") {
+
+      return getAgentProxy(sandboxId)(req, res, next)
+   }
+   else if (host.split(".")[1] === "preview") {
+      return createProxy(sandboxId)(req, res, next)
+   }
+
+
+
+
+})
 
 
 export default app
