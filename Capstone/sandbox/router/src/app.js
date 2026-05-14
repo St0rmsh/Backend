@@ -59,7 +59,7 @@ async function getAgentProxy(sandboxId) {
 
 }
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
 
    const host = req.headers.host
 
@@ -74,15 +74,13 @@ app.use((req, res, next) => {
    }
 
    if (host.split(".")[1] === "agent") {
-
-      return getAgentProxy(sandboxId)(req, res, next)
+      const proxy = await getAgentProxy(sandboxId)
+      return proxy(req, res, next)
    }
    else if (host.split(".")[1] === "preview") {
-      return createProxy(sandboxId)(req, res, next)
+      const proxy = await createProxy(sandboxId)
+      return proxy(req, res, next)
    }
-
-
-
 
 })
 

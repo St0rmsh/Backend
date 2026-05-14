@@ -284,23 +284,100 @@ And called it before returning the URL:
 
 ---
 
-#### 🧹 CLEANUP: Orphaned Services
+#### 🐛 BUG #3: 504 Gateway Time-out (Node Out of Memory)
 
-**Date:** 2026-05-13
+**Date:** 2026-05-14
 
-During debugging, several sandbox services were left behind with no backing pods (pods were deleted during redeployments but services weren't):
+**Error seen:**
+Nginx returned a `504 Gateway Time-out` when calling `/api/sandbox/start`.
+
+**How we diagnosed it:**
+1. Checked all pods using `kubectl get pods -A`. We noticed that several `sandbox-pod-<uuid>` instances were stuck in the `Pending` state.
+2. Ran `kubectl describe pod <pending-pod-name>`, which revealed the following Event:
+   `FailedScheduling: 0/1 nodes are available: 1 Insufficient memory`
+3. Checked node resources: The Docker Desktop node only had ~3.5GB of allocatable memory. Each sandbox pod requested `500Mi` memory per container (totaling 1GB per pod). With several old, unused pods still running, the node hit 94% memory allocation, preventing any new pods from being scheduled. The API server's `waitForPodReady` function timed out after 60 seconds waiting for the pod to start, resulting in the 504.
+
+**Root Cause:**
+Node memory exhaustion due to high resource requests (1GB per pod) combined with no garbage collection/cleanup of old sandbox pods.
+
+**What we changed:**
+Lowered the resource limits in `sandbox/server/src/kubernetes/pod.js`:
+```javascript
+resources: {
+    requests: { cpu: "100m", memory: "128Mi" },
+    limits: { cpu: "250m", memory: "256Mi" }
+}
 ```
-sandbox-service-019e204b-bc48-75b9-b31d-6632d5dffb29   <none>
-sandbox-service-019e2053-16ed-7231-a547-f644b9ee1617   <none>
-sandbox-service-019e205a-5fe3-7339-afdf-905f6462777b   <none>
+We also manually deleted old, orphaned sandbox pods to free up node memory.
+
+---
+
+#### 🐛 BUG #4: `TypeError: createProxy(...) is not a function`
+
+**Date:** 2026-05-14
+
+**Error seen:**
+The router crashed with `TypeError: createProxy(...) is not a function` when attempting to access any preview or agent subdomain.
+
+**How we diagnosed it:**
+Inspected `sandbox/router/src/app.js`. The routing middleware called `createProxy(sandboxId)(req, res, next)`. However, `createProxy` and `getAgentProxy` were defined as `async function`s.
+
+**Root Cause:**
+Async functions return Promises in JavaScript. Calling `(req, res, next)` directly on a Promise rather than on the resolved proxy middleware function caused the `TypeError`.
+
+**What we changed:**
+Made the Express middleware async and added `await` before invoking the proxy function:
+```javascript
+app.use(async (req, res, next) => {
+   // ...
+   if (host.split(".")[1] === "agent") {
+      const proxy = await getAgentProxy(sandboxId);
+      return proxy(req, res, next);
+   }
+   // ...
+});
 ```
 
-Cleaned up manually:
-```bash
-kubectl delete svc sandbox-service-019e204b-... sandbox-service-019e2053-... sandbox-service-019e205a-...
-```
+---
 
-**Note for future:** We need to implement a sandbox cleanup/TTL system that auto-deletes both pods AND their services after a timeout.
+#### 🐛 BUG #5: Agent API returning Vite React App (HTML) instead of JSON
+
+**Date:** 2026-05-14
+
+**Error seen:**
+Accessing `http://<uuid>.preview.localhost/list-files` returned the Vite React app `index.html` template instead of the expected JSON array of files.
+
+**Root Cause:**
+The request was made to the `.preview.localhost` subdomain instead of `.agent.localhost`. The `router` forwarded the `.preview` request to port 5173 (Vite). Since Vite is an SPA dev server, it falls back to serving `index.html` for unknown paths. The `/list-files` endpoint was actually hosted by the `agent-container` on port 3000. 
+
+**What we changed:**
+Instructed usage of the correct subdomain: `http://<uuid>.agent.localhost/list-files`.
+
+---
+
+#### 🐛 BUG #6: `sandbox-service` missing port 3000 & `agent-container` not spawning
+
+**Date:** 2026-05-14
+
+**Error seen:**
+`Error occurred while trying to proxy: <uuid>.agent.localhost/list-files`. Additionally, running `kubectl logs <pod> -c agent-container` returned `error: container agent-container is not valid for pod`.
+
+**How we diagnosed it:**
+1. Described the newly created service (`kubectl get svc <service-name> -o yaml`). It only exposed port 80 (target 5173), meaning port 3000 was completely missing.
+2. Described the pod (`kubectl get pod <pod-name> -o yaml`). It only had `sandbox-container`. The `agent-container` was entirely missing from the pod specification.
+3. Attempted to manually trigger `/api/sandbox/start` and checked the server logs, which threw a `422 Unprocessable Entity` from the K8s API.
+4. The error message explicitly stated: `Invalid value: "init-Container": a lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-'`.
+
+**Root Cause:**
+1. **Capital Letter in Container Name:** The `pod.js` manifest contained an init container named `init-Container` (with a capital `C`). Kubernetes enforces strict lowercase validation for container names. This caused pod creation to fail silently.
+2. **Stale Docker Image:** The `sandbox-deployment` was still running an older version of the `sandbox:latest` image because subsequent builds had been tagged incorrectly (`sandbox-server:latest`). Thus, the older server code was creating pods and services without the `agent` configurations.
+
+**What we changed:**
+1. Fixed the casing in `sandbox/server/src/kubernetes/pod.js`: `name: "init-container"`.
+2. Rebuilt the API server with the correct tag: `docker build -t sandbox:latest ./sandbox/server`.
+3. Restarted the deployment: `kubectl rollout restart deployment sandbox-deployment`.
+
+**Result:** Calling `/api/sandbox/start` now successfully generates a pod with both `sandbox-container` (Vite) and `agent-container` (API), and properly wires up both ports on the service.
 
 ---
 
