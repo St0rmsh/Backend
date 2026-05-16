@@ -36,7 +36,7 @@ await agent.invoke({
    messages:[
     {
         role: "user",
-        content:  ` create a folder name main and inside that folder create a file jsx for each .css file. 
+        content:  ` create a folder name main and inside that folder create a file jsx for each .css file . 
 
         Steps:
          1. List files

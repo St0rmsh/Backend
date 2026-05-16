@@ -1,6 +1,6 @@
 # Capstone Project — Progress Tracker
 
-> **Last updated:** 2026-05-13
+> **Last updated:** 2026-05-16
 
 ---
 
@@ -108,7 +108,27 @@ A lightweight Express server that proxies wildcard subdomain requests to the cor
 | `GET` | `/api/status/readyz` | Readiness probe |
 | `*` | `/*` | Proxy middleware — routes to sandbox service based on Host header |
 
-### 4. Kubernetes Infrastructure
+### 4. AI Orchestration Service (The "Brain")
+
+**Location:** `ai-orchestration/`
+
+This is the smart part of the project. It uses advanced AI models (like Gemini and Mistral) to understand user requests and write code automatically.
+
+- **Multi-Model Support:** Can switch between different AI models to get the best results.
+- **LangChain Integration:** Uses a powerful framework to help the AI "reason" and use tools.
+- **Automated Coding:** Can perform tasks like "create a new folder" or "refactor this file" without human help.
+
+### 5. Sandbox Agent (The "Hands")
+
+**Location:** `sandbox/agent/`
+
+Every sandbox now has its own "agent" that follows instructions from the AI Brain.
+
+- **Direct File Access:** The agent can list, read, create, and update files directly inside the sandbox.
+- **API Interface:** Provides simple endpoints for the AI to interact with the file system.
+- **Isolated Security:** Each agent only has access to its own specific sandbox environment.
+
+### 6. Kubernetes Infrastructure
 
 **Location:** `k8s/`
 
@@ -123,7 +143,7 @@ All K8s manifests for deploying the platform on Docker Desktop Kubernetes.
 | `ingress.yml` | Ingress | Nginx ingress with two rules: `/api/sandbox` → sandbox-service, `*.preview.localhost` → router-service |
 | `rbac.yml` | ServiceAccount + Role + RoleBinding | `resource-manager` SA with permissions to `get/list/watch/create/delete` pods and services in default namespace |
 
-### 5. Bug Fixes & Debugging Log
+### 7. Bug Fixes & Debugging Log
 
 > Every bug we encounter is documented here with full context so we can learn from it and never repeat the same mistake.
 
@@ -383,13 +403,11 @@ Instructed usage of the correct subdomain: `http://<uuid>.agent.localhost/list-f
 
 ## Planned / Not Yet Implemented
 
-- [ ] **Auth Service** (`Auth/`)
-- [ ] **AI Orchestration / Multi-Agent System** (`ai-orchestration/`)
-- [ ] **Notification Service** (`notification/`)
-- [ ] **Sandbox Cleanup / TTL** — auto-delete idle pods after timeout
-- [ ] **File System Sync** — live code editing in sandbox containers
-- [ ] **Terminal WebSocket** — exec into sandbox containers from browser
-- [ ] **Frontend UI** — web-based IDE / dashboard
+- [ ] **Auth Service** — So users can log in and save their work.
+- [ ] **Notification Service** — To tell users when things happen.
+- [ ] **Sandbox Cleanup** — Automatically delete old sandboxes to save space.
+- [ ] **Live Collaboration** — Multiple people working on the same code.
+- [ ] **Web Dashboard** — A pretty website to manage everything.
 
 ---
 
