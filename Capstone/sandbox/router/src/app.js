@@ -6,7 +6,6 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 const app = express()
 
 app.use(morgan("dev"))
-app.use(express.json())
 
 
 app.get("/api/status/healthz", async (req, res) => {
@@ -45,7 +44,7 @@ async function createProxy(sandboxId) {
 
 async function getAgentProxy(sandboxId) {
 
-   const target = `http://sandbox-service-${sandboxId}:3000`
+   const target = `http://sandbox-service-${sandboxId}.default.svc.cluster.local:3000`
 
    if (!agentProxy[sandboxId]) {
       agentProxy[sandboxId] = createProxyMiddleware({
@@ -80,6 +79,8 @@ app.use(async (req, res, next) => {
    else if (host.split(".")[1] === "preview") {
       const proxy = await createProxy(sandboxId)
       return proxy(req, res, next)
+   } else {
+      return res.status(404).json({ message: "Service not found" })
    }
 
 })

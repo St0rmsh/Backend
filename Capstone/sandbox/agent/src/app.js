@@ -1,14 +1,16 @@
 import express from "express";
 import morgan from "morgan";
+import cors from "cors";
 import fs from "fs"
 import path from "path"
 
 
 const app = express();
 
+app.use(cors());
 app.use(morgan("dev"));
-app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+app.use(express.json({limit:"50mb"}));
+app.use(express.urlencoded({limit:"50mb" , extended: false}));
 
 const WORKING_DIR = "/workspace"
 
@@ -88,38 +90,83 @@ app.get("/read-file", async (req, res) => {
 //        { "file": "file2.txt", "content": "content2" }
 //    ]
 // }
-
-app.patch("/update-file", async(req,res)=>{
-
-    const updates = req.body.updates;
-
-    if (!updates || !Array.isArray(updates)) {
-        return res.status(400).json({
-            message: "Updates must be an array of objects with file and content",
-            status: 400,
-        })
-    }
-const result = await Promise.all(updates.map(async(update)=>{
-
-    const {filePath,content} = update
-
-    const absolutePath = path.join(WORKING_DIR, filePath);
+app.patch("/update-file", async (req, res) => {
 
     try {
-    await fs.promises.writeFile(absolutePath, content , "utf-8");
-        return { [absolutePath]: "File updated successfully" };
+
+        const updates = req.body.updates;
+
+        if (!updates || !Array.isArray(updates)) {
+            return res.status(400).json({
+                message: "Updates must be an array"
+            });
+        }
+
+        const result = await Promise.all(
+
+            updates.map(async (update) => {
+
+                const {
+                    filePath,
+                    content
+                } = update;
+
+                const safePath =
+                    filePath.replace(/^\/+/, "");
+
+                const absolutePath =
+                    path.resolve(
+                        WORKING_DIR,
+                        safePath
+                    );
+
+                // Security check
+                if (
+                    !absolutePath.startsWith(
+                        WORKING_DIR
+                    )
+                ) {
+                    throw new Error(
+                        "Access denied"
+                    );
+                }
+
+                await fs.promises.mkdir(
+                    path.dirname(absolutePath),
+                    { recursive: true }
+                );
+
+                await fs.promises.writeFile(
+                    absolutePath,
+                    content,
+                    "utf-8"
+                );
+
+                return {
+                    [safePath]:
+                        "File updated successfully"
+                };
+
+            })
+
+        );
+
+        return res.status(200).json({
+            message: "File updated successfully",
+            data: result
+        });
+
     } catch (error) {
-        return { [absolutePath]: `File not found : ${error.message}` };
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: error.message
+        });
+
     }
 
-}))
-
-    res.status(200).json({
-        message: "File updated successfully",
-        data: result
-    })
-
-})
+});
 
 
 
