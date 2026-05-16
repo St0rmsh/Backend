@@ -36,7 +36,15 @@ await agent.invoke({
    messages:[
     {
         role: "user",
-        content: "update The Theme of the project to light ",
+        content:  ` create a folder name main and inside that folder create a file jsx for each .css file. 
+
+        Steps:
+         1. List files
+         2. Find theme-related files
+         3. Read only relevant files
+         4. Update only necessary files
+         5. Stop after changes are complete
+`,
     }
    ]
 })

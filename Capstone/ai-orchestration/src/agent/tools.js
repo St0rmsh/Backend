@@ -14,7 +14,9 @@ export const listFiles = tool(
 
         console.log("============================================================================");
 
-        const response = await axios.get(`http://019e2fe2-81d0-723a-b27d-11f42b2300cc.agent.localhost/list-files`)
+        const response = await axios.get(`http://019e3117-6425-7681-991b-7831e1f89b4d.agent.localhost/list-files`)
+
+        console.log(response.data);
         
        
 
@@ -40,7 +42,7 @@ export const listFiles = tool(
 
 
 export const readFile = tool(
-    async({files:[]})=>{
+    async({files})=>{
 
 
         
@@ -54,7 +56,9 @@ export const readFile = tool(
          console.log("============================================================================");
         
 
-        const response = await axios.get(`http://019e2fe2-81d0-723a-b27d-11f42b2300cc.agent.localhost/read-file?files=${files.join(",")}`)
+        const response = await axios.get(`http://019e3117-6425-7681-991b-7831e1f89b4d.agent.localhost/read-file?files=${files.join(",")}`)
+
+        console.log(response.data);
 
 
 
@@ -62,7 +66,7 @@ export const readFile = tool(
 
 
 
-        console.log("Responding to the Api Request");
+        console.log("Responding to the Api Request",response.data);
         
         console.log("============================================================================");
 
@@ -92,7 +96,7 @@ export const updateFile = tool(
         console.log("============================================================================");
 
 
-        const response = await axios.patch(`http://019e2fe2-81d0-723a-b27d-11f42b2300cc.agent.localhost/update-file`,{
+        const response = await axios.patch(`http://019e3117-6425-7681-991b-7831e1f89b4d.agent.localhost/update-file`,{
             updates:files
         })
 
@@ -102,7 +106,7 @@ export const updateFile = tool(
 
         console.log("====================================================================================");
 
-        console.log("Responding to the Api Request");
+        console.log("Responding to the Api Request", response.data);
         
         console.log("====================================================================================");  
 
@@ -113,10 +117,14 @@ export const updateFile = tool(
     {
         name:"update-file",
         description:"Updates the specified content to the specified file in the Project Directory. Use this tool to update the content of a file.",
-        schema: z.array(z.object({
-            filePath: z.string().describe("Path to the file to update"),
-            content: z.string().describe("Content to write to the file")
-        })).describe("an array of file paths and content to update")
+       schema: z.object({
+          files: z.array(
+            z.object({
+               filePath: z.string().describe("Path to the file to update"),
+               content: z.string().describe("Content to write to the file")
+        })
+    )
+})
     }
 )
 
@@ -135,14 +143,16 @@ export const createFile = tool(
          console.log("============================================================================");
         
 
-        const response = await axios.post(`http://019e2fe2-81d0-723a-b27d-11f42b2300cc.agent.localhost/create-file`,{
+        const response = await axios.post(`http://019e3117-6425-7681-991b-7831e1f89b4d.agent.localhost/create-file`,{
             files:files
         })
 
         
+        console.log("====================================================");
+        
        
 
-        console.log("Responding to the Api Request");
+        console.log("Responding to the Api Request", response.data);
         
         console.log("============================================================================");
         
