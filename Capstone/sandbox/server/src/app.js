@@ -21,7 +21,7 @@ app.get("/api/sandbox/health", async (req,res) =>{
 });
 
 
-async function waitForPodReady(sandboxId, timeoutMs = 60000) {
+async function waitForPodReady(sandboxId, timeoutMs = 180000) {
     const podName = `sandbox-pod-${sandboxId}`;
     const start = Date.now();
     
@@ -58,7 +58,7 @@ app.post("/api/sandbox/start", async (req,res)=>{
 
    await createService(sandboxId);
 
-   await waitForPodReady(sandboxId);
+   await waitForPodReady(sandboxId, 180000);
 
    return res.status(201).json({
     message: "Sandbox started successfully",
