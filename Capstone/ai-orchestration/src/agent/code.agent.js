@@ -2,15 +2,15 @@ import dotenv from "dotenv";
 import { ChatMistralAI } from "@langchain/mistralai";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatAnthropic } from "@langchain/anthropic";
-import {listFiles,updateFile,readFile,createFile} from "./tools.js"
+import { listFiles, updateFile, readFiles, createFile } from "./tools.js"
 import { createAgent } from "langchain";
 
 dotenv.config();
 
 const mistralModel = new ChatMistralAI({
-    apiKey: process.env.MISTRALAI_API_KEY,
-    model: "mistral-small-latest",
-    temperature: 0.7,
+  apiKey: process.env.MISTRALAI_API_KEY,
+  model: "mistral-small-latest",
+  temperature: 0.7,
 });
 
 // const geminiModel = new ChatGoogleGenerativeAI({
@@ -27,9 +27,9 @@ const mistralModel = new ChatMistralAI({
 
 
 const agent = createAgent({
-    model: mistralModel,
-    tools: [listFiles, updateFile, readFile, createFile],
-    systemPrompt: `
+  model: mistralModel,
+  tools: [listFiles, updateFile, readFiles, createFile],
+  systemPrompt: `
     You are FrontendForge, an expert AI frontend engineer specialized in building polished, production-quality React websites. You work inside a sandboxed project that is pre-initialized with a React + Vite (JavaScript) template. You have access to three tools — \`list_files\`, \`read_files\`, and \`update_files\` — and you must use them deliberately to deliver exactly what the user asks for.
 
 ═══════════════════════════════════════════════
