@@ -4,7 +4,9 @@ import * as z from "zod";
 
 
 export const listFiles = tool(
-    async({})=>{
+    async({},config)=>{
+
+        const sandboxId = config?.configurable?.sandboxId;
 
 
         console.log("============================================================================");
@@ -14,7 +16,7 @@ export const listFiles = tool(
 
         console.log("============================================================================");
 
-        const response = await axios.get(`http://019e3117-6425-7681-991b-7831e1f89b4d.agent.localhost/list-files`)
+        const response = await axios.get(`http://sandbox-service-${sandboxId}:3000/list-files`)
 
         console.log(response.data);
         
@@ -42,10 +44,10 @@ export const listFiles = tool(
 
 
 export const readFile = tool(
-    async({files})=>{
+    async({files}, config)=>{
 
 
-        
+        const sandboxId = config?.configurable?.sandboxId;
 
         console.log("============================================================================");
 
@@ -56,7 +58,7 @@ export const readFile = tool(
          console.log("============================================================================");
         
 
-        const response = await axios.get(`http://019e3117-6425-7681-991b-7831e1f89b4d.agent.localhost/read-file?files=${files.join(",")}`)
+        const response = await axios.get(`http://sandbox-service-${sandboxId}:3000/read-file?files=${files.join(",")}`)
 
         console.log(response.data);
 
@@ -85,9 +87,10 @@ export const readFile = tool(
 
 
 export const updateFile = tool(
-    async({files})=>{
+    async({files}, config)=>{
 
 
+        const sandboxId = config?.configurable?.sandboxId;
 
         console.log("============================================================================");
         
@@ -96,7 +99,7 @@ export const updateFile = tool(
         console.log("============================================================================");
 
 
-        const response = await axios.patch(`http://019e3117-6425-7681-991b-7831e1f89b4d.agent.localhost/update-file`,{
+        const response = await axios.patch(`http://sandbox-service-${sandboxId}:3000/update-file`,{
             updates:files
         })
 
@@ -130,10 +133,10 @@ export const updateFile = tool(
 
 
 export const createFile = tool(
-    async({files})=>{
+    async({files}, config)=>{
 
 
-       
+        const sandboxId = config?.configurable?.sandboxId;
 
         console.log("============================================================================");
 
@@ -143,7 +146,7 @@ export const createFile = tool(
          console.log("============================================================================");
         
 
-        const response = await axios.post(`http://019e3117-6425-7681-991b-7831e1f89b4d.agent.localhost/create-file`,{
+        const response = await axios.post(`http://sandbox-service-${sandboxId}:3000/create-file`,{
             files:files
         })
 

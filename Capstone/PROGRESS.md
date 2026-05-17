@@ -1,6 +1,6 @@
 # Capstone Project — Progress Tracker
 
-> **Last updated:** 2026-05-16
+> **Last updated:** 2026-05-17
 
 ---
 
@@ -114,9 +114,9 @@ A lightweight Express server that proxies wildcard subdomain requests to the cor
 
 This is the smart part of the project. It uses advanced AI models (like Gemini and Mistral) to understand user requests and write code automatically.
 
-- **Multi-Model Support:** Can switch between different AI models to get the best results.
-- **LangChain Integration:** Uses a powerful framework to help the AI "reason" and use tools.
-- **Automated Coding:** Can perform tasks like "create a new folder" or "refactor this file" without human help.
+- **Dynamic Thread Context & LangGraph Integration:** Fully integrated LangGraph's prebuilt ReactAgent with a dynamic context engine. Configured agent thread properties (`configurable.sandboxId`) to pass execution-specific environment coordinates downstream to custom actions.
+- **Calibrated Message State Routing:** Configured the Express controller (`agent.routes.js`) to validate incoming user prompts and properly align input payloads under the strict `messages` state schema expected by LangGraph, preventing graph initialization failures.
+- **Unification under Mistral Model:** Established the Mistral AI large language model (`mistral-small-latest`) as the primary orchestration intelligence, with modular configurations prepared for Claude/Gemini model hot-swapping once appropriate Kubernetes secrets are populated.
 
 ### 5. Sandbox Agent (The "Hands")
 
@@ -124,9 +124,9 @@ This is the smart part of the project. It uses advanced AI models (like Gemini a
 
 Every sandbox now has its own "agent" that follows instructions from the AI Brain.
 
-- **Direct File Access:** The agent can list, read, create, and update files directly inside the sandbox.
-- **API Interface:** Provides simple endpoints for the AI to interact with the file system.
-- **Isolated Security:** Each agent only has access to its own specific sandbox environment.
+- **Dynamic Port-level Proxying & Discovery:** Upgraded file system tools (`tools.js`) to dynamically target the active sandbox instances using resolved pod naming structures (`http://sandbox-service-${sandboxId}:3000`) instead of relying on fragile static configurations.
+- **RESTful Sandboxed Operations:** Built direct, performant workspace tools targeting `list-files`, `read-file`, `create-file`, and `update-file` to enable precise, isolated file manipulations inside the target sandbox container.
+- **Isolated Node Workspace Interaction:** Enforced single-sandbox containment policies ensuring that tools invoked by the AI brain cannot access or modify resources belonging to unrelated sandboxes.
 
 ### 6. Kubernetes Infrastructure
 
@@ -398,6 +398,46 @@ Instructed usage of the correct subdomain: `http://<uuid>.agent.localhost/list-f
 3. Restarted the deployment: `kubectl rollout restart deployment sandbox-deployment`.
 
 **Result:** Calling `/api/sandbox/start` now successfully generates a pod with both `sandbox-container` (Vite) and `agent-container` (API), and properly wires up both ports on the service.
+
+---
+
+#### 🐛 BUG #7: `GraphRecursionError` & `504 Gateway Time-out` in AI Orchestration (`/api/ai/invoke`)
+
+**Date:** 2026-05-17
+
+**Error seen:**
+1. In `ai-orchestration` server logs or client payload:
+   ```json
+   {
+       "message": "Internal server error",
+       "error": {
+           "lc_error_code": "GRAPH_RECURSION_LIMIT",
+           "name": "GraphRecursionError"
+       }
+   }
+   ```
+2. When calling `/api/ai/invoke` through Nginx Ingress:
+   ```html
+   <html>
+   <head><title>504 Gateway Time-out</title></head>
+   <body><center><h1>504 Gateway Time-out</h1></center><hr><center>nginx</center></body>
+   </html>
+   ```
+
+**How we diagnosed it:**
+1. **Dynamic Sandbox Endpoint Failure**: The sandbox agent tools in `tools.js` used a hardcoded, stale URL from a dead pod session (`sandbox-service-19e34d4...`). Since the tools failed to connect, the prebuilt LangGraph `ReactAgent` entered an infinite loop of retrying tool calls, eventually crashing with `GraphRecursionError` when hitting the recursion limit.
+2. **CrashLoopBackOff & Stuck Rollout**: When attempting to resolve this, the newer pods failed to boot and crashed with:
+   `Error: Please set an API key for Google GenerativeAI... in ChatGoogleGenerativeAI constructor`
+   This happened because the previous built Docker image of `ai-orchestration` left the Gemini model instantiation uncommented in `code.agent.js`. Because `GOOGLE_API_KEY` was missing from the deployment's environment variables, Node crashed immediately on boot, putting the deployment in `CrashLoopBackOff`.
+3. **Nginx 504 Gateway Time-out**: Since the new container was stuck in a crash loop, Kubernetes routed incoming traffic to the OLD active pods. These old pods still had the hardcoded sandbox service URL and the wrong `message` state initialization key. Making a request through Ingress resulted in a hang and eventual Nginx 504 timeout.
+
+**What we changed:**
+1. **Dynamic Tool URL Construction**: Refactored `tools.js` to accept `config` parameters and dynamically construct the target agent URLs using `config?.configurable?.sandboxId` instead of a hardcoded string.
+2. **Controller/Router Payload & Context Mapping**: Corrected the route parameter key in `agent.routes.js` to use `messages` (required by LangGraph ReactAgent schema) and parsed/passed the `sandboxId` as thread configuration `configurable`.
+3. **Image Rebuild & Rollout Restart**: Commented out the unused Gemini and Claude instantiations in `code.agent.js` to prevent API key startup crashes. Rebuilt the local Docker image using `docker build -t ai-orchestration ./ai-orchestration` and triggered `kubectl rollout restart deployment ai-deployment`.
+
+**Result:**
+The AI-orchestration service boots successfully and healthy (`1/1 READY`), correctly maps requests, dynamically communicates with the designated sandbox agent pod, and returns the expected code generations without timeouts.
 
 ---
 

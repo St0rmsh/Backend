@@ -1,10 +1,51 @@
 import express from "express";
+import agent from "../agent/code.agent.js"
 
-const router = express.Router();
+
+const agentRouter = express.Router();
 
 
-router.post("/invoke",async (req,res) => {
-    
+agentRouter.post("/invoke",async (req,res) => {
+    try {
+        const {messages, sandboxId} = req.body;
+
+        if (!messages) {
+            return res.status(400).json({
+                message: "Missing 'messages' in request body"
+            });
+        }
+
+        if (!sandboxId) {
+            return res.status(400).json({
+                message: "Missing 'sandboxId' in request body"
+            });
+        }
+
+        const result = await agent.invoke(
+            {
+                messages:[{
+                    role: "user",
+                    content: messages
+                }]
+            },
+            {
+                configurable: {
+                    sandboxId: sandboxId
+                }
+            }
+        )
+
+        return res.status(200).json({
+            message: "Agent invoked successfully",
+            result
+        })
+    } catch (error) {
+        console.log("error in invoke",error)
+        return res.status(500).json({
+            message: "Internal server error",
+            error
+        })
+    }
 })
 
-export default router;
+export default agentRouter;
