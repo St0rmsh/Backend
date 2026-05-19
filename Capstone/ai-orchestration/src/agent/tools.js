@@ -2,7 +2,6 @@ import axios from "axios";
 import { tool } from "langchain"
 import * as z from "zod";
 
-// Helper to safely write progress updates to the caller if a writer is provided
 function writeProgress(config, message) {
     const writer = config?.writer || config?.configurable?.writer;
     if (writer && typeof writer.write === "function") {

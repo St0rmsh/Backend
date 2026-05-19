@@ -5,7 +5,7 @@ metadata:
   labels:
     name:  ai-deployment
 spec:
-  replicas: 2 
+  replicas: 1 
   selector: 
     matchLabels:
       app:  ai-server 
@@ -16,9 +16,9 @@ spec:
         app:  ai-server
     spec:
       containers:
-      - image:  ai-orchestration
+      - image:  ai-orchestration:latest
         name:  ai-server
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         env:
           - name: MISTRALAI_API_KEY
             valueFrom:
@@ -27,11 +27,11 @@ spec:
                 key: MISTRALAI_API_KEY
         resources:
           limits:
-            memory: "256Mi"
-            cpu: "500m"
+            memory: "512Mi"
+            cpu: "800m"
           requests:
-            cpu: "250m"
-            memory: "128Mi"
+            cpu: "400m"
+            memory: "256Mi"
         livenessProbe:
           httpGet:
             path: /api/status/healthz

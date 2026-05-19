@@ -3,6 +3,10 @@ import morgan from "morgan";
 import cors from "cors";
 import fs from "fs"
 import path from "path"
+import http from "http";
+import {Server} from "socket.io";
+import pty from "node-pty"
+import os from "os"
 
 
 const app = express();
@@ -11,6 +15,15 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json({limit:"50mb"}));
 app.use(express.urlencoded({limit:"50mb" , extended: false}));
+
+const httpServer = http.createServer(app);
+
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+    },
+});
 
 const WORKING_DIR = "/workspace"
 
@@ -21,6 +34,36 @@ app.get("/",(req,res)=>{
     })
 })
 
+const shell = process.env.SHELL || "bash"
+
+// node-pty for running terminal commands
+const ptyProcess = pty.spawn(shell, [], {
+  name: 'xterm-color',
+  cols: 80,
+  rows: 30,
+  cwd: "/workspace",
+  env: process.env
+});
+
+ptyProcess.onData((data) => {
+  io.emit("terminal-output",data);
+});
+
+ptyProcess.onExit(({exitCode, signal}) => {
+    console.log(`Terminal exited with code ${exitCode} and signal ${signal}`);
+})
+
+io.on("connection",(socket)=>{
+    console.log(`User connected: ${socket.id}`);
+
+    socket.on("terminal-input",(data)=>{
+        ptyProcess.write(data)
+    })
+
+    socket.on("disconnect",()=>{
+        console.log(`User disconnected: ${socket.id}`);
+    })
+})
 
 
 // @route GET /read-file read files 
@@ -231,10 +274,6 @@ app.post("/create-file", async(req,res)=>{
 // "src/nested-dir/file3.text",
 //    ]
 // }
-
-
-
-
 app.get("/list-files", async (req, res) => {
 
     const ignored = new Set([
@@ -316,4 +355,6 @@ app.get("/list-files", async (req, res) => {
     }
 
 });
-export default app;
+
+
+export default httpServer;
