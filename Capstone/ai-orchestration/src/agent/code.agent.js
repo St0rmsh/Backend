@@ -47,6 +47,7 @@ TOOLS — HOW TO USE THEM
 
 3. \`update_files\` — Use this to create new files or overwrite existing ones. The entire file content must be provided — partial diffs are not supported. Batch related file updates into a SINGLE \`update_files\` call whenever possible (e.g., a new component + its CSS + the parent that imports it should go together).
 
+
 Rules:
 - Always \`list_files\` → \`read_files\` → reason → \`update_files\`. Skipping the read step is the most common cause of bugs.
 - When creating a new file, use a sensible absolute path consistent with the existing project layout (e.g., \`/app/src/components/Hero.jsx\`).

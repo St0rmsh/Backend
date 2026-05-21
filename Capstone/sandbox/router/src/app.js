@@ -23,67 +23,53 @@ app.get("/api/status/readyz", async (req, res) => {
    })
 })
 
-const proxies = {}
-const agentProxy = {}
-
-
-async function createProxy(sandboxId) {
-   const target = `http://sandbox-service-${sandboxId}.default.svc.cluster.local`
-
-   if (!proxies[sandboxId]) {
-      proxies[sandboxId] = createProxyMiddleware({
-         target,
-         changeOrigin: true,
-         ws: true
-      })
+const previewProxy = createProxyMiddleware({
+   target: "http://default-target",
+   changeOrigin: true,
+   ws: true,
+   router: (req) => {
+      const host = req.headers.host;
+      if (!host) return undefined;
+      const sandboxId = host.split(".")[0];
+      return `http://sandbox-service-${sandboxId}.default.svc.cluster.local`;
    }
+});
 
-   return proxies[sandboxId]
-}
-
-
-async function getAgentProxy(sandboxId) {
-
-   const target = `http://sandbox-service-${sandboxId}.default.svc.cluster.local:3000`
-
-   if (!agentProxy[sandboxId]) {
-      agentProxy[sandboxId] = createProxyMiddleware({
-         target,
-         changeOrigin: true,
-         ws: true
-      })
+const agentProxy = createProxyMiddleware({
+   target: "http://default-target",
+   changeOrigin: true,
+   ws: true,
+   router: (req) => {
+      const host = req.headers.host;
+      if (!host) return undefined;
+      const sandboxId = host.split(".")[0];
+      return `http://sandbox-service-${sandboxId}.default.svc.cluster.local:3000`;
    }
+});
 
-   return agentProxy[sandboxId]
-
-}
-
-app.use(async (req, res, next) => {
-
-   const host = req.headers.host
+app.use((req, res, next) => {
+   const host = req.headers.host;
 
    if (!host) {
-      return res.status(400).json({ message: "Host header is required" })
+      return res.status(400).json({ message: "Host header is required" });
    }
 
-   const sandboxId = host.split(".")[0]
+   const parts = host.split(".");
+   const sandboxId = parts[0];
+   const subdomain = parts[1];
 
    if (!sandboxId) {
-      return res.status(400).json({ message: "Invalid host header" })
+      return res.status(400).json({ message: "Invalid host header" });
    }
 
-   if (host.split(".")[1] === "agent") {
-      const proxy = await getAgentProxy(sandboxId)
-      return proxy(req, res, next)
-   }
-   else if (host.split(".")[1] === "preview") {
-      const proxy = await createProxy(sandboxId)
-      return proxy(req, res, next)
+   if (subdomain === "agent") {
+      return agentProxy(req, res, next);
+   } else if (subdomain === "preview") {
+      return previewProxy(req, res, next);
    } else {
-      return res.status(404).json({ message: "Service not found" })
+      return res.status(404).json({ message: "Service not found" });
    }
-
-})
+});
 
 
 export default app

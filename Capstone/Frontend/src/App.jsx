@@ -106,17 +106,9 @@ function App() {
         done = doneReading;
         if (value) {
           const chunk = decoder.decode(value, { stream: true });
-          
-          // Basic manual SSE parsing (for demonstration, a proper library like '@microsoft/fetch-event-source' is better for production)
           const lines = chunk.split('\n');
           for (const line of lines) {
             if (line.trim() === '') continue;
-            
-            // Wait, looking at the user's data for SSE:
-            // "{"type":"progress","message":"Reading Files Successfully...\n"}"
-            // It seems it just sends JSON objects separated by newlines, or actual SSE format "data: {...}"?
-            // The prompt gave examples like `{"type":"progress","message":"..."}` which isn't strict SSE, or it is line-delimited JSON.
-            // Let's parse line-delimited JSON for safety.
             try {
               let jsonStr = line.startsWith('data: ') ? line.substring(6) : line;
               if (!jsonStr.startsWith('{') && !jsonStr.startsWith('[')) continue;
@@ -124,17 +116,21 @@ function App() {
               const parsed = JSON.parse(jsonStr);
               
               if (parsed.type === 'progress') {
-                // Optional: we can skip raw progress text in chat if it's too noisy, but let's keep it clean
-                const cleanProgress = `\n*[${parsed.message.trim()}]*\n`;
-                onStream(cleanProgress);
-                finalMessage += cleanProgress;
-              } else if (Array.isArray(parsed) && parsed[0]?.id?.includes("AIMessageChunk") && parsed[0]?.kwargs?.content) {
-                // Handle the AIMessageChunk
-                onStream(parsed[0].kwargs.content);
-                finalMessage += parsed[0].kwargs.content;
-              } else if (parsed.type === 'done') {
-                // Done event
-                finalMessage += '\n' + (parsed.message || '');
+                onStream(parsed.message.trim(), 'progress');
+              } else if (Array.isArray(parsed)) {
+                const lastMsg = parsed[parsed.length - 1];
+                if (lastMsg && lastMsg.kwargs) {
+                  const isChunk = lastMsg.id?.some(part => part.includes("AIMessageChunk"));
+                  const isFull = lastMsg.id?.some(part => part.includes("AIMessage")) && !isChunk;
+                  
+                  if (isChunk && lastMsg.kwargs.content) {
+                    onStream(lastMsg.kwargs.content, 'text-chunk');
+                    finalMessage += lastMsg.kwargs.content;
+                  } else if (isFull && lastMsg.kwargs.content) {
+                    onStream(lastMsg.kwargs.content, 'text-full');
+                    finalMessage = lastMsg.kwargs.content;
+                  }
+                }
               }
             } catch {
               // Ignore parse errors on partial chunks if any
