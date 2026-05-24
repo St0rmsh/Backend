@@ -12,9 +12,12 @@ async function connect() {
 
     connection.on("error", (err) => {
       console.error("[MQ] Connection error:", err.message);
+      
       channel = null;
+
       scheduleReconnect();
     });
+
 
     connection.on("close", () => {
       console.warn("[MQ] Connection closed — reconnecting...");
