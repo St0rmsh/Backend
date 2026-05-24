@@ -22,8 +22,6 @@ channel.consume("auth_notification_queue", async (msg) => {
         console.log(message);
 
       try {
-       
-
         const {userId,email,action,timestamp} = message;
 
         const subject = `New Login Notification`;
