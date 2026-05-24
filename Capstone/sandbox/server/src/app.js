@@ -4,7 +4,7 @@ import {createPod} from "./kubernetes/pod.js"
 import {createService} from "./kubernetes/service.js"
 import { k8sCoreV1Api } from "./kubernetes/config.js"
 import {v7 as uuid} from "uuid"
-
+import {createSandboxKey} from "./config/redis.js"
 
 const app = express();
 
@@ -59,6 +59,8 @@ app.post("/api/sandbox/start", async (req,res)=>{
    await createService(sandboxId);
 
    await waitForPodReady(sandboxId, 180000);
+
+   await createSandboxKey(sandboxId);
 
    return res.status(201).json({
     message: "Sandbox started successfully",

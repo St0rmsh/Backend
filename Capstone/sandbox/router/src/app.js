@@ -1,6 +1,7 @@
 import express from "express";
 import morgan from "morgan";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import {refreshTTL} from "./config/redis.js"
 
 
 const app = express()
@@ -47,20 +48,26 @@ const agentProxy = createProxyMiddleware({
    }
 });
 
-app.use((req, res, next) => {
+app.use(async(req, res, next) => {
    const host = req.headers.host;
 
    if (!host) {
       return res.status(400).json({ message: "Host header is required" });
    }
 
+
    const parts = host.split(".");
    const sandboxId = parts[0];
    const subdomain = parts[1];
 
+
+
    if (!sandboxId) {
       return res.status(400).json({ message: "Invalid host header" });
    }
+
+   await refreshTTL(sandboxId);     
+    
 
    if (subdomain === "agent") {
       return agentProxy(req, res, next);
