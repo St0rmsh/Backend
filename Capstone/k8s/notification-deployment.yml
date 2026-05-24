@@ -47,7 +47,7 @@ spec:
           - name:  EMAIL_USER
             valueFrom:
               secretKeyRef:
-                name:  google
+                name:  database
                 key:  EMAIL_USER
 
           - name:  GOOGLE_CLIENT_ID

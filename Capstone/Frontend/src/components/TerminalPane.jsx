@@ -42,7 +42,7 @@ export default function TerminalPane({ socket }) {
     const resizeObserver = new ResizeObserver(() => {
       fitAddon.fit();
     });
-    
+
     if (terminalRef.current) {
       resizeObserver.observe(terminalRef.current);
     }

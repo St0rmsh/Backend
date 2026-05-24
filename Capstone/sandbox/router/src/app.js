@@ -24,7 +24,7 @@ app.get("/api/status/readyz", async (req, res) => {
    })
 })
 
-const previewProxy = createProxyMiddleware({
+export const previewProxy = createProxyMiddleware({
    target: "http://default-target",
    changeOrigin: true,
    ws: true,
@@ -36,7 +36,7 @@ const previewProxy = createProxyMiddleware({
    }
 });
 
-const agentProxy = createProxyMiddleware({
+export const agentProxy = createProxyMiddleware({
    target: "http://default-target",
    changeOrigin: true,
    ws: true,

@@ -10,7 +10,7 @@ export async function createSandboxKey(sandboxId){
 
     await redis.set(`sandbox:${sandboxId}`,JSON.stringify({
         status: "active"
-    }), "ex" , 120 )   // 60 seconds TTL
+    }), "ex" , 2400 )   // 40 mins TTL
 }
 
 subscriber.config("SET" , "notify-keyspace-events" , "Ex")
