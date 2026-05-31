@@ -43,9 +43,9 @@ spec:
             valueFrom:
               secretKeyRef:
                 name:  jwt
-                key:  AUTH_JWT_SECRET      
+                key:  AUTH_JWT_SECRET     
 
-          - name:  MONGO_URI
+          - name:  SANDBOX
             valueFrom:
               secretKeyRef:
                 name: database

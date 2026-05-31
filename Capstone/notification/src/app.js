@@ -12,8 +12,9 @@ app.use(morgan("dev"))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
-
-channel.consume("auth_notification_queue", async (msg) => {
+if(channel){
+  
+  channel.consume("auth_notification_queue", async (msg) => {
 
     if(msg !== null){
 
@@ -22,7 +23,7 @@ channel.consume("auth_notification_queue", async (msg) => {
         console.log(message);
 
       try {
-        const {userId,email,action,timestamp} = message;
+        const {userId,emails,action,timestamp} = message;
 
         const subject = `New Login Notification`;
         const text = `Hello ${userId}, 
@@ -31,7 +32,7 @@ channel.consume("auth_notification_queue", async (msg) => {
         `;
         const html = `<h1>Your account has been ${action}ed at ${timestamp}</h1>`;
 
-        await sendEmail(email,subject,text,html);
+        await sendEmail(emails,subject,text,html);
 
         channel.ack(msg);
 
@@ -45,6 +46,12 @@ channel.consume("auth_notification_queue", async (msg) => {
       console.log("No message received");
     }
 })
+}else {
+      console.error('[MQ] Channel not available, skipping consumer setup');
+
+}
+
+
 
 
 app.get("/_status/healthz",(req,res)=>{

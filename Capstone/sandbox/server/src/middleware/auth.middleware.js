@@ -1,6 +1,7 @@
 import { verifyToken } from "../utils.js";
 
 export const authenticate = (req, res, next) => {
+    
     const token = req.cookies.token || req.headers["authorization"]?.split(" ")[1];
     
     if (!token) {
@@ -12,6 +13,7 @@ export const authenticate = (req, res, next) => {
     if (!decoded) {
         return res.status(401).json({ message: "Unauthorized" });
     }
-    req.userId = decoded.userId;
+
+    req.userId = decoded.id;
     next();
 }

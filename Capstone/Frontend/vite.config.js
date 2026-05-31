@@ -10,7 +10,12 @@ export default defineConfig({
     port: 5173,
     hmr: {
       // Stabilise HMR — prevents reloads triggered by unrelated socket errors.
-      clientPort: 5173,
+      clientPort: 80,
+    },
+    watch: {                 // ← added
+      usePolling: true,
+      interval: 1000,
+      ignored: ["**/node_modules/**", "**/.git/**"],
     },
     proxy: {
       // REST API — forwarded to the backend/ingress

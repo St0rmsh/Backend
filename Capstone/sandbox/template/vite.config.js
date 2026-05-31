@@ -10,11 +10,14 @@ export default defineConfig({
     allowedHosts: true,
     hmr: {
       clientPort: 80
+    },
+    watch: {
+      usePolling: true,
+      interval: 1000,
+      ignored: ["**/node_modules/**", "**/.git/**"],
     }
-  },
-  watch: {
-    usePolling: true,
-    interval: 300,
-    ignored: ["node_modules"]
+
+
   }
+
 })

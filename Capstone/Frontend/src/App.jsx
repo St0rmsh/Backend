@@ -49,7 +49,10 @@ function App() {
     setIsStarting(true);
     try {
       const res = await fetch('/api/sandbox/start', {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: 'default' })
       });
       const data = await res.json();
       if (data.sandboxId) {
@@ -83,6 +86,7 @@ function App() {
     try {
       const res = await fetch('/api/ai/invoke', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },

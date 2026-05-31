@@ -44,9 +44,15 @@ router.get("/google/callback", passport.authenticate("google", {
         const token = jwt.sign({id: user._id},process.env.AUTH_JWT_SECRET,{expiresIn: "1d"});
 
 
-        res.cookie("token", token);
+        res.cookie("token", token , {
+            httpOnly: true,                                      // ✅ prevents XSS
+            secure: false,                                       // ✅ false for localhost
+            sameSite: "lax",                                     // ✅ allows redirects
+            maxAge: 24 * 60 * 60 * 1000,
+            domain: "localhost"                          // ✅ 1 day
+        });
 
-        res.redirect("http://localhost:5173")
+        res.redirect(`http://localhost:5173`)
 
 
     } catch (error) {

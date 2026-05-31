@@ -42,12 +42,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name:  amqlib
-                key:  RABBITMQ_URL
+                key: RABBITMQ_URL
 
           - name:  EMAIL_USER
             valueFrom:
               secretKeyRef:
-                name:  database
+                name:  amqlib
                 key:  EMAIL_USER
 
           - name:  GOOGLE_CLIENT_ID
@@ -67,6 +67,12 @@ spec:
               secretKeyRef:
                 name:  google
                 key:  GOOGLE_REFRESH_TOKEN  
+
+          - name:  EMAIL_APP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name:  google
+                key:  EMAIL_APP_PASSWORD       
 
         ports:
         - containerPort:  3000
