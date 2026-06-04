@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: Cap-ingress
+  labels:
+    app.kubernetes.io/name: Cap-ingress
+spec:
+  app.kubernetes.io/name: nginx
+  rules:
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/api/sandbox"
+        backend:
+          service:
+            name: sandbox-service
+            port: 
+              number: 80
