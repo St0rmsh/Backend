@@ -1,21 +1,21 @@
-import express, { type   Application } from "express"
-import {type Request, type Response} from "express"
-import cookieParser from "cookie-parser"
-const app: Application = express()
+import express from "express"
+import authRouter from "./routes/auth.routes.js"
+import morgan from "morgan";
+const app = express()
+
+
 app.use(express.json())
-app.use(cookieParser())
 
+app.use(morgan("dev"))
 
- type HealthResponse = {
-   status: "ok" | "fail"
-}
-
-app.get("/", (req: Request<{},HealthResponse, {}>, res: Response<HealthResponse>) => {
-    res.json({status: "ok"})
+app.get("/",(req,res)=>{
+    return res.status(200).json({
+        message:'Health Check route'
+    })
 })
 
 
-import authRoutes from "./routes/auth.routes.js"
-app.use("/api/auth", authRoutes)
+app.use("/api/auth",authRouter)
+
 
 export default app

@@ -1,0 +1,32 @@
+
+ type UserRole =
+    | "user"
+    | "author"
+    | "admin";
+
+
+export interface IUser {
+    _id: string,
+    username: string,
+    fullname: string,
+    email: string,
+    password: string,
+    isVerified: boolean,
+    avatar: string,
+    bio: string,
+    banner: string,
+    postCount: number,
+    roles: UserRole[],
+    isActive: boolean,
+    lastLogin?: Date,
+    createdAt?: Date,
+    updatedAt?: Date
+}
+
+
+export interface RegisterBody {
+    username: string,
+    fullname: string,
+    email: string,
+    password: string,
+}

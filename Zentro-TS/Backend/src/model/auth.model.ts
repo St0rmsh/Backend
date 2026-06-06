@@ -1,118 +1,92 @@
-import mongoose from "mongoose";
-import {Document, Schema, Model} from "mongoose"
+import mongoose, { Document } from "mongoose";
+import type { IUser } from "../types/Auth/user.types.js";
 import bcrypt from "bcrypt"
 
-export type  User = {
-    username: string;
-    fullname: string;
-    email: string;
-    password: string;
-    avatar?: string;
-    banner?: string;
-    isVerified?: boolean;
-    bio?: string;
-    followers: mongoose.Types.ObjectId[];
-    following: mongoose.Types.ObjectId[];
-    postCount: number;
-    isActive?: boolean;
-    refreshToken?: string;
-    role: "admin" | "user";
-}
 
+interface UserDocument extends Omit<IUser, "_id">,Document{
+comparePassword: (password: string) => Promise<boolean>}
 
-export type UserMethods = {
-    comparePassword: (password: string) => Promise<boolean>
-}
+const USER_ROLES = [
+    "user",
+    "author",
+    "admin"
+] as const;
 
-export type UserDocument =  User & Document & UserMethods & {
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-
-const userSchema = new Schema<UserDocument>({
+const userSchema = new mongoose.Schema<UserDocument>({
     username: {
         type: String,
         required: true,
+        unique:true,
         trim: true,
-        unique: true,
-        lowercase: true
+        lowercase:true
     },
     fullname: {
         type: String,
-        required: true,
-        trim: true,
+        required: [true,"Fullname is required"],
+        trim:true
     },
     email: {
         type: String,
-        required: true,
-        trim: true,
-        unique: true,
-        lowercase: true
+        required: [true,"Email is required"],
+        unique:true,
+        trim:true,
+        lowercase:true
     },
     password: {
         type: String,
-        required: true,
-        trim: true
+        required: [true,"Password is required"],
+        minlength: [6,"Password must be at least 6 characters long"]
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
     },
     avatar: {
         type: String,
-        default: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop",
-        trim: true
+        default: "https://ik.imagekit.io/p7b10nfhs/default.png?updatedAt=1770739987572"
     },
-    banner:{
-        type:String,
-        default: "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop",
-    },
-    bio:{
-        type:String,
-        default: "",
-    },
-    isVerified:{
-        type:Boolean,
-        default: false,
-    },
-    followers:[{
-        type:mongoose.Schema.Types.ObjectId,
-        ref: "User",
-    }],
-    following:[{
-        type:mongoose.Schema.Types.ObjectId,
-        ref: "User",
-    }],
-    postCount:{
-        type:Number,
-        default: 0,
-    },
-    isActive:{
-        type:Boolean,
-        default: true,
-    },
-    refreshToken:{
-        type:String,
-        select: false,
-    },
-    role: {
+    bio: {
         type: String,
-        enum: ["admin", "user", "author"],
-        default: "user"
+        maxlength: 300,
+        default: ""
+    },
+    banner: {
+        type: String,
+        default: "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop"
+    },
+    postCount: {
+        type: Number,
+        default: 0
+    },
+    roles: {
+        type: [String],
+        enum: USER_ROLES,
+        default: ["user"]
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    lastLogin: {
+        type: Date,
+        default: Date.now
     }
 },{
-    timestamps: true
+    timestamps:true
 })
 
 
-userSchema.pre("save", async function(this: UserDocument): Promise<void> {
+userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
-    const SALT_ROUNDS = 10
-    const salt = await bcrypt.genSalt(SALT_ROUNDS)
-    this.password = await bcrypt.hash(this.password, salt)
-})
+    this.password = await bcrypt.hash(this.password, 10);
+});
 
-userSchema.methods.comparePassword = async function(this: UserDocument,password: string): Promise<boolean> {
-    return await bcrypt.compare(password, this.password)
-}
 
-const UserModel: Model<UserDocument> = mongoose.model<UserDocument>("User", userSchema)
+userSchema.methods.comparePassword = function (password: string) {
+    return bcrypt.compare(password, this.password);
+};
+
+
+const UserModel = mongoose.model("User",userSchema)
 
 export default UserModel
