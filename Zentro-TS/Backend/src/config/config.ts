@@ -30,6 +30,18 @@ if(!process.env.REFRESH_TOKEN){
     throw new Error("REFRESH_TOKEN is undefined")
 }
 
+if(!process.env.REDIS_HOST){
+    throw new Error("REFRESH_TOKEN is undefined")
+}
+
+if(!process.env.REDIS_PASSWORD){
+    throw new Error("REFRESH_TOKEN is undefined")
+}
+
+if(!process.env.REDIS_PORT){
+    throw new Error("REDIS_PORT is undefined")
+}
+
 
 const config = {
     PORT: process.env.PORT,
@@ -38,7 +50,10 @@ const config = {
     GOOGLE_PASS: process.env.GOOGLE_PASS,
     GOOGLE_USER: process.env.GOOGLE_USER,
     ACCESS_TOKEN: process.env.ACCESS_TOKEN,
-    REFRESH_TOKEN: process.env.REFRESH_TOKEN
+    REFRESH_TOKEN: process.env.REFRESH_TOKEN,
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+    REDIS_HOST: process.env.REDIS_HOST,
+    REDIS_PORT: process.env.REDIS_PORT
 }
 
 export default config

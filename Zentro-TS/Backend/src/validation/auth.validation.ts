@@ -44,3 +44,21 @@ export const registerValidator = [
 
     handleValidationErrors
 ]
+
+export const loginValidator = [
+    body('email')
+    .trim()
+    .notEmpty()
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("Invalid Email"),
+    
+    body('password')
+    .trim()
+    .notEmpty()
+    .isLength({min:6})
+    .withMessage("Password must be at least 6 characters long"),
+
+    handleValidationErrors
+]
+
