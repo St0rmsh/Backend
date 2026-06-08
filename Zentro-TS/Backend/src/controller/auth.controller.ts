@@ -1,6 +1,6 @@
 import type {Request, Response } from "express";
 import type { RegisterBody } from "../types/Auth/user.types.js";
-import {genearteAccessTokenService, getMyProfileService, loginUserService, logoutService, registerUserService} from "../services/user.service.js";
+import {genearteAccessTokenService, getMyProfileService, loginUserService, logoutService, registerUserService, sendOtpService, updateUserDetailsSerivice, verifyOtpService} from "../services/user.service.js";
 
 
 
@@ -69,7 +69,10 @@ export const loginController = async (  req: Request<{}, {}, RegisterBody>,
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        res.status(200).json({
+        console.log("user =>",user)
+        
+
+        return res.status(200).json({
             success:true,
             message:"User logged in successfully",
             data:user,
@@ -186,3 +189,94 @@ export const logoutController = async (req:Request,res:Response) =>{
         });
     }
 }
+
+export const updateUserController = async (req:Request,res:Response)=>{
+    try {
+        
+        const id = req.user?._id;
+
+        if(!id){
+            throw new Error("Unauthorized")
+        }
+
+        const updatedUser = await updateUserDetailsSerivice(id,req.body)
+
+       return res.status(200).json({
+            success:true,
+            message:"User updated successfully",
+            data:updatedUser,
+        })
+
+        
+
+    } catch (error) {
+        console.error("Error in update user controller:", error);
+
+        return res.status(400).json({
+            success: false,
+            message: error instanceof Error ? error.message : "update user failed"
+        });
+    }
+}
+
+
+
+export const sendOtpController = async (req:Request,res:Response) =>{
+    try {
+        console.log("req.user =>", req.user);
+
+        
+         const email = req.user?.email;
+
+        if (!email) {
+            throw new Error("Unauthorized");
+        }
+
+        const result = await sendOtpService(email);
+
+        return res.status(200).json(result);
+
+    } catch (error) {
+        console.error("Error in verify email controller:", error);
+
+        return res.status(400).json({
+            success: false,
+            message: error instanceof Error ? error.message : "verify email failed"
+        });
+    }
+}
+
+
+export const verifyOtpController = async (
+    req: Request,
+    res: Response
+) => {
+
+    try {
+
+        const email = req.user?.email;
+
+        const { otp } = req.body;
+
+        if (!email) {
+            throw new Error("Unauthorized");
+        }
+
+        const result = await verifyOtpService(
+            email,
+            otp
+        );
+
+        return res.status(200).json(result);
+
+    } catch (error) {
+
+        return res.status(400).json({
+            success: false,
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "Verification failed"
+        });
+    }
+};

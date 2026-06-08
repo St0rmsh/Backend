@@ -37,3 +37,20 @@ export interface LoginBody {
     password: string,
     username?: string
 }
+
+
+export interface UpdateUserBody {
+    fullname?: string,
+    avatar?: string,
+    bio?: string,
+    banner?: string,
+    username?: string,
+}
+
+
+export interface EmailOptions {
+    email: string;
+    subject: string;
+    text?: string;
+    html?: string;
+}

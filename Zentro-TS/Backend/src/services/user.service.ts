@@ -1,9 +1,12 @@
 import UserModel from "../model/auth.model.js";
-import type { LoginBody, RegisterBody } from "../types/Auth/user.types.js";
+import type { LoginBody, RegisterBody, UpdateUserBody } from "../types/Auth/user.types.js";
 import jwt from "jsonwebtoken"
 import config from "../config/config.js"
 import type { JwtPayload } from "../types/Jwt/payload.types.js";
 import redisClient from "../config/cache.js";
+import otpGenerate from "../utils/otp.js";
+import otpModel from "../model/otp.model.js";
+import sendEmail from "./email.service.js";
 
 
 
@@ -26,10 +29,9 @@ export const registerUserService = async (data:RegisterBody) =>{
             username,
         })
 
-        //Token Generation Function here
-        const accessToken = jwt.sign({_id: newUser._id},config.ACCESS_TOKEN,{ expiresIn: "15m" })
+        const accessToken = jwt.sign({_id: newUser._id , email:newUser.email,roles:newUser.roles},config.ACCESS_TOKEN,{ expiresIn: "15m" })
 
-        const refreshToken = jwt.sign({_id: newUser._id},config.REFRESH_TOKEN,{ expiresIn: "7d" })
+        const refreshToken = jwt.sign({_id: newUser._id , email:newUser.email,roles:newUser.roles},config.REFRESH_TOKEN,{ expiresIn: "7d" })
 
         return {
             user: {
@@ -77,8 +79,8 @@ export const loginUserService = async (data:LoginBody) =>{
 
         await user.save()
 
-        const accessToken = jwt.sign({_id: user._id},config.ACCESS_TOKEN,{ expiresIn: "15m" })
-        const refreshToken = jwt.sign({_id: user._id},config.REFRESH_TOKEN,{ expiresIn: "7d" })
+        const accessToken = jwt.sign({_id: user._id , email:user.email,roles:user.roles},config.ACCESS_TOKEN,{ expiresIn: "15m" })
+        const refreshToken = jwt.sign({_id: user._id , email:user.email,roles:user.roles},config.REFRESH_TOKEN,{ expiresIn: "7d" })
 
         return {
             user: {
@@ -200,3 +202,134 @@ export const logoutService = async (refreshToken:string, accessToken:string) => 
         );
     }
 }
+
+
+export const updateUserDetailsSerivice = async (id:string,data:UpdateUserBody) =>{
+    try {
+        
+        const updatedUser = await UserModel.findByIdAndUpdate(id,data,{new:true,runValidators: true
+})
+        
+        if(!updatedUser){
+            throw new Error("User not found")
+        }
+
+        return {
+            _id: updatedUser._id,
+            username: updatedUser.username,
+            fullname: updatedUser.fullname,
+            bio: updatedUser?.bio,
+            avatar: updatedUser?.avatar,
+            banner: updatedUser?.banner,
+        }
+
+    } catch (error) {
+        console.error("Error in user service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+export const sendOtpService = async (email:string)=>{
+    
+    try {
+
+        const user = await UserModel.findOne({ email });
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    if (user.isVerified) {
+        throw new Error("Email already verified");
+    }
+
+    const otp = otpGenerate();
+
+    await otpModel.findOneAndUpdate(
+        { email },
+        {
+            email,
+            otp,
+            expiresAt: new Date(
+                Date.now() + 1 * 60 * 1000 
+            ), 
+            attempts: 0
+        },
+        {
+            upsert: true,
+            new: true
+        }
+    );
+
+    await sendEmail({
+        email,
+        subject: "Email Verification",
+        text: `Your OTP is ${otp}`,
+        html: `<h2>Your OTP is ${otp}</h2>`
+    });
+
+    return {
+        success: true,
+        message: "OTP sent successfully"
+    };
+
+      
+
+
+    } catch (error) {
+        console.error("Error in user service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+
+
+export const verifyOtpService = async (
+    email: string,
+    otp: string
+) => {
+
+    const otpDoc = await otpModel.findOne({
+        email
+    });
+
+    if (!otpDoc) {
+        throw new Error("OTP expired");
+    }
+
+    if (otpDoc.otp !== otp) {
+
+        otpDoc.attempts += 1;
+
+        await otpDoc.save();
+
+        throw new Error("Invalid OTP");
+    }
+
+    const user = await UserModel.findOne({
+        email
+    });
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    user.isVerified = true;
+
+    await user.save();
+
+    await otpModel.deleteOne({
+        email
+    });
+
+    return {
+        success: true,
+        message: "Email verified successfully"
+    };
+};

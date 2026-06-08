@@ -6,7 +6,6 @@ const otpSchema = new mongoose.Schema({
   expiresAt: Date,
   isVerified: Boolean,
 
-  // 🔥 NEW: store user data temporarily
   tempUser: {
     name: String,
     username: String,
