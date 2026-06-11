@@ -7,8 +7,11 @@ import redisClient from "../config/cache.js";
 import otpGenerate from "../utils/otp.js";
 import otpModel from "../model/otp.model.js";
 import sendEmail from "./email.service.js";
+import { uploadBuffer } from "../config/storage.js";
+import bcrypt from "bcrypt"
 
 
+// Register user service
 
 export const registerUserService = async (data:RegisterBody) =>{
 
@@ -53,6 +56,8 @@ export const registerUserService = async (data:RegisterBody) =>{
     }
 }
 
+
+// Login user service
 
 export const loginUserService = async (data:LoginBody) =>{
     try {
@@ -106,6 +111,8 @@ export const loginUserService = async (data:LoginBody) =>{
 }
 
 
+// Get my profile service
+
 export const getMyProfileService = async (id:string) =>{
     try {
         
@@ -138,6 +145,9 @@ export const getMyProfileService = async (id:string) =>{
 }
 
 
+
+
+// Generate access token service
 export const genearteAccessTokenService = async (refreshToken:string) => {
     try {
 
@@ -168,6 +178,8 @@ export const genearteAccessTokenService = async (refreshToken:string) => {
 }
 
 
+
+// Logout service
 export const logoutService = async (refreshToken:string, accessToken:string) => {
     try {
 
@@ -204,24 +216,90 @@ export const logoutService = async (refreshToken:string, accessToken:string) => 
 }
 
 
-export const updateUserDetailsSerivice = async (id:string,data:UpdateUserBody) =>{
+
+// Update user details service
+export const updateUserDetailsSerivice = async (id:string,data:UpdateUserBody , files?: {
+        avatar?: Express.Multer.File[];
+        banner?: Express.Multer.File[];
+    }) =>{
     try {
         
-        const updatedUser = await UserModel.findByIdAndUpdate(id,data,{new:true,runValidators: true
-})
-        
-        if(!updatedUser){
-            throw new Error("User not found")
+        const user = await UserModel.findById(id);
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    let avatarUrl = user.avatar;
+    let bannerUrl = user.banner;
+
+        console.log("Avatar file:", files?.avatar?.[0]);
+console.log("Banner file:", files?.banner?.[0]);
+
+
+    if (files?.avatar?.[0]) {
+
+        const avatarResult = await uploadBuffer({
+            buffer: files.avatar[0].buffer,
+            fileName: `avatar-${Date.now()}-${files.avatar[0].originalname}`,
+            folder: "Zentro/users/avatar"
+        });
+
+        console.log("Avatar Upload Result:", avatarResult);
+
+
+        if (!avatarResult.url) {
+            throw new Error("Avatar upload failed");
         }
 
-        return {
-            _id: updatedUser._id,
-            username: updatedUser.username,
-            fullname: updatedUser.fullname,
-            bio: updatedUser?.bio,
-            avatar: updatedUser?.avatar,
-            banner: updatedUser?.banner,
+        avatarUrl = avatarResult.url;
+    }
+
+    if (files?.banner?.[0]) {
+
+        const bannerResult = await uploadBuffer({
+            buffer: files.banner[0].buffer,
+            fileName: `banner-${Date.now()}-${files.banner[0].originalname}`,
+            folder: "Zentro/users/banner"
+        });
+
+        console.log("Banner Upload Result:", bannerResult);
+
+
+        if (!bannerResult.url) {
+            throw new Error("Banner upload failed");
         }
+
+        bannerUrl = bannerResult.url;
+    }
+
+
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+        id,
+        {
+            ...data,
+            avatar: avatarUrl,
+            banner: bannerUrl
+        },
+        {
+            new: true,
+            runValidators: true
+        }
+    );
+
+    if (!updatedUser) {
+        throw new Error("User not found");
+    }
+
+    return {
+        _id: updatedUser._id,
+        username: updatedUser.username,
+        fullname: updatedUser.fullname,
+        bio: updatedUser.bio,
+        avatar: updatedUser.avatar,
+        banner: updatedUser.banner
+    }
 
     } catch (error) {
         console.error("Error in user service:", error);
@@ -232,6 +310,9 @@ export const updateUserDetailsSerivice = async (id:string,data:UpdateUserBody) =
 }
 
 
+
+
+// Otp services
 export const sendOtpService = async (email:string)=>{
     
     try {
@@ -290,6 +371,8 @@ export const sendOtpService = async (email:string)=>{
 
 
 
+// Verify otp service
+
 export const verifyOtpService = async (
     email: string,
     otp: string
@@ -333,3 +416,48 @@ export const verifyOtpService = async (
         message: "Email verified successfully"
     };
 };
+
+
+// Change password Service 
+
+export const changePasswordService = async (email:string,oldPassword:string,newPassword:string)=>{
+    try {
+
+        const user = await UserModel.findOne({ email });
+        if(!user){
+            throw new Error("User not found")
+        }
+
+        const isPasswordValid = await user.comparePassword(oldPassword);
+
+        if(!isPasswordValid){
+            throw new Error("Invalid Password")
+        }
+
+        if(!newPassword){
+            throw new Error("New Password is required")
+        }
+
+        if (!oldPassword || !newPassword) {
+            throw new Error("Old password and new password are required")
+        }
+
+        if (oldPassword === newPassword) {
+            throw new Error("New password cannot be same as old password");
+        }
+
+        user.password = newPassword
+        await user.save();
+
+        return {
+            success: true,
+            message: "Password changed successfully"
+        };
+        
+    } catch (error) {
+        console.error("Error in user service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}

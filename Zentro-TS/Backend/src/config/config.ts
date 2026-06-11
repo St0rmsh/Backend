@@ -43,6 +43,15 @@ if(!process.env.REDIS_PORT){
 }
 
 
+if(!process.env.IMAGEKIT_PUBLIC_KEY){
+    throw new Error("REDIS_PORT is undefined")
+}
+
+if(!process.env.IMAGEKIT_PRIVATE_KEY){
+    throw new Error("REDIS_PORT is undefined")
+}
+
+
 const config = {
     PORT: process.env.PORT,
     MONGO_URI: process.env.MONGO_URI,
@@ -53,7 +62,9 @@ const config = {
     REFRESH_TOKEN: process.env.REFRESH_TOKEN,
     REDIS_PASSWORD: process.env.REDIS_PASSWORD,
     REDIS_HOST: process.env.REDIS_HOST,
-    REDIS_PORT: process.env.REDIS_PORT
+    REDIS_PORT: process.env.REDIS_PORT,
+    IMAGEKIT_PUBLIC_KEY: process.env.IMAGEKIT_PUBLIC_KEY,
+    IMAGEKIT_PRIVATE_KEY: process.env.IMAGEKIT_PRIVATE_KEY,
 }
 
 export default config

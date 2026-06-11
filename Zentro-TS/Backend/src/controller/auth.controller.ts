@@ -1,9 +1,9 @@
 import type {Request, Response } from "express";
 import type { RegisterBody } from "../types/Auth/user.types.js";
-import {genearteAccessTokenService, getMyProfileService, loginUserService, logoutService, registerUserService, sendOtpService, updateUserDetailsSerivice, verifyOtpService} from "../services/user.service.js";
+import {changePasswordService, genearteAccessTokenService, getMyProfileService, loginUserService, logoutService, registerUserService, sendOtpService, updateUserDetailsSerivice, verifyOtpService} from "../services/user.service.js";
 
 
-
+// for registration controller
 export const registrationController = async (  req: Request<{}, {}, RegisterBody>,
     res: Response) => {
 
@@ -46,6 +46,7 @@ export const registrationController = async (  req: Request<{}, {}, RegisterBody
     }
 }
 
+// for login controller
 
 export const loginController = async (  req: Request<{}, {}, RegisterBody>,
     res: Response) => {
@@ -123,6 +124,7 @@ export const getUser = async (req:Request,res:Response)=>{
     }
 }
 
+// for refresh access token controller
 
 export const refreshAccessTokenController = async (req:Request,res:Response) =>{
     try {
@@ -158,6 +160,9 @@ export const refreshAccessTokenController = async (req:Request,res:Response) =>{
     }
 }
 
+
+// for logout controller
+
 export const logoutController = async (req:Request,res:Response) =>{
     try {
 
@@ -190,6 +195,9 @@ export const logoutController = async (req:Request,res:Response) =>{
     }
 }
 
+
+// for update user controller
+
 export const updateUserController = async (req:Request,res:Response)=>{
     try {
         
@@ -199,7 +207,14 @@ export const updateUserController = async (req:Request,res:Response)=>{
             throw new Error("Unauthorized")
         }
 
-        const updatedUser = await updateUserDetailsSerivice(id,req.body)
+        const files = req.files as {
+            avatar?: Express.Multer.File[];
+            banner?: Express.Multer.File[];
+        };
+
+        
+
+        const updatedUser = await updateUserDetailsSerivice(id,req.body,files)
 
        return res.status(200).json({
             success:true,
@@ -219,7 +234,7 @@ export const updateUserController = async (req:Request,res:Response)=>{
     }
 }
 
-
+// for send otp controller 
 
 export const sendOtpController = async (req:Request,res:Response) =>{
     try {
@@ -245,6 +260,9 @@ export const sendOtpController = async (req:Request,res:Response) =>{
         });
     }
 }
+
+
+// for verify email controller 
 
 
 export const verifyOtpController = async (
@@ -280,3 +298,29 @@ export const verifyOtpController = async (
         });
     }
 };
+
+
+// for change password controller 
+
+export const changePasswordController = async (req:Request,res:Response)=>{
+    try {
+        
+        const email = req.user?.email;
+
+        const {oldPassword,newPassword} = req.body;
+
+        if(!email){
+            throw new Error("Unauthorized")
+        }
+
+        const result = await changePasswordService(email,oldPassword,newPassword);
+
+        return res.status(200).json(result);
+
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error instanceof Error ? error.message : "change password failed"
+        });
+    }
+}

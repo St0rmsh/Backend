@@ -19,6 +19,7 @@ app.get("/",(req,res)=>{
 })
 
 
+// Auth routes
 app.use("/api/auth",authRouter)
 
 
