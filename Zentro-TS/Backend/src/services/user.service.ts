@@ -8,8 +8,8 @@ import otpGenerate from "../utils/otp.js";
 import otpModel from "../model/otp.model.js";
 import sendEmail from "./email.service.js";
 import { uploadBuffer } from "../config/storage.js";
-import bcrypt from "bcrypt"
-
+import { forgotPasswordTemplate } from "../template/forgotPassword.js";
+import { verifyEmail } from "../template/verifyEmail.js";
 
 // Register user service
 
@@ -64,8 +64,10 @@ export const loginUserService = async (data:LoginBody) =>{
 
         const {email,password,username} = data
 
-        if(!email && !username || !password){
-            throw new Error("Email or username or password is required")
+        if ((!email && !username) || !password) {
+            throw new Error(
+                "Email/Username and password are required"
+            );
         }
 
         const user = await UserModel.findOne({email});
@@ -148,8 +150,14 @@ export const getMyProfileService = async (id:string) =>{
 
 
 // Generate access token service
-export const genearteAccessTokenService = async (refreshToken:string) => {
+export const generateAccessTokenService = async (refreshToken:string) => {
     try {
+
+        const isBlacklisted = await redisClient.get(`logout:${refreshToken}`);
+
+        if (isBlacklisted) {
+            throw new Error("Refresh token revoked");
+        }
 
         const decodedToken = jwt.verify(refreshToken,config.REFRESH_TOKEN)as JwtPayload;
 
@@ -218,7 +226,7 @@ export const logoutService = async (refreshToken:string, accessToken:string) => 
 
 
 // Update user details service
-export const updateUserDetailsSerivice = async (id:string,data:UpdateUserBody , files?: {
+export const updateUserDetailsService = async (id:string,data:UpdateUserBody , files?: {
         avatar?: Express.Multer.File[];
         banner?: Express.Multer.File[];
     }) =>{
@@ -323,6 +331,29 @@ export const sendOtpService = async (email:string)=>{
         throw new Error("User not found");
     }
 
+    const existingOTP = await otpModel.findOne({
+        email,
+        type: "verify-email"
+    });
+
+   if (existingOTP) {
+
+    if (existingOTP.expiresAt > new Date()) {
+
+        const remainingTime = Math.ceil(
+            (existingOTP.expiresAt.getTime() - Date.now()) / 1000
+        );
+
+        throw new Error(
+            `OTP already sent. Try again in ${remainingTime} seconds`
+        );
+    }
+
+    await otpModel.deleteOne({
+        _id: existingOTP._id
+    });
+}
+
     if (user.isVerified) {
         throw new Error("Email already verified");
     }
@@ -334,6 +365,7 @@ export const sendOtpService = async (email:string)=>{
         {
             email,
             otp,
+            type:"verify-email",
             expiresAt: new Date(
                 Date.now() + 1 * 60 * 1000 
             ), 
@@ -349,7 +381,7 @@ export const sendOtpService = async (email:string)=>{
         email,
         subject: "Email Verification",
         text: `Your OTP is ${otp}`,
-        html: `<h2>Your OTP is ${otp}</h2>`
+        html: verifyEmail(otp)
     });
 
     return {
@@ -374,47 +406,65 @@ export const sendOtpService = async (email:string)=>{
 // Verify otp service
 
 export const verifyOtpService = async (
-    email: string,
-    otp: string
+  email: string,
+  otp: string
 ) => {
 
-    const otpDoc = await otpModel.findOne({
-        email
-    });
+  const otpDoc = await otpModel.findOne({
+    email,
+    type: "verify-email",
+  });
 
-    if (!otpDoc) {
-        throw new Error("OTP expired");
-    }
+  if (!otpDoc) {
+    throw new Error("OTP not found");
+  }
 
-    if (otpDoc.otp !== otp) {
-
-        otpDoc.attempts += 1;
-
-        await otpDoc.save();
-
-        throw new Error("Invalid OTP");
-    }
-
-    const user = await UserModel.findOne({
-        email
-    });
-
-    if (!user) {
-        throw new Error("User not found");
-    }
-
-    user.isVerified = true;
-
-    await user.save();
-
+  if (otpDoc.expiresAt < new Date()) {
     await otpModel.deleteOne({
-        email
+      _id: otpDoc._id,
     });
 
-    return {
-        success: true,
-        message: "Email verified successfully"
-    };
+    throw new Error("OTP expired");
+  }
+
+  if (otpDoc.attempts >= 5) {
+    await otpModel.deleteOne({
+      _id: otpDoc._id,
+    });
+
+    throw new Error(
+      "Maximum OTP attempts exceeded"
+    );
+  }
+
+  if (otpDoc.otp !== otp) {
+    otpDoc.attempts += 1;
+
+    await otpDoc.save();
+
+    throw new Error("Invalid OTP");
+  }
+
+  const user = await UserModel.findOne({
+    email,
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  user.isVerified = true;
+
+  await user.save();
+
+  await otpModel.deleteOne({
+    _id: otpDoc._id,
+  });
+
+  return {
+    success: true,
+    message: "Email verified successfully",
+  };
 };
 
 
@@ -434,10 +484,6 @@ export const changePasswordService = async (email:string,oldPassword:string,newP
             throw new Error("Invalid Password")
         }
 
-        if(!newPassword){
-            throw new Error("New Password is required")
-        }
-
         if (!oldPassword || !newPassword) {
             throw new Error("Old password and new password are required")
         }
@@ -454,6 +500,171 @@ export const changePasswordService = async (email:string,oldPassword:string,newP
             message: "Password changed successfully"
         };
         
+    } catch (error) {
+        console.error("Error in user service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+
+// Forgot password service 
+
+export const forgotPasswordService = async (email:string)=>{
+    try {
+        
+         const user = await UserModel.findOne({ email});
+
+         if(!user){
+            throw new Error("User not found")
+         }
+
+         if (!user.isVerified) {
+            throw new Error("Please verify your email first");
+        }
+
+        const existingOTP = await otpModel.findOne({ email,  type: "reset-password" });
+
+
+        if (existingOTP) {
+
+            if (existingOTP.expiresAt > new Date()) {
+
+        const remainingTime = Math.ceil(
+            (existingOTP.expiresAt.getTime() - Date.now()) / 1000
+        );
+
+        throw new Error(
+            `OTP already sent. Try again in ${remainingTime} seconds`
+        );
+    }
+
+    await otpModel.deleteOne({
+        _id: existingOTP._id
+    });
+}
+
+    const otp = otpGenerate();
+
+const otpDoc = await otpModel.findOneAndUpdate(
+    { email },
+    {
+        email,
+        otp,
+        type: "reset-password",
+        expiresAt: new Date(Date.now() + 60 * 1000),
+        attempts: 0
+    },
+    {
+        upsert: true,
+        new: true
+    }
+);
+
+console.log("Saved OTP:", otpDoc);
+
+   
+    await sendEmail({
+        email,
+        subject: "Password Reset OTP",
+        text: `Your OTP is ${otp}`,
+        html:  forgotPasswordTemplate(otp)
+    });
+
+    return {
+        success: true,
+        message: "Password reset OTP sent successfully"
+    };
+
+    } catch (error) {
+        console.error("Error in user service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+
+
+
+//  Reset Password Service 
+
+export const resetPasswordService = async (email:string,newPassword:string,otp:string)=>{
+    try {
+
+    const otpDoc = await otpModel.findOne({
+        email: new RegExp(`^${email}$`, "i"),
+        type: "reset-password"
+    });
+
+
+    if (!otpDoc) {
+        throw new Error("OTP not found");
+    }
+
+    if (otpDoc.expiresAt < new Date()) {
+
+        await otpModel.deleteOne({
+            _id: otpDoc._id
+        });
+
+        throw new Error("OTP expired");
+    }
+
+    if (otpDoc.attempts >= 5) {
+
+        await otpModel.deleteOne({
+            _id: otpDoc._id
+        });
+
+        throw new Error("Maximum OTP attempts exceeded");
+    }
+
+    if (otpDoc.otp !== otp) {
+
+        otpDoc.attempts += 1;
+
+        await otpDoc.save();
+
+        throw new Error("Invalid OTP");
+    }
+
+    const user = await UserModel.findOne({
+        email
+    });
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    const isSamePassword =
+    await user.comparePassword(newPassword);
+
+    if (isSamePassword) {
+    throw new Error(
+        "New password cannot be same as old password"
+    );
+    }
+
+    user.password = newPassword;
+
+    await user.save();
+
+    await otpModel.deleteOne({
+        _id: otpDoc._id
+    });
+
+    return {
+        success: true,
+        message: "Password reset successfully"
+    };
+      
+
+      
+
     } catch (error) {
         console.error("Error in user service:", error);
         throw new Error(

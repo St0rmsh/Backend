@@ -1,102 +1,102 @@
-import type {Request, Response } from "express";
+import type { Request, Response } from "express";
 import type { RegisterBody } from "../types/Auth/user.types.js";
-import {changePasswordService, genearteAccessTokenService, getMyProfileService, loginUserService, logoutService, registerUserService, sendOtpService, updateUserDetailsSerivice, verifyOtpService} from "../services/user.service.js";
+import { changePasswordService, forgotPasswordService, generateAccessTokenService, getMyProfileService, loginUserService, logoutService, registerUserService, resetPasswordService, sendOtpService, updateUserDetailsService, verifyOtpService } from "../services/user.service.js";
 
 
 // for registration controller
-export const registrationController = async (  req: Request<{}, {}, RegisterBody>,
+export const registrationController = async (req: Request<{}, {}, RegisterBody>,
     res: Response) => {
 
     try {
 
-        const {user,accessToken,refreshToken} = await registerUserService(req.body)
+        const { user, accessToken, refreshToken } = await registerUserService(req.body)
 
-        console.log("user",user)
+        console.log("user", user)
 
-        res.cookie("accessToken", accessToken,{
+        res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true, 
-            sameSite: "strict", 
+            secure: true,
+            sameSite: "strict",
             maxAge: 15 * 60 * 1000
-        } );
-        res.cookie("refreshToken", refreshToken,{
+        });
+        res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: true, 
-            sameSite: "strict", 
+            secure: true,
+            sameSite: "strict",
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
         res.status(201).json({
-            success:true,
-            message:"User registered successfully",
-            data:user,
+            success: true,
+            message: "User registered successfully",
+            data: user,
             accessToken,
             refreshToken
         })
 
-        
+
     } catch (error) {
-         console.error("Error in register controller:", error);
+        console.error("Error in register controller:", error);
 
         return res.status(400).json({
             success: false,
             message: error instanceof Error ? error.message : "Registration failed"
         });
-        
+
     }
 }
 
 // for login controller
 
-export const loginController = async (  req: Request<{}, {}, RegisterBody>,
+export const loginController = async (req: Request<{}, {}, RegisterBody>,
     res: Response) => {
 
     try {
 
-        const {user,accessToken,refreshToken} = await loginUserService(req.body)
+        const { user, accessToken, refreshToken } = await loginUserService(req.body)
 
-        console.log("user",user)
+        console.log("user", user)
 
-        res.cookie("accessToken", accessToken,{
+        res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true, 
-            sameSite: "strict", 
+            secure: true,
+            sameSite: "strict",
             maxAge: 15 * 60 * 1000
-        } );
-        res.cookie("refreshToken", refreshToken,{
+        });
+        res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: true, 
-            sameSite: "strict", 
+            secure: true,
+            sameSite: "strict",
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        console.log("user =>",user)
-        
+        console.log("user =>", user)
+
 
         return res.status(200).json({
-            success:true,
-            message:"User logged in successfully",
-            data:user,
+            success: true,
+            message: "User logged in successfully",
+            data: user,
             accessToken,
             refreshToken
         })
 
-        
+
     } catch (error) {
-         console.error("Error in login controller:", error);
+        console.error("Error in login controller:", error);
 
         return res.status(400).json({
             success: false,
             message: error instanceof Error ? error.message : "login failed"
         });
-        
+
     }
 }
 
-export const getUser = async (req:Request,res:Response)=>{
+export const getUser = async (req: Request, res: Response) => {
     try {
 
-        const id = req.user?._id ;
+        const id = req.user?._id;
 
         if (!id) {
             return res.status(401).json({
@@ -104,20 +104,20 @@ export const getUser = async (req:Request,res:Response)=>{
                 message: "Unauthorized"
             });
         }
-        
+
         const user = await getMyProfileService(id);
-        if(!user){
+        if (!user) {
             throw new Error("User not found")
         }
 
         res.status(200).json({
-            success:true,
-            message:"User fetched successfully",
-            data:user,
+            success: true,
+            message: "User fetched successfully",
+            data: user,
         })
 
     } catch (error) {
-         return res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error instanceof Error ? error.message : "Server error"
         });
@@ -126,28 +126,28 @@ export const getUser = async (req:Request,res:Response)=>{
 
 // for refresh access token controller
 
-export const refreshAccessTokenController = async (req:Request,res:Response) =>{
+export const refreshAccessTokenController = async (req: Request, res: Response) => {
     try {
-        
+
         const refreshToken = req.cookies?.refreshToken;
 
-        if(!refreshToken){
+        if (!refreshToken) {
             throw new Error("Unauthorized")
         }
 
-        const accessToken = await genearteAccessTokenService(refreshToken);
+        const accessToken = await generateAccessTokenService(refreshToken);
 
-        res.cookie("accessToken", accessToken,{
+        res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true, 
-            sameSite: "strict", 
+            secure: true,
+            sameSite: "strict",
             maxAge: 15 * 60 * 1000
-        } );
+        });
 
         res.status(200).json({
-            success:true,
-            message:"Access token refreshed successfully",
-            data:accessToken,
+            success: true,
+            message: "Access token refreshed successfully",
+            data: accessToken,
         })
 
     } catch (error) {
@@ -163,28 +163,28 @@ export const refreshAccessTokenController = async (req:Request,res:Response) =>{
 
 // for logout controller
 
-export const logoutController = async (req:Request,res:Response) =>{
+export const logoutController = async (req: Request, res: Response) => {
     try {
 
         const refreshToken = req.cookies?.refreshToken;
         const accessToken = req.cookies?.accessToken;
 
-        if(!refreshToken || !accessToken){
+        if (!refreshToken || !accessToken) {
             throw new Error("Unauthorized")
         }
 
-         await logoutService(refreshToken,accessToken);
+        await logoutService(refreshToken, accessToken);
 
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");
-        
+
 
         res.status(200).json({
-            success:true,
-            message:"User logged out successfully",
+            success: true,
+            message: "User logged out successfully",
         })
-        
-        
+
+
     } catch (error) {
         console.error("Error in logout controller:", error);
 
@@ -198,12 +198,12 @@ export const logoutController = async (req:Request,res:Response) =>{
 
 // for update user controller
 
-export const updateUserController = async (req:Request,res:Response)=>{
+export const updateUserController = async (req: Request, res: Response) => {
     try {
-        
+
         const id = req.user?._id;
 
-        if(!id){
+        if (!id) {
             throw new Error("Unauthorized")
         }
 
@@ -212,17 +212,17 @@ export const updateUserController = async (req:Request,res:Response)=>{
             banner?: Express.Multer.File[];
         };
 
-        
 
-        const updatedUser = await updateUserDetailsSerivice(id,req.body,files)
 
-       return res.status(200).json({
-            success:true,
-            message:"User updated successfully",
-            data:updatedUser,
+        const updatedUser = await updateUserDetailsService(id, req.body, files)
+
+        return res.status(200).json({
+            success: true,
+            message: "User updated successfully",
+            data: updatedUser,
         })
 
-        
+
 
     } catch (error) {
         console.error("Error in update user controller:", error);
@@ -236,12 +236,12 @@ export const updateUserController = async (req:Request,res:Response)=>{
 
 // for send otp controller 
 
-export const sendOtpController = async (req:Request,res:Response) =>{
+export const sendOtpController = async (req: Request, res: Response) => {
     try {
         console.log("req.user =>", req.user);
 
-        
-         const email = req.user?.email;
+
+        const email = req.user?.email;
 
         if (!email) {
             throw new Error("Unauthorized");
@@ -302,18 +302,18 @@ export const verifyOtpController = async (
 
 // for change password controller 
 
-export const changePasswordController = async (req:Request,res:Response)=>{
+export const changePasswordController = async (req: Request, res: Response) => {
     try {
-        
+
         const email = req.user?.email;
 
-        const {oldPassword,newPassword} = req.body;
+        const { oldPassword, newPassword } = req.body;
 
-        if(!email){
+        if (!email) {
             throw new Error("Unauthorized")
         }
 
-        const result = await changePasswordService(email,oldPassword,newPassword);
+        const result = await changePasswordService(email, oldPassword, newPassword);
 
         return res.status(200).json(result);
 
@@ -321,6 +321,58 @@ export const changePasswordController = async (req:Request,res:Response)=>{
         return res.status(400).json({
             success: false,
             message: error instanceof Error ? error.message : "change password failed"
+        });
+    }
+}
+
+
+
+
+// for forget password controller
+
+export const forgotPasswordController = async (req: Request, res: Response) => {
+    try {
+
+        const email = req.body?.email;
+
+        if (!email) {
+            throw new Error("Email is required")
+        }
+
+        const result = await forgotPasswordService(email);
+
+        return res.status(200).json(result);
+
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error instanceof Error ? error.message : "forget password failed"
+        });
+    }
+}
+
+
+// for Reset Password controller
+
+export const resetPasswordController = async (req: Request, res: Response) => {
+    try {
+
+        const { email, newPassword, otp } = req.body;
+
+        if (!email || !newPassword || !otp) {
+            throw new Error("All fields are required")
+        }
+
+        const result = await resetPasswordService(email, newPassword, otp);
+
+        console.log("result", result);
+
+        return res.status(200).json(result);
+
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error instanceof Error ? error.message : "reset password failed"
         });
     }
 }

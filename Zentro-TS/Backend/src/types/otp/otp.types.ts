@@ -7,4 +7,5 @@ export interface OtpBody {
     attempts: number,
     requestCount: number,
     firstRequestTime: number
+    type: string
 }
