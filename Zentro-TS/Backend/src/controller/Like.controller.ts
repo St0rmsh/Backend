@@ -27,9 +27,12 @@ export const LikeController = async (req:Request<{postId:string}>,res: Response)
        })
 
     }catch(error){
-        console.error("Error in like controller:", error);
-        throw new Error(
-            error instanceof Error ? error.message : "Unknown error"
-        );
+        return res.status(500).json({
+            success: false,
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "Internal Server Error"
+    });
     }
 }
