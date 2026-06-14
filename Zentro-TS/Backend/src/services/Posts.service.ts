@@ -58,3 +58,33 @@ export const getAllPostsService = async (userId:string,{page=1,limit=10}:{
         );
     }
 }
+
+
+
+export const getUserPostsService = async (userId:string,{page=1,limit=10}:{
+    page?:number
+    limit?:number
+})=>{
+    try {
+        const skips = (page-1)*limit
+
+        const [posts, totalPosts] = await Promise.all([
+            PostModel.find({user:userId}).sort({createdAt:-1}).skip(skips).limit(limit).lean(),
+            PostModel.countDocuments({user:userId})  
+        ])
+
+        return {
+            posts,
+            totalPosts,
+            currentPage:page,
+            totalPages:Math.ceil(totalPosts/limit),
+            hasNextPage: page < Math.ceil(totalPosts / limit)
+        }
+
+    } catch (error) {
+        console.error("Error in get all posts service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}

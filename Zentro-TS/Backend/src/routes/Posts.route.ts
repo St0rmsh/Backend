@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { authMiddleware } from "../middleware/auth.middleware.js"
-import { createPostController, getALLPostsController } from "../controller/Posts.controller.js"
+import { createPostController, getALLPostsController, getUserPostsController } from "../controller/Posts.controller.js"
 import uploadFile from "../middleware/multer.js"
 
 
@@ -19,5 +19,5 @@ PostRouter.post("/create",authMiddleware,uploadFile.single("coverImage"),createP
 PostRouter.get("/",authMiddleware,getALLPostsController)
 
 
-
+PostRouter.get("/user/:userId",authMiddleware,getUserPostsController)
 export default PostRouter
