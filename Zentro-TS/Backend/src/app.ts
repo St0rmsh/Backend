@@ -6,6 +6,7 @@ import followersRouter from "./routes/Followers.routes.js";
 import userProfileRouter from "./routes/userProfile.route.js";
 import PostRouter from "./routes/Posts.route.js";
 import likeRouter from "./routes/like.route.js";
+import CommentRouter from "./routes/comment.route.js";
 
 const app = express()
 
@@ -43,5 +44,7 @@ app.use("/api/post", PostRouter)
 // Like routes
 app.use("/api/like", likeRouter)
 
+
+app.use("/api/comment", CommentRouter)
 
 export default app
