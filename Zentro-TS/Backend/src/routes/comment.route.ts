@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { commentController, getCommentController, getSingleCommentController, updateCommentController } from "../controller/comment.controller.js";
+import { commentController, deleteCommentController, getCommentController, getSingleCommentController, updateCommentController } from "../controller/comment.controller.js";
 
 
 const CommentRouter = Router()
@@ -34,6 +34,6 @@ CommentRouter.patch("/:commentId",authMiddleware,updateCommentController)
 // @route: DELETE /api/comment/:commentId
 // @desc: Delete a comment
 // @access: Private
-// CommentRouter.delete("/:commentId",authMiddleware,deleteCommentController)
+CommentRouter.delete("/:commentId",authMiddleware,deleteCommentController)
 
 export default CommentRouter

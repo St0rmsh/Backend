@@ -141,3 +141,35 @@ export const updateCommentService = async (commentId:string , userId:string , co
         );
     }
 }
+
+
+export const deleteCommentService = async (commentId:string , userId:string)=>{
+    try {
+
+        const comment = await CommentModel.findOne({_id:commentId,user:userId})
+
+        if(!comment){
+            throw new Error("Comment not found or unauthorized")
+        }
+
+        await CommentModel.findByIdAndDelete(commentId);
+
+        await PostModel.findByIdAndUpdate(
+            comment.post,
+            {
+                $inc: {
+                    commentsCount: -1
+                }
+            }
+        );
+        return comment
+        
+    } catch (error) {
+        console.error("Error in delete Comment service:", error);
+        throw new Error(
+            error instanceof Error
+                ? error.message
+                : "Unknown error"
+        );
+    }
+}
