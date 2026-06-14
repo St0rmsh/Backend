@@ -156,20 +156,19 @@ export const updatePostService = async (postId:string,userId:string,updatedData:
 
 
 export const deletePostService = async (postId:string,userId:string)=>{
+    
     try {
-        const post = await PostModel.findById(postId)
 
-        if(!post){
-            throw new Error("Post not found")
+          const deletedPost = await PostModel.findOneAndDelete({
+            _id: postId,
+            user: userId
+        });
+
+        if (!deletedPost) {
+            throw new Error("Post not found");
         }
 
-        if(post.user.toString() !== userId){
-            throw new Error("Unauthorized")
-        }
-
-        const deletePost = await PostModel.findByIdAndDelete(postId)
-
-        return deletePost
+        return deletedPost;
 
     } catch (error) {
         console.error("Error in delete post service:", error);

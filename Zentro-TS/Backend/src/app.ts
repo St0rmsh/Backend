@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import followersRouter from "./routes/Followers.routes.js";
 import userProfileRouter from "./routes/userProfile.route.js";
 import PostRouter from "./routes/Posts.route.js";
+import likeRouter from "./routes/like.route.js";
 
 const app = express()
 
@@ -35,8 +36,12 @@ app.use("/api/follow",followersRouter)
 app.use("/api/profile",userProfileRouter)
 
 
-// 
+// Post routes
 app.use("/api/post", PostRouter)
+
+
+// Like routes
+app.use("/api/like", likeRouter)
 
 
 export default app
