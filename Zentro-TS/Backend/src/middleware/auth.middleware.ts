@@ -12,7 +12,6 @@ export const authMiddleware = async (req:Request,res:Response,next:NextFunction)
 
         const accessToken = req.cookies?.accessToken;
 
-        console.log("accessToken",accessToken)
 
         if(!accessToken){
              return res.status(401).json({

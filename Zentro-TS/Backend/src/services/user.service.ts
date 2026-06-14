@@ -10,6 +10,9 @@ import sendEmail from "./email.service.js";
 import { uploadBuffer } from "../config/storage.js";
 import { forgotPasswordTemplate } from "../template/forgotPassword.js";
 import { verifyEmail } from "../template/verifyEmail.js";
+import FollowerModel from "../model/Follower.model.js";
+import PostModel from "../model/post.model.js";
+import type { IUserProfileResponse } from "../types/Profile/userProfile.types.js";
 
 // Register user service
 
@@ -664,6 +667,47 @@ export const resetPasswordService = async (email:string,newPassword:string,otp:s
       
 
       
+
+    } catch (error) {
+        console.error("Error in user service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+
+
+
+export const getprofileService = async (userId:string): Promise<IUserProfileResponse>=>{
+    
+    try {
+
+       const user = await UserModel.findById(userId).select("-password").lean();
+
+       if(!user){
+        throw new Error("User not found")
+       }
+
+       const [followersCount,followingCount, postsCount] = await Promise.all([
+        FollowerModel.countDocuments({followingId:user._id}),
+        FollowerModel.countDocuments({followerId:user._id}),
+        PostModel.countDocuments({user:user._id})
+       ])
+
+       return {
+        user:{
+           _id: String(user._id),
+           username: user.username,
+          fullname: user.fullname,
+          bio: user.bio,
+          avatar: user.avatar,
+        },
+        followersCount,
+        followingCount,
+        postsCount
+       };
 
     } catch (error) {
         console.error("Error in user service:", error);
