@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import type { ICreatePostBody } from "../types/Posts/posts.types.js";
-import { createPostService, getAllPostsService, getUserPostsService } from "../services/Posts.service.js";
+import type { ICreatePostBody, IPostUpdateBody } from "../types/Posts/posts.types.js";
+import { createPostService, deletePostService, getAllPostsService, getSinglePostService, getUserPostsService, updatePostService } from "../services/Posts.service.js";
 import { uploadBuffer } from "../config/storage.js";
 
 
@@ -121,6 +121,133 @@ export const getUserPostsController = async(req:Request<{userId:string}>,res:Res
         })
 
         
+        
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:error instanceof Error ? error.message : "Internal server error"
+        })
+    }
+}
+
+
+
+export const getSinglePostController = async (req:Request<{postId:string}>,res:Response)=>{
+    try {
+        const {postId} = req.params
+
+        if (!postId) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found",
+            });
+        }
+
+        const post = await getSinglePostService(postId)
+
+        return res.status(200).json({
+            success:true,
+            message:"Post fetched successfully",
+            data:post
+        })
+
+        
+        
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:error instanceof Error ? error.message : "Internal server error"
+        })
+    }
+}
+
+
+
+export const updatePostController = async (req:Request<{postId:string}>,res:Response)=>{
+    try {
+       
+        const userId = req.user?._id
+        const {postId} = req.params
+
+        if(!userId){
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized",
+            });
+        }
+
+        if(!postId){
+            return res.status(404).json({
+                success: false,
+                message: "Post not found",
+            });
+        }
+
+        const {title,content,tags,category,isPublished} = req.body as IPostUpdateBody
+
+        let coverImage : string | undefined;
+
+        if(req.file){
+            const uploadImage = await uploadBuffer({
+                buffer:req.file.buffer,
+                fileName:req.file.originalname,
+                folder:"Zentro/posts"
+            })
+            coverImage = uploadImage.url
+        }
+
+        const updatedData:IPostUpdateBody = {
+            ...(title && { title }),
+            ...(content && { content }),
+            ...(tags && { tags }),
+            ...(category && { category }),
+            ...(isPublished && { isPublished }),
+            ...(coverImage && { coverImage }),
+        }
+
+        const updatePost = await updatePostService(postId,userId,updatedData)
+
+        return res.status(200).json({
+            success:true,
+            message:"Post updated successfully",
+            data:updatePost
+        })
+        
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:error instanceof Error ? error.message : "Internal server error"
+        })
+    }
+}
+
+
+export const deletePostController = async(req:Request<{postId:string}>,res:Response)=>{
+    try {
+        const userId = req.user?._id
+        const {postId} = req.params
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized",
+            });
+        }
+
+        if(!postId){
+            return res.status(404).json({
+                success: false,
+                message: "Post not found",
+            });
+        }
+
+        const deletePost = await deletePostService(postId,userId)
+
+        return res.status(200).json({
+            success:true,
+            message:"Post deleted successfully",
+            data:deletePost
+        })
         
     } catch (error) {
         return res.status(500).json({

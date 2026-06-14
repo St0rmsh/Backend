@@ -1,5 +1,5 @@
 import PostModel from "../model/post.model.js";
-import type { ICreatePostBody } from "../types/Posts/posts.types.js";
+import type { ICreatePostBody, IPostUpdateBody } from "../types/Posts/posts.types.js";
 
 
 
@@ -83,6 +83,96 @@ export const getUserPostsService = async (userId:string,{page=1,limit=10}:{
 
     } catch (error) {
         console.error("Error in get all posts service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+
+export const getSinglePostService = async (postId:string)=>{
+
+    try {
+
+    const post = await PostModel.findByIdAndUpdate(postId,{$inc:{viewsCount:1}},{new:true}).populate("user", "fullname , username , avatar").lean()
+
+    if(!post){
+        throw new Error("Post not found")
+    }
+
+    return post
+
+    } catch (error) {
+        console.error("Error in get single post service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+export const updatePostService = async (postId:string,userId:string,updatedData:IPostUpdateBody)=>{
+    try {
+        
+        const post = await PostModel.findById(postId)
+
+        if(!post){
+            throw new Error("Post not found")
+        }
+
+        if(post.user.toString() !== userId){
+            throw new Error("Unauthorized")
+        }
+
+        const updateFields = {
+    ...(updatedData.title && { title: updatedData.title }),
+    ...(updatedData.content && { content: updatedData.content }),
+    ...(updatedData.tags && { tags: updatedData.tags }),
+    ...(updatedData.category && { category: updatedData.category }),
+    ...(typeof updatedData.isPublished !== "undefined" && {
+        isPublished: updatedData.isPublished
+    }),
+    ...(updatedData.coverImage && {
+        coverImage: updatedData.coverImage
+    }),
+};
+
+        const UpdatePost = await PostModel.findByIdAndUpdate(postId,{...updateFields},{new:true, runValidators:true})
+
+        if(!UpdatePost){
+            throw new Error("Post not found")
+        }
+
+        return UpdatePost
+
+    } catch (error) {
+        console.error("Error in update post service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+export const deletePostService = async (postId:string,userId:string)=>{
+    try {
+        const post = await PostModel.findById(postId)
+
+        if(!post){
+            throw new Error("Post not found")
+        }
+
+        if(post.user.toString() !== userId){
+            throw new Error("Unauthorized")
+        }
+
+        const deletePost = await PostModel.findByIdAndDelete(postId)
+
+        return deletePost
+
+    } catch (error) {
+        console.error("Error in delete post service:", error);
         throw new Error(
             error instanceof Error ? error.message : "Unknown error"
         );

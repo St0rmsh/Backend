@@ -30,7 +30,7 @@ export interface ICreatePostBody {
 export interface IPostUpdateBody {
     title?: string,
     content?: string,
-    coverImage?: Buffer,
+    coverImage?: string,
     tags?: string[],
     category?: string,
     isPublished?: boolean,

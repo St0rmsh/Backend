@@ -51,6 +51,12 @@ const postSchema = new mongoose.Schema<IPost>(
         category: {
             type: String,
             trim: true,
+            enum: [
+             "Technology",
+             "Programming",
+             "AI",
+             "General"
+           ],
             default: "General",
         },
     },

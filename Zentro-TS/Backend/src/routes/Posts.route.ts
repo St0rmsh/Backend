@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { authMiddleware } from "../middleware/auth.middleware.js"
-import { createPostController, getALLPostsController, getUserPostsController } from "../controller/Posts.controller.js"
+import { createPostController, deletePostController, getALLPostsController, getSinglePostController, getUserPostsController, updatePostController } from "../controller/Posts.controller.js"
 import uploadFile from "../middleware/multer.js"
 
 
@@ -18,6 +18,27 @@ PostRouter.post("/create",authMiddleware,uploadFile.single("coverImage"),createP
 // @access: Private
 PostRouter.get("/",authMiddleware,getALLPostsController)
 
-
+// @route: GET /api/posts/user/:userId
+// @desc: Get all posts by user
+// @access: Private
 PostRouter.get("/user/:userId",authMiddleware,getUserPostsController)
+
+
+// @route: GET /api/posts/:postId
+// @desc: Get single post
+// @access: Private
+PostRouter.get("/:postId",authMiddleware,getSinglePostController)
+
+
+// @route: PATCH /api/posts/:postId
+// @desc: Update a post
+// @access: Private
+PostRouter.patch("/:postId",authMiddleware,updatePostController)
+
+
+// @route: DELETE /api/post/:postId
+// @desc delete's a post
+// @access: Private
+PostRouter.delete("/:postId",authMiddleware, deletePostController)
+
 export default PostRouter
