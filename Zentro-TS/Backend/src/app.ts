@@ -45,6 +45,7 @@ app.use("/api/post", PostRouter)
 app.use("/api/like", likeRouter)
 
 
+// Comment route
 app.use("/api/comment", CommentRouter)
 
 export default app

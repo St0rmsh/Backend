@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import type { ICreatePostBody, IPostUpdateBody } from "../types/Posts/posts.types.js";
-import { createPostService, deletePostService, getAllPostsService, getSinglePostService, getUserPostsService, updatePostService } from "../services/Posts.service.js";
+import type { ICreatePostBody, IPostUpdateBody, ISearchQuery } from "../types/Posts/posts.types.js";
+import { createPostService, deletePostService, getAllPostsService, getSinglePostService, getUserPostsService, searchPostService, updatePostService } from "../services/Posts.service.js";
 import { uploadBuffer } from "../config/storage.js";
 
 
@@ -249,6 +249,36 @@ export const deletePostController = async(req:Request<{postId:string}>,res:Respo
             data:deletePost
         })
         
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:error instanceof Error ? error.message : "Internal server error"
+        })
+    }
+}
+
+
+
+export const searchPostController = async (req:Request<{}, {}, {} ,ISearchQuery>,res:Response)=>{
+    try {
+        const {q,page,limit,category,tag} = req.query
+
+        const searchQuery = typeof q === "string"
+        ? q.trim()
+        : "";
+
+       const result = await searchPostService(searchQuery, {
+             page: Math.max(1, Number(page) || 1),
+            limit: Math.max(1, Number(limit) || 10),
+            ...(typeof category === "string" && { category }),
+            ...(typeof tag === "string" && { tag }),
+        });
+
+        return res.status(200).json({
+            success:true,
+            message:"Posts fetched successfully",
+            ...result
+        })
     } catch (error) {
         return res.status(500).json({
             success:false,

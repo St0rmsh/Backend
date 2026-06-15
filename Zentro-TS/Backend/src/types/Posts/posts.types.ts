@@ -35,3 +35,14 @@ export interface IPostUpdateBody {
     category?: string,
     isPublished?: boolean,
 }
+
+
+
+export interface ISearchQuery {
+    q?:string,
+    category?:string,
+    tag?:string,
+    page?:number,
+    limit?:number
+
+}

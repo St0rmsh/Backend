@@ -1,6 +1,6 @@
 import PostModel from "../model/post.model.js";
-import type { ICreatePostBody, IPostUpdateBody } from "../types/Posts/posts.types.js";
-
+import type { ICreatePostBody, IPost, IPostUpdateBody } from "../types/Posts/posts.types.js";
+import { escapeRegex } from "../utils/escapeRegex.js";
 
 
 export const createPostService = async (userId:string,{title,content,tags,category,coverImage}:ICreatePostBody)=>{
@@ -172,6 +172,85 @@ export const deletePostService = async (postId:string,userId:string)=>{
 
     } catch (error) {
         console.error("Error in delete post service:", error);
+        throw new Error(
+            error instanceof Error ? error.message : "Unknown error"
+        );
+    }
+}
+
+
+export const searchPostService = async (query:string,{page=1,limit=10, category, tag}:{
+    page?:number
+    limit?:number
+    category?:string
+    tag?:string
+})=>{
+    try {
+        const safeLimit = Math.max(1, limit);
+        const skip = (page - 1) * safeLimit;
+        
+        const filter: Record<string, unknown> = {isPublished: true};
+
+     if (query) {
+
+            const searchText = escapeRegex(query);
+
+
+         filter.$or = [
+        { title: { $regex: searchText, $options: "i" } },
+        { content: { $regex: searchText, $options: "i" } },
+        { tags: { $regex: searchText, $options: "i" } },
+        {category: { $regex: searchText, $options: "i" } }
+    ];
+}
+
+if (category) {
+    const safeCategory = escapeRegex(category);
+
+    filter.category = {
+        $regex: `^${safeCategory}$`,
+        $options: "i"
+    };
+}
+
+if (tag) {
+    const safeTag = escapeRegex(tag);
+
+    filter.tags = {
+        $regex: safeTag,
+        $options: "i"
+    };
+}
+
+        const [posts, totalPosts] = await Promise.all([
+            PostModel.find(filter)
+            .populate({path: "user",select: "username fullname avatar"})
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(safeLimit)
+            .lean(),
+
+         PostModel.countDocuments(filter)
+        ]);
+
+        const totalPages = Math.ceil(totalPosts / safeLimit);
+
+
+        return {
+           posts,
+            totalPosts,
+            currentPage: page,
+            results: posts.length,
+            totalPages,
+            limit:safeLimit,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        }
+        
+
+
+    } catch (error) {
+        console.error("Error in search post service:", error);
         throw new Error(
             error instanceof Error ? error.message : "Unknown error"
         );

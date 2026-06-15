@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { authMiddleware } from "../middleware/auth.middleware.js"
-import { createPostController, deletePostController, getALLPostsController, getSinglePostController, getUserPostsController, updatePostController } from "../controller/Posts.controller.js"
+import { createPostController, deletePostController, getALLPostsController, getSinglePostController, getUserPostsController, searchPostController, updatePostController } from "../controller/Posts.controller.js"
 import uploadFile from "../middleware/multer.js"
 
 
@@ -40,5 +40,11 @@ PostRouter.patch("/:postId",authMiddleware,updatePostController)
 // @desc delete's a post
 // @access: Private
 PostRouter.delete("/:postId",authMiddleware, deletePostController)
+
+
+// @route: GET /api/posts/search/:query
+// @desc: Search posts
+// @access: Public
+PostRouter.get("/search/:query",searchPostController)
 
 export default PostRouter
