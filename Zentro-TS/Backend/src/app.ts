@@ -7,6 +7,7 @@ import userProfileRouter from "./routes/userProfile.route.js";
 import PostRouter from "./routes/Posts.route.js";
 import likeRouter from "./routes/like.route.js";
 import CommentRouter from "./routes/comment.route.js";
+import bookmarkRouter from "./routes/bookmark.route.js";
 
 const app = express()
 
@@ -47,5 +48,9 @@ app.use("/api/like", likeRouter)
 
 // Comment route
 app.use("/api/comment", CommentRouter)
+
+
+// Bookmark route
+app.use("/api/bookmark",bookmarkRouter)
 
 export default app
