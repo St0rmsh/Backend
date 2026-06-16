@@ -269,14 +269,17 @@ export const searchPostController = async (req:Request<{}, {}, {} ,ISearchQuery>
 
        const result = await searchPostService(searchQuery, {
              page: Math.max(1, Number(page) || 1),
-            limit: Math.max(1, Number(limit) || 10),
+            limit: Math.min(50, Math.max(1, Number(limit) || 10)),
             ...(typeof category === "string" && { category }),
             ...(typeof tag === "string" && { tag }),
         });
 
         return res.status(200).json({
             success:true,
-            message:"Posts fetched successfully",
+            message:
+        result.posts.length > 0
+            ? "Posts fetched successfully"
+            : "No posts found",
             ...result
         })
     } catch (error) {

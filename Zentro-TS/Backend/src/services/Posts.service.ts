@@ -192,55 +192,68 @@ export const searchPostService = async (query:string,{page=1,limit=10, category,
         const filter: Record<string, unknown> = {isPublished: true};
 
      if (query) {
-
-            const searchText = escapeRegex(query);
-
-
-         filter.$or = [
-        { title: { $regex: searchText, $options: "i" } },
-        { content: { $regex: searchText, $options: "i" } },
-        { tags: { $regex: searchText, $options: "i" } },
-        {category: { $regex: searchText, $options: "i" } }
-    ];
+        filter.$text = {
+        $search: query
+    };
 }
 
 if (category) {
-    const safeCategory = escapeRegex(category);
-
-    filter.category = {
-        $regex: `^${safeCategory}$`,
+      filter.category = {
+        $regex: `^${escapeRegex(category)}$`,
         $options: "i"
     };
+
 }
 
 if (tag) {
     const safeTag = escapeRegex(tag);
 
-    filter.tags = {
-        $regex: safeTag,
-        $options: "i"
-    };
+  filter.tags = {
+    $regex: `^${safeTag}$`,
+    $options: "i"
+};
 }
 
-        const [posts, totalPosts] = await Promise.all([
-            PostModel.find(filter)
-            .populate({path: "user",select: "username fullname avatar"})
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(safeLimit)
-            .lean(),
+          const [posts, totalPosts] = await Promise.all([
+            PostModel.find(
+                filter,
+               query
+        ? {
+              score: {
+                  $meta: "textScore"
+              }
+          }
+        : {}
+            )
+                .populate({
+                    path: "user",
+                    select: "username fullname avatar"
+                })
+                .sort(
+                    query
+                        ? { score: { $meta: "textScore" } }
+                        : { createdAt: -1 }
+                )
+                .skip(skip)
+                .limit(safeLimit)
+                .lean(),
 
-         PostModel.countDocuments(filter)
+            PostModel.countDocuments(filter)
         ]);
-
-        const totalPages = Math.ceil(totalPosts / safeLimit);
-
+        
+const totalPages = Math.max(
+    1,
+    Math.ceil(totalPosts / safeLimit)
+);
 
         return {
-           posts,
+             posts,
             totalPosts,
-            currentPage: page,
             results: posts.length,
+            searchQuery: query,
+            category,
+            tag,
+            currentPage: page,
             totalPages,
             limit:safeLimit,
             hasNextPage: page < totalPages,

@@ -204,3 +204,36 @@ likeSchema.index(
 
 
 
+const bookmarkSchema = new Schema(
+    {
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+        post: {
+            type: Schema.Types.ObjectId,
+            ref: "Post",
+            required: true
+        }
+    },
+    { timestamps: true }
+);
+
+bookmarkSchema.index(
+    { user: 1, post: 1 },
+    { unique: true }
+);
+
+
+export interface IBookmark {
+    _id: string;
+    user: Types.ObjectId;
+    post: Types.ObjectId;
+
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+
+POST /api/bookmark/:postId
