@@ -1,6 +1,6 @@
 import CommentModel from "../model/comment.model.js"
 import PostModel from "../model/post.model.js"
-
+import { updateUserInterestService } from "./interest.service.js";
 
 
 export const createCommentService = async (postId:string , userId:string , content:string)=>{
@@ -24,6 +24,8 @@ export const createCommentService = async (postId:string , userId:string , conte
                 commentsCount:1
             }
         })
+
+        await updateUserInterestService(userId,postId,4);
 
        await comment.populate("user", "fullname username avatar")
         

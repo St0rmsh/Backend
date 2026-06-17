@@ -69,6 +69,8 @@ postSchema.index({ category: 1 })
 
 postSchema.index({ tags: 1 })
 
+postSchema.index({likesCount: -1});
+
 postSchema.index({ title: "text", content: "text", tags: "text" })
 
 const PostModel = mongoose.model("Post", postSchema);

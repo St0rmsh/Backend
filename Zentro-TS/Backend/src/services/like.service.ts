@@ -1,6 +1,6 @@
 import LikeModel from "../model/like.model.js"
 import PostModel from "../model/post.model.js"
-
+import { updateUserInterestService } from "./interest.service.js";
 
 
 
@@ -29,6 +29,9 @@ export const Likeservice = async (postId:string , userId:string)=>{
                     likesCount:-1
                 }
             })
+
+            await updateUserInterestService(userId,postId,-2);
+
             return {
                 message: "Post unliked successfully",
                 liked: false,
@@ -39,6 +42,9 @@ export const Likeservice = async (postId:string , userId:string)=>{
             user:userId,
             postId
         })
+
+         await updateUserInterestService(userId,postId,3);
+
 
         await PostModel.findByIdAndUpdate(postId,{
             $inc:{
