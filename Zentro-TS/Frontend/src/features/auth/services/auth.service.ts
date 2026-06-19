@@ -1,12 +1,12 @@
-import { axiosInstance } from "../utils/axiosInstance";
+import { axiosInstance } from "@/shared/lib/axios";
 import { LoginFormData } from "../schemas/login.schema";
 import { RegisterFormData } from "../schemas/register.schema";
 import { ForgotPasswordFormData } from "../schemas/forgotPassword.schema";
 import { ResetPasswordFormData } from "../schemas/resetPassword.schema";
 import { ChangePasswordFormData } from "../schemas/changePassword.schema";
 import { LoginResponse, RegisterResponse } from "../types/auth.types";
-import { ApiResponse } from "../types/api.types";
-import { User } from "../types/user.types";
+import { ApiResponse } from "@/shared/types/api.types";
+import { User } from "@/shared/types/user.types";
 
 export const authService = {
   login: async (data: LoginFormData) => {

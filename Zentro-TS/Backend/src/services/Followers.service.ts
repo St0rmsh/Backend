@@ -1,5 +1,7 @@
 import UserModel from "../model/auth.model.js";
 import FollowerModel from "../model/Follower.model.js";
+import { updateUserInterestService } from "./interest.service.js";
+import { createNotificationService } from "./notification.service.js";
 
 
 export const followUserService = async (followerId:string,followingId:string) => {
@@ -35,6 +37,14 @@ export const followUserService = async (followerId:string,followingId:string) =>
         followingId
      })
 
+    await createNotificationService({
+        type: "FOLLOW",
+        recipient: followingUser.toString(),
+        sender: followerId,
+        message: "Started following you",
+    });
+
+    await updateUserInterestService(followerId,followingId,3);
 
      return following
 

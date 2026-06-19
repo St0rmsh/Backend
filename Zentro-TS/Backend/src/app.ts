@@ -8,9 +8,15 @@ import PostRouter from "./routes/Posts.route.js";
 import likeRouter from "./routes/like.route.js";
 import CommentRouter from "./routes/comment.route.js";
 import bookmarkRouter from "./routes/bookmark.route.js";
-
+import cors from "cors"
 const app = express()
 
+
+app.use(cors({
+    origin:"http://localhost:5173",
+    methods:["GET","POST"],
+    credentials:true
+}))
 
 app.use(express.json())
 

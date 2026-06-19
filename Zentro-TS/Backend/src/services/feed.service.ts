@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 import PostModel from "../model/post.model.js";
 import UserInterestModel from "../model/userInterest.model.js";
+import FollowerModel from "../model/Follower.model.js";
 
 export const getFeedService = async (userId:string, page: number, limit: number) => {
 
@@ -28,22 +29,34 @@ export const getFeedService = async (userId:string, page: number, limit: number)
         ?.map((t) => t.name)
         ?.filter(Boolean) || [];
 
-    const personalizedFeed =
+
+    const following = await FollowerModel.find({followerId: userId})
+    .select("followingId")
+    .lean();
+
+    const followingIds = following.map(
+      (f) => new Types.ObjectId(f.followingId.toString())
+    );  
+
+    const hasPersonalization =
+      followingIds.length > 0 ||
       topCategories.length > 0 ||
       topTags.length > 0;
 
-    const matchStage = personalizedFeed
+
+      
+
+    const matchStage = hasPersonalization
       ? {
           isPublished: true,
           user: {
-        $ne: new Types.ObjectId(userId)
+            $ne: new Types.ObjectId(userId)
       },
-          createdAt: {
-            $gte: new Date(
-              Date.now() -
-                30 * 24 * 60 * 60 * 1000
-            )
-          },
+         createdAt: {
+        $gte: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+    )
+  },
           $or: [
             {
               category: {
@@ -54,11 +67,23 @@ export const getFeedService = async (userId:string, page: number, limit: number)
               tags: {
                 $in: topTags
               }
-            }
+            },
+            ...(followingIds.length
+            ? [
+              {
+                user: {
+                  $in: followingIds
+                }
+              }
+        ]
+      : [])
           ]
         }
       : {
           isPublished: true,
+           user: {
+           $ne: new Types.ObjectId(userId)
+          },
           createdAt: {
             $gte: new Date(
               Date.now() -
@@ -66,6 +91,8 @@ export const getFeedService = async (userId:string, page: number, limit: number)
             )
           }
         };
+
+
 
     const [posts, totalPosts] =
       await Promise.all([
@@ -224,18 +251,187 @@ export const getFeedService = async (userId:string, page: number, limit: number)
         PostModel.countDocuments(matchStage)
       ]);
 
-    const totalPages = Math.max(1,Math.ceil(totalPosts / safeLimit));
+  
 
+
+    let finalPosts = posts;
+let finalTotalPosts = totalPosts;
+
+if (hasPersonalization && posts.length === 0) {
+  const fallbackMatch = {
+    isPublished: true,
+    user: {
+      $ne: new Types.ObjectId(userId)
+    },
+    createdAt: {
+      $gte: new Date(
+        Date.now() - 30 * 24 * 60 * 60 * 1000
+      )
+    }
+  };
+
+  const [fallbackPosts, fallbackTotal] =
+    await Promise.all([
+      PostModel.aggregate([
+        {
+          $match: fallbackMatch
+        },
+
+        {
+          $addFields: {
+            ageHours: {
+              $divide: [
+                {
+                  $subtract: [
+                    new Date(),
+                    "$createdAt"
+                  ]
+                },
+                1000 * 60 * 60
+              ]
+            }
+          }
+        },
+
+        {
+          $addFields: {
+            score: {
+              $subtract: [
+                {
+                  $add: [
+                    {
+                      $multiply: [
+                        {
+                          $ifNull: [
+                            "$likesCount",
+                            0
+                          ]
+                        },
+                        5
+                      ]
+                    },
+                    {
+                      $multiply: [
+                        {
+                          $ifNull: [
+                            "$commentsCount",
+                            0
+                          ]
+                        },
+                        10
+                      ]
+                    },
+                    {
+                      $multiply: [
+                        {
+                          $ifNull: [
+                            "$viewsCount",
+                            0
+                          ]
+                        },
+                        0.1
+                      ]
+                    }
+                  ]
+                },
+                {
+                  $multiply: [
+                    "$ageHours",
+                    0.1
+                  ]
+                }
+              ]
+            }
+          }
+        },
+
+        {
+          $sort: {
+            score: -1,
+            createdAt: -1
+          }
+        },
+
+        {
+          $skip: skip
+        },
+
+        {
+          $limit: safeLimit
+        },
+
+        {
+  $lookup: {
+    from: "users",
+    let: {
+      userId: "$user"
+    },
+    pipeline: [
+      {
+        $match: {
+          $expr: {
+            $eq: ["$_id", "$$userId"]
+          }
+        }
+      },
+      {
+        $project: {
+          username: 1,
+          fullname: 1,
+          avatar: 1
+        }
+      }
+    ],
+    as: "user"
+  }
+},
+{
+  $unwind: {
+    path: "$user",
+    preserveNullAndEmptyArrays: true
+  }
+},
+{
+  $project: {
+    _id: 1,
+    title: 1,
+    content: 1,
+    coverImage: 1,
+    category: 1,
+    tags: 1,
+    likesCount: 1,
+    commentsCount: 1,
+    viewsCount: 1,
+    createdAt: 1,
+    updatedAt: 1,
+    score: 1,
+
+    "user._id": 1,
+    "user.username": 1,
+    "user.fullname": 1,
+    "user.avatar": 1
+  }
+}
+      ]),
+
+      PostModel.countDocuments(
+        fallbackMatch
+      )
+    ]);
+
+  finalPosts = fallbackPosts;
+  finalTotalPosts = fallbackTotal;
+}
+
+const totalPages = Math.max(1,Math.ceil(finalTotalPosts / safeLimit));
     return {
-      posts,
-      totalPosts,
-      currentPage: safePage,
-      totalPages,
-      limit: safeLimit,
-      hasNextPage:
-      safePage < totalPages,
-      hasPrevPage:
-      safePage > 1
+   posts: finalPosts,
+  totalPosts: finalTotalPosts,
+  currentPage: safePage,
+  totalPages,
+  limit: safeLimit,
+  hasNextPage: safePage < totalPages,
+  hasPrevPage: safePage > 1
     };
 
     } catch (error) {

@@ -1,6 +1,7 @@
 import LikeModel from "../model/like.model.js"
 import PostModel from "../model/post.model.js"
 import { updateUserInterestService } from "./interest.service.js";
+import { createNotificationService } from "./notification.service.js";
 
 
 
@@ -51,6 +52,14 @@ export const Likeservice = async (postId:string , userId:string)=>{
                 likesCount:1
             }
         })
+
+        await createNotificationService({
+            type: "LIKE",
+            recipient: post.user.toString() as string,
+            sender: userId,
+            post: postId,
+            message: "liked your post",
+        });
 
         return {
             message: "Post liked successfully",

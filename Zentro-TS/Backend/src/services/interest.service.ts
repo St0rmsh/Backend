@@ -37,13 +37,13 @@ export const updateUserInterestService = async (
   const category = interest.categories[categoryIndex];
 
   if (category) {
-    category.score = Math.min(category.score + weight,100);
+    category.score = Math.max(0,Math.min(category.score + weight,100)) ;
   }
 } else {
     interest.categories.push({
-      name: post.category,
-      score: weight
-    });
+  name: post.category,
+  score: Math.max(0, weight)
+});
   }
 
   // TAGS
@@ -63,13 +63,12 @@ export const updateUserInterestService = async (
   const existingTag = interest.tags[tagIndex];
 
   if (existingTag) {
-    existingTag.score += weight;
-  }
+existingTag.score = Math.max(0,Math.min(existingTag.score + weight,100))  }
 } else {
-    interest.tags.push({
-      name: tag,
-      score: weight
-    });
+  interest.tags.push({
+    name: tag,
+    score: Math.max(0, weight)
+});
   }
 }
 

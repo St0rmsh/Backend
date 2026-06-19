@@ -13,8 +13,16 @@ export const getFeedController = async (req:Request<
 
     try {
 
-        const userId = req.user?._id as string;
-        
+      if (!req.user?._id) {
+       return res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
+}
+
+
+      const userId = req.user._id.toString();
+
        const { page, limit } =
         req.query;
 

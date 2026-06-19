@@ -1,6 +1,7 @@
 import bookmarkmodel from "../model/bookmark.model.js";
 import PostModel from "../model/post.model.js";
 import { updateUserInterestService } from "./interest.service.js";
+import { createNotificationService } from "./notification.service.js";
 
 export const createBookmarkService = async (userId:string , postId:string)=>{
     try {
@@ -15,6 +16,9 @@ export const createBookmarkService = async (userId:string , postId:string)=>{
 
         if(existingBookmark){
             await bookmarkmodel.findByIdAndDelete(existingBookmark._id)
+
+             await updateUserInterestService(userId,postId,-3);
+
             return {
                 message:"Bookmark removed",
                 bookmarked:false
@@ -24,6 +28,14 @@ export const createBookmarkService = async (userId:string , postId:string)=>{
             user:userId,
             post:postId
         })
+
+        await createNotificationService({
+            type: "BOOKMARK",
+            recipient: post.user.toString() as string,
+            sender: userId,
+            post: postId,
+            message: "Bookmarked your post",
+        });
 
         await updateUserInterestService(userId,postId,5);
 

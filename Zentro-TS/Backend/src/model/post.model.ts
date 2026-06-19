@@ -73,6 +73,12 @@ postSchema.index({likesCount: -1});
 
 postSchema.index({ title: "text", content: "text", tags: "text" })
 
+postSchema.index({isPublished: 1,createdAt: -1});
+
+postSchema.index({category: 1, isPublished: 1});
+
+postSchema.index({tags: 1,isPublished: 1});
+
 const PostModel = mongoose.model("Post", postSchema);
 
 export default PostModel;
