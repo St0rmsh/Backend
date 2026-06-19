@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import { useAppDispatch, useAppSelector } from "../../../hooks/reduxHooks";
-import { fetchCurrentUserThunk } from "../state/authThunk";
+import { useAppDispatch, useAppSelector } from "@/shared/hooks";
+import { fetchCurrentUserThunk } from "../state/authThunks";
 import { selectAuthIsAuthenticated } from "../state/authSelectors";
-import { getAccessToken } from "../utils/cookies";
+import { getAccessToken } from "@/shared/lib/cookies";
 
 export const useCurrentUser = () => {
   const dispatch = useAppDispatch();

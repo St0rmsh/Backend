@@ -8,10 +8,10 @@ import { changePasswordSchema, ChangePasswordFormData } from "../schemas/changeP
 import { authService } from "../services/auth.service";
 import { AUTH_MESSAGES } from "../constants/authMessages";
 import { ROUTES } from "@/shared/constants/routes";
-import { handleAuthError } from "../utils/authErrorHandler";
+import { handleApiError as handleAuthError } from "@/shared/utils/errorHandler";
 
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/shared/ui/button";
+import { Label } from "@/shared/ui/label";
 import { PasswordInput } from "./PasswordInput";
 import { PasswordStrengthMeter } from "./PasswordStrengthMeter";
 

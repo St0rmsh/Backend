@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { authService } from "../services/auth.service";
 import { AUTH_MESSAGES } from "../constants/authMessages";
 import { ROUTES } from "@/shared/constants/routes";
-import { handleAuthError } from "../utils/authErrorHandler";
+import { handleApiError as handleAuthError } from "@/shared/utils/errorHandler";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 export const VerifyOtpForm = () => {
   const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));

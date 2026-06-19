@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useAppDispatch, useAppSelector } from "../../../hooks/reduxHooks";
+import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import {
   selectAuthUser,
   selectAuthIsAuthenticated,
@@ -12,7 +12,7 @@ import {
   registerThunk,
   logoutThunk,
   updateProfileThunk,
-} from "../state/authThunk";
+} from "../state/authThunks";
 import { clearError } from "../state/authSlice";
 import { LoginFormData } from "../schemas/login.schema";
 import { RegisterFormData } from "../schemas/register.schema";

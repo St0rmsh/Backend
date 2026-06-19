@@ -1,5 +1,5 @@
 import { useSessionMonitor } from "../hooks/useSessionMonitor";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 export const SessionExpiryModal = () => {

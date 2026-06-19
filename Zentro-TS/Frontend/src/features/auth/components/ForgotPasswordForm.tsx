@@ -6,11 +6,11 @@ import { useState } from "react";
 import { forgotPasswordSchema, ForgotPasswordFormData } from "../schemas/forgotPassword.schema";
 import { authService } from "../services/auth.service";
 import { AUTH_MESSAGES } from "../constants/authMessages";
-import { handleAuthError } from "../utils/authErrorHandler";
+import { handleApiError as handleAuthError } from "@/shared/utils/errorHandler";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 
 export const ForgotPasswordForm = () => {
   const [loading, setLoading] = useState(false);

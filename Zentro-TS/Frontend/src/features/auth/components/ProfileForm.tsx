@@ -7,9 +7,9 @@ import { profileSchema, ProfileFormData } from "../schemas/profile.schema";
 import { useAuth } from "../hooks/useAuth";
 import { AUTH_MESSAGES } from "../constants/authMessages";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 import { AvatarUploader } from "./AvatarUploader";
 import { BannerUploader } from "./BannerUploader";
 

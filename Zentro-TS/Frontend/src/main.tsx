@@ -4,8 +4,8 @@ import { Provider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { store } from './store'
-import './index.css'
-import App from './App/App.tsx'
+import './styles/index.css'
+import App from './app/App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

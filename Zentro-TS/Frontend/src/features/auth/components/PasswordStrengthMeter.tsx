@@ -1,4 +1,4 @@
-import { calculatePasswordStrength, getPasswordStrengthLabel } from "../utils/passwordStrength";
+import { calculatePasswordStrength, getPasswordStrengthLabel } from "@/shared/utils/passwordStrength";
 import { motion } from "framer-motion";
 
 interface PasswordStrengthMeterProps {
