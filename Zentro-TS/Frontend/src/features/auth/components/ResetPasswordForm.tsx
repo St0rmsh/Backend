@@ -62,7 +62,7 @@ export const ResetPasswordForm = () => {
         />
         <Label 
           htmlFor="email"
-          className="absolute left-3 top-4 text-muted-foreground transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary peer-not-placeholder-shown:top-1.5 peer-not-placeholder-shown:text-xs"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
         >
           Email address
         </Label>
@@ -79,7 +79,7 @@ export const ResetPasswordForm = () => {
         />
         <Label 
           htmlFor="otp"
-          className="absolute left-3 top-4 text-muted-foreground transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary peer-not-placeholder-shown:top-1.5 peer-not-placeholder-shown:text-xs"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
         >
           6-Digit OTP
         </Label>
@@ -95,7 +95,7 @@ export const ResetPasswordForm = () => {
         />
         <Label 
           htmlFor="newPassword"
-          className="absolute left-3 top-4 text-muted-foreground transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary peer-not-placeholder-shown:top-1.5 peer-not-placeholder-shown:text-xs"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
         >
           New Password
         </Label>
@@ -112,7 +112,7 @@ export const ResetPasswordForm = () => {
         />
         <Label 
           htmlFor="confirmPassword"
-          className="absolute left-3 top-4 text-muted-foreground transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary peer-not-placeholder-shown:top-1.5 peer-not-placeholder-shown:text-xs"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
         >
           Confirm New Password
         </Label>

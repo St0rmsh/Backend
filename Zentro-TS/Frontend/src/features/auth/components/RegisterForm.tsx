@@ -51,7 +51,7 @@ export const RegisterForm = () => {
           />
           <Label 
             htmlFor="fullname"
-            className="absolute left-3 top-4 text-muted-foreground transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary peer-not-placeholder-shown:top-1.5 peer-not-placeholder-shown:text-xs"
+            className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
           >
             Full Name
           </Label>
@@ -67,7 +67,7 @@ export const RegisterForm = () => {
           />
           <Label 
             htmlFor="username"
-            className="absolute left-3 top-4 text-muted-foreground transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary peer-not-placeholder-shown:top-1.5 peer-not-placeholder-shown:text-xs"
+            className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
           >
             Username
           </Label>
@@ -85,7 +85,7 @@ export const RegisterForm = () => {
         />
         <Label 
           htmlFor="email"
-          className="absolute left-3 top-4 text-muted-foreground transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary peer-not-placeholder-shown:top-1.5 peer-not-placeholder-shown:text-xs"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
         >
           Email address
         </Label>
@@ -101,7 +101,7 @@ export const RegisterForm = () => {
         />
         <Label 
           htmlFor="password"
-          className="absolute left-3 top-4 text-muted-foreground transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary peer-not-placeholder-shown:top-1.5 peer-not-placeholder-shown:text-xs"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
         >
           Password
         </Label>
