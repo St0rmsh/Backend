@@ -6,7 +6,9 @@ export const ROUTES = {
   RESET_PASSWORD: '/reset-password',
   CHANGE_PASSWORD: '/change-password',
   VERIFY_EMAIL: '/verify-email',
+  VERIFY_OTP: '/verify-otp',
   PROFILE: '/profile',
+  PROFILE_SETTINGS: '/profile/settings',
   SETTINGS: '/settings',
   NOT_FOUND: '/404',
 } as const;

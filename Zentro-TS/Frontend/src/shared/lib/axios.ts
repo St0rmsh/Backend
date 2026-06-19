@@ -1,6 +1,6 @@
 import axios, { InternalAxiosRequestConfig } from "axios";
-import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./cookies";
-import { API_BASE_URL } from "../../app/config/env";
+import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./cookies.js";
+import { API_BASE_URL } from "@/app/config/env";
 import { ROUTES } from "../constants/routes";
 
 declare module 'axios' {

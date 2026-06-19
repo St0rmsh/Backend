@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { changePasswordSchema, ChangePasswordFormData } from "../schemas/changePassword.schema";
 import { authService } from "../services/auth.service";
 import { AUTH_MESSAGES } from "../constants/authMessages";
-import { AUTH_ROUTES } from "../constants/authRoutes";
+import { ROUTES } from "@/shared/constants/routes";
 import { handleAuthError } from "../utils/authErrorHandler";
 
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ export const ChangePasswordForm = () => {
       setLoading(true);
       await authService.changePassword(data);
       toast.success(AUTH_MESSAGES.CHANGE_PASSWORD_SUCCESS);
-      navigate(AUTH_ROUTES.PROFILE_SETTINGS);
+      navigate(ROUTES.PROFILE_SETTINGS);
     } catch (error) {
       toast.error(handleAuthError(error));
     } finally {

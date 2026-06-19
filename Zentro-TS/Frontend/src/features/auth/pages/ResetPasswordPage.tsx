@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { AuthLayout } from "../components/AuthLayout";
 import { AuthCard } from "../components/AuthCard";
 import { ResetPasswordForm } from "../components/ResetPasswordForm";
-import { AUTH_ROUTES } from "../constants/authRoutes";
+import { ROUTES } from "@/shared/constants/routes";
 
 export const ResetPasswordPage = () => {
   return (
@@ -13,7 +13,7 @@ export const ResetPasswordPage = () => {
         footer={
           <span>
             Back to{" "}
-            <Link to={AUTH_ROUTES.LOGIN} className="text-accent hover:underline">
+            <Link to={ROUTES.LOGIN} className="text-accent hover:underline">
               Sign in
             </Link>
           </span>

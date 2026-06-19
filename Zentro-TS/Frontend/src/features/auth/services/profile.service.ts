@@ -1,7 +1,7 @@
-import { axiosInstance } from "../utils/axiosInstance";
+import { axiosInstance } from "@/shared/lib/axios";
 import { ProfileFormData } from "../schemas/profile.schema";
-import { ApiResponse } from "../types/api.types";
-import { User } from "../types/user.types";
+import { ApiResponse } from "@/shared/types/api.types";
+import { User } from "@/shared/types/user.types";
 
 export const profileService = {
   updateProfile: async (data: ProfileFormData, avatarFile?: File, bannerFile?: File) => {

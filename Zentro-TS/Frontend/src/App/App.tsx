@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { AUTH_ROUTES } from '../features/auth/constants/authRoutes'
+import { ROUTES } from "@/shared/constants/routes";
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { RegisterPage } from '../features/auth/pages/RegisterPage'
 import { SessionExpiryModal } from '../features/auth/components/SessionExpiryModal'
@@ -15,15 +15,15 @@ function App() {
     <>
       <SessionExpiryModal />
       <Routes>
-        <Route path={AUTH_ROUTES.LOGIN} element={<LoginPage />} />
-        <Route path={AUTH_ROUTES.REGISTER} element={<RegisterPage />} />
-        <Route path={AUTH_ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
-        <Route path={AUTH_ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
-        <Route path={AUTH_ROUTES.VERIFY_OTP} element={<VerifyOtpPage />} />
-        <Route path={AUTH_ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPage />} />
-        <Route path={AUTH_ROUTES.PROFILE_SETTINGS} element={<ProfileSettingsPage />} />
+        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+        <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+        <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+        <Route path={ROUTES.VERIFY_OTP} element={<VerifyOtpPage />} />
+        <Route path={ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPage />} />
+        <Route path={ROUTES.PROFILE_SETTINGS} element={<ProfileSettingsPage />} />
         {/* Redirect root to login for now, or you can build a Home page */}
-        <Route path="/" element={<Navigate to={AUTH_ROUTES.LOGIN} replace />} />
+        <Route path="/" element={<Navigate to={ROUTES.LOGIN} replace />} />
       </Routes>
     </>
   )

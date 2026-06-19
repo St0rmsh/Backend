@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { AuthLayout } from "../components/AuthLayout";
 import { AuthCard } from "../components/AuthCard";
 import { LoginForm } from "../components/LoginForm";
-import { AUTH_ROUTES } from "../constants/authRoutes";
+import { ROUTES } from "@/shared/constants/routes";
 
 export const LoginPage = () => {
   return (
@@ -13,7 +13,7 @@ export const LoginPage = () => {
         footer={
           <span>
             Don't have an account?{" "}
-            <Link to={AUTH_ROUTES.REGISTER} className="text-accent hover:underline">
+            <Link to={ROUTES.REGISTER} className="text-accent hover:underline">
               Sign up
             </Link>
           </span>

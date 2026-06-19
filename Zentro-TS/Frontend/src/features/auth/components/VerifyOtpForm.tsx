@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/auth.service";
 import { AUTH_MESSAGES } from "../constants/authMessages";
-import { AUTH_ROUTES } from "../constants/authRoutes";
+import { ROUTES } from "@/shared/constants/routes";
 import { handleAuthError } from "../utils/authErrorHandler";
 
 import { Button } from "@/components/ui/button";
@@ -72,7 +72,7 @@ export const VerifyOtpForm = () => {
       setLoading(true);
       await authService.verifyOtp(otpValue);
       toast.success(AUTH_MESSAGES.VERIFY_OTP_SUCCESS);
-      navigate(AUTH_ROUTES.HOME);
+      navigate(ROUTES.HOME);
     } catch (error) {
       toast.error(handleAuthError(error));
     } finally {

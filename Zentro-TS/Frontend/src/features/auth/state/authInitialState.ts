@@ -1,5 +1,5 @@
 import { AuthState } from "../types/auth.types";
-import { getAccessToken } from "../utils/cookies";
+import { getAccessToken, getRefreshToken } from '@/shared/lib/cookies';
 
 export const initialState: AuthState = {
   user: null,

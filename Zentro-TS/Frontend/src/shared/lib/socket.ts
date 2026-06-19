@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import { SOCKET_URL } from "../../app/config/env";
+import { SOCKET_URL } from "@/app/config/env";
 
 class SocketService {
   private socket: Socket | null = null;

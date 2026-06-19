@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { resetPasswordSchema, ResetPasswordFormData } from "../schemas/resetPassword.schema";
 import { authService } from "../services/auth.service";
 import { AUTH_MESSAGES } from "../constants/authMessages";
-import { AUTH_ROUTES } from "../constants/authRoutes";
+import { ROUTES } from "@/shared/constants/routes";
 import { handleAuthError } from "../utils/authErrorHandler";
 
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export const ResetPasswordForm = () => {
       setLoading(true);
       await authService.resetPassword(data);
       toast.success(AUTH_MESSAGES.RESET_PASSWORD_SUCCESS);
-      navigate(AUTH_ROUTES.LOGIN);
+      navigate(ROUTES.LOGIN);
     } catch (error) {
       toast.error(handleAuthError(error));
     } finally {

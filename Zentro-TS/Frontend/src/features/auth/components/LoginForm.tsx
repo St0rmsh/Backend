@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { loginSchema, LoginFormData } from "../schemas/login.schema";
 import { useAuth } from "../hooks/useAuth";
-import { AUTH_ROUTES } from "../constants/authRoutes";
+import { ROUTES } from "@/shared/constants/routes";
 import { AUTH_MESSAGES } from "../constants/authMessages";
 
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ export const LoginForm = () => {
     try {
       await login(data);
       toast.success(AUTH_MESSAGES.LOGIN_SUCCESS);
-      navigate(AUTH_ROUTES.HOME);
+      navigate(ROUTES.HOME);
     } catch (error) {
       toast.error(error as string);
     }
@@ -75,7 +75,7 @@ export const LoginForm = () => {
           {/* Checkbox can go here if needed */}
         </div>
         <Link 
-          to={AUTH_ROUTES.FORGOT_PASSWORD}
+          to={ROUTES.FORGOT_PASSWORD}
           className="text-sm text-accent hover:underline"
         >
           Forgot password?
