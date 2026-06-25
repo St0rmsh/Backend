@@ -50,76 +50,82 @@ export const ResetPasswordForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full">
-      <div className="space-y-2 relative">
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
+      {/* Email Field (disabled) */}
+      <div className="relative">
         <Input
           id="email"
           type="email"
           placeholder=" "
-          className="pt-6 pb-2 peer bg-muted"
+          className="pt-5 pb-2 peer bg-muted"
           disabled
           {...register("email")}
         />
         <Label 
           htmlFor="email"
-          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
         >
           Email address
         </Label>
-        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+        {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
       </div>
 
-      <div className="space-y-2 relative">
+      {/* OTP Field */}
+      <div className="relative">
         <Input
           id="otp"
           placeholder=" "
           maxLength={6}
-          className="pt-6 pb-2 peer tracking-widest"
+          className="pt-5 pb-2 peer tracking-widest"
           {...register("otp")}
         />
         <Label 
           htmlFor="otp"
-          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
         >
           6-Digit OTP
         </Label>
-        {errors.otp && <p className="text-xs text-destructive">{errors.otp.message}</p>}
+        {errors.otp && <p className="mt-1 text-xs text-destructive">{errors.otp.message}</p>}
       </div>
 
-      <div className="space-y-2 relative">
-        <PasswordInput
-          id="newPassword"
-          placeholder=" "
-          className="pt-6 pb-2 peer"
-          {...register("newPassword")}
-        />
-        <Label 
-          htmlFor="newPassword"
-          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
-        >
-          New Password
-        </Label>
+      {/* New Password Field */}
+      <div>
+        <div className="relative">
+          <PasswordInput
+            id="newPassword"
+            placeholder=" "
+            className="pt-5 pb-2 peer"
+            {...register("newPassword")}
+          />
+          <Label 
+            htmlFor="newPassword"
+            className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
+          >
+            New Password
+          </Label>
+        </div>
         <PasswordStrengthMeter password={password} />
-        {errors.newPassword && <p className="text-xs text-destructive">{errors.newPassword.message}</p>}
+        {errors.newPassword && <p className="mt-1 text-xs text-destructive">{errors.newPassword.message}</p>}
       </div>
 
-      <div className="space-y-2 relative">
+      {/* Confirm Password Field */}
+      <div className="relative">
         <PasswordInput
           id="confirmPassword"
           placeholder=" "
-          className="pt-6 pb-2 peer"
+          className="pt-5 pb-2 peer"
           {...register("confirmPassword")}
         />
         <Label 
           htmlFor="confirmPassword"
-          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
+          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
         >
           Confirm New Password
         </Label>
-        {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
+        {errors.confirmPassword && <p className="mt-1 text-xs text-destructive">{errors.confirmPassword.message}</p>}
       </div>
 
-      <Button type="submit" className="w-full mt-6" disabled={loading}>
+      <Button type="submit" className="w-full !mt-6" disabled={loading}>
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Reset Password"}
       </Button>
     </form>

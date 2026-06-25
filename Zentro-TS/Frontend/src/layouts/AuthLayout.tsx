@@ -1,16 +1,15 @@
 import { Outlet } from "react-router-dom";
 
 /**
- * Auth Layout Component
+ * Auth Layout Component (Router-level)
  * Layout for authentication pages (login, register, reset password, etc.)
- * Provides centered card layout with minimal navigation
+ * This is a pass-through layout — the actual auth page styling 
+ * (hero + card split) is handled by the feature-level AuthLayout.
  */
 export const AuthLayout = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <div className="w-full max-w-md">
-        <Outlet />
-      </div>
+    <div className="min-h-screen bg-background">
+      <Outlet />
     </div>
   );
 };

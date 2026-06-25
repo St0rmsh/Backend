@@ -94,8 +94,9 @@ export const VerifyOtpForm = () => {
   };
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex justify-between gap-2">
+    <div className="w-full space-y-6">
+      {/* OTP Input Grid */}
+      <div className="flex justify-center gap-2 sm:gap-3">
         {otp.map((digit, index) => (
           <input
             key={index}
@@ -107,16 +108,20 @@ export const VerifyOtpForm = () => {
             onKeyDown={(e) => handleKeyDown(e, index)}
             onPaste={handlePaste}
             ref={(el) => { inputRefs.current[index] = el; }}
-            className="w-12 h-14 text-center text-2xl font-bold rounded-md border border-input bg-transparent shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary transition-colors"
+            className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold rounded-lg border border-input bg-transparent shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary transition-all"
           />
         ))}
       </div>
 
-      <Button onClick={handleVerify} className="w-full mt-6" disabled={loading || otp.join("").length !== 6}>
+      <Button 
+        onClick={handleVerify} 
+        className="w-full" 
+        disabled={loading || otp.join("").length !== 6}
+      >
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Verify OTP"}
       </Button>
 
-      <div className="text-center mt-4">
+      <div className="text-center">
         <button
           type="button"
           onClick={handleResend}

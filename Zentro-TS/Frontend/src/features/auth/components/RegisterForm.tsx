@@ -18,8 +18,8 @@ import { PasswordStrengthMeter } from "./PasswordStrengthMeter";
 import { SocialButton } from "./SocialButton";
 
 const Requirement = ({ met, text }: { met: boolean; text: string }) => (
-  <div className="flex items-center space-x-2 text-xs">
-    {met ? <Check className="text-green-500 w-3 h-3" /> : <X className="text-muted-foreground w-3 h-3" />}
+  <div className="flex items-center gap-1.5 text-xs">
+    {met ? <Check className="text-green-500 w-3 h-3 shrink-0" /> : <X className="text-muted-foreground w-3 h-3 shrink-0" />}
     <span className={met ? "text-green-500" : "text-muted-foreground"}>{text}</span>
   </div>
 );
@@ -64,74 +64,79 @@ export const RegisterForm = () => {
       transition={{ duration: 0.4 }}
       className="w-full"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2 relative">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
+        {/* Full Name + Username Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="relative">
             <Input
               id="fullname"
               placeholder=" "
-              className="pt-6 pb-2 peer"
+              className="pt-5 pb-2 peer"
               {...register("fullname")}
             />
             <Label 
               htmlFor="fullname"
-              className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
+              className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
             >
               Full Name
             </Label>
-            {errors.fullname && <p className="text-xs text-destructive">{errors.fullname.message}</p>}
+            {errors.fullname && <p className="mt-1 text-xs text-destructive">{errors.fullname.message}</p>}
           </div>
 
-          <div className="space-y-2 relative">
+          <div className="relative">
             <Input
               id="username"
               placeholder=" "
-              className="pt-6 pb-2 peer"
+              className="pt-5 pb-2 peer"
               {...register("username")}
             />
             <Label 
               htmlFor="username"
-              className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
+              className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
             >
               Username
             </Label>
-            {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
+            {errors.username && <p className="mt-1 text-xs text-destructive">{errors.username.message}</p>}
           </div>
         </div>
 
-        <div className="space-y-2 relative">
+        {/* Email Field */}
+        <div className="relative">
           <Input
             id="email"
             type="email"
             placeholder=" "
-            className="pt-6 pb-2 peer"
+            className="pt-5 pb-2 peer"
             {...register("email")}
           />
           <Label 
             htmlFor="email"
-            className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
+            className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
           >
             Email address
           </Label>
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
         </div>
 
-        <div className="space-y-2 relative">
-          <PasswordInput
-            id="password"
-            placeholder=" "
-            className="pt-6 pb-2 peer"
-            {...register("password")}
-          />
-          <Label 
-            htmlFor="password"
-            className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary"
-          >
-            Password
-          </Label>
+        {/* Password Field */}
+        <div>
+          <div className="relative">
+            <PasswordInput
+              id="password"
+              placeholder=" "
+              className="pt-5 pb-2 peer"
+              {...register("password")}
+            />
+            <Label 
+              htmlFor="password"
+              className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
+            >
+              Password
+            </Label>
+          </div>
           <PasswordStrengthMeter password={password} />
           {password.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-2 pb-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-2">
               <Requirement met={hasLength} text="At least 8 characters" />
               <Requirement met={hasUpper} text="One uppercase letter" />
               <Requirement met={hasLower} text="One lowercase letter" />
@@ -139,21 +144,23 @@ export const RegisterForm = () => {
               <Requirement met={hasSpecial} text="One special character" />
             </div>
           )}
-          {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
         </div>
 
-        <Button type="submit" className="w-full mt-6" disabled={loading}>
+        <Button type="submit" className="w-full !mt-6" disabled={loading}>
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Account"}
         </Button>
       </form>
 
-      <div className="mt-6 flex items-center justify-center space-x-4">
+      {/* Divider */}
+      <div className="mt-6 flex items-center gap-4">
         <div className="h-px bg-border flex-1" />
-        <span className="text-xs text-muted-foreground uppercase tracking-wider">Or continue with</span>
+        <span className="text-xs text-muted-foreground uppercase tracking-wider shrink-0">Or continue with</span>
         <div className="h-px bg-border flex-1" />
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4">
+      {/* Social Buttons */}
+      <div className="mt-6 grid grid-cols-2 gap-3">
         <SocialButton
           provider="Google"
           icon={
