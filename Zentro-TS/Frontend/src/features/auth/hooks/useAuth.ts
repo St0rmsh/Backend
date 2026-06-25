@@ -1,18 +1,7 @@
 import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
-import {
-  selectAuthUser,
-  selectAuthIsAuthenticated,
-  selectAuthLoading,
-  selectAuthError,
-  selectAuthAccessToken,
-} from "../state/authSelectors";
-import {
-  loginThunk,
-  registerThunk,
-  logoutThunk,
-  updateProfileThunk,
-} from "../state/authThunks";
+import {selectAuthUser,selectAuthIsAuthenticated,selectAuthLoading,selectAuthError,selectAuthAccessToken} from "../state/authSelectors";
+import {loginThunk,registerThunk,logoutThunk,updateProfileThunk} from "../state/authThunks";
 import { clearError } from "../state/authSlice";
 import { LoginFormData } from "../schemas/login.schema";
 import { RegisterFormData } from "../schemas/register.schema";

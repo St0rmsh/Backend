@@ -2,18 +2,20 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
-import { Toaster } from 'sonner'
 import { store } from './store'
+import { AppRouter } from './app/AppRouter'
 import './styles/index.css'
-import App from './app/App.tsx'
+import LenisProvider from './styles/lenis/LenisProvider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <App />
-        <Toaster position="top-right" richColors />
+        <LenisProvider>
+          <AppRouter />
+        </LenisProvider>
       </BrowserRouter>
     </Provider>
   </StrictMode>,
 )
+

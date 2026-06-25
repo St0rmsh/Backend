@@ -36,19 +36,19 @@ class SocketService {
     }
   }
 
-  on(event: string, callback: (...args: any[]) => void) {
+  on(event: string, callback: (...args: unknown[]) => void) {
     if (!this.socket) return;
     this.socket.off(event, callback); // prevent duplicate listeners
     this.socket.on(event, callback);
     this.customListeners.add(event);
   }
 
-  off(event: string, callback?: (...args: any[]) => void) {
+  off(event: string, callback?: (...args: unknown[]) => void) {
     if (!this.socket) return;
     this.socket.off(event, callback);
   }
 
-  emit(event: string, data: any) {
+  emit(event: string, data: unknown) {
     if (!this.socket) return;
     this.socket.emit(event, data);
   }

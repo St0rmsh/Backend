@@ -16,8 +16,9 @@ export const AuthCard = ({ title, description, children, footer }: AuthCardProps
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Card className="max-w-md mx-auto rounded-xl shadow-lg sm:border sm:shadow-lg overflow-hidden">
-        <CardHeader className="space-y-2 text-center sm:text-left pt-6">
+      <Card className="max-w-md mx-auto rounded-xl shadow-2xl sm:border border-white/5 bg-background/60 backdrop-blur-xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5 opacity-50 pointer-events-none" />
+        <CardHeader className="space-y-2 text-center sm:text-left pt-6 relative z-10">
           <CardTitle className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</CardTitle>
           {description && (
             <CardDescription className="text-base text-muted-foreground">
