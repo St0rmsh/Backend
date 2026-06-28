@@ -93,16 +93,11 @@ export const ResetPasswordForm = () => {
         <div className="relative">
           <PasswordInput
             id="newPassword"
+            label="New Password"
             placeholder=" "
             className="pt-5 pb-2 peer"
             {...register("newPassword")}
           />
-          <Label 
-            htmlFor="newPassword"
-            className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
-          >
-            New Password
-          </Label>
         </div>
         <PasswordStrengthMeter password={password} />
         {errors.newPassword && <p className="mt-1 text-xs text-destructive">{errors.newPassword.message}</p>}
@@ -112,16 +107,11 @@ export const ResetPasswordForm = () => {
       <div className="relative">
         <PasswordInput
           id="confirmPassword"
+          label="Confirm New Password"
           placeholder=" "
           className="pt-5 pb-2 peer"
           {...register("confirmPassword")}
         />
-        <Label 
-          htmlFor="confirmPassword"
-          className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
-        >
-          Confirm New Password
-        </Label>
         {errors.confirmPassword && <p className="mt-1 text-xs text-destructive">{errors.confirmPassword.message}</p>}
       </div>
 

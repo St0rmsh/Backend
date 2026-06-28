@@ -10,12 +10,12 @@ import { setConnected } from "@/store/slices/socketSlice";
 export function useSocket() {
   const dispatch = useAppDispatch();
   const { isConnected } = useAppSelector((state) => state.socket);
-  const { isAuthenticated, token } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, accessToken } = useAppSelector((state) => state.auth);
 
   // Auto-connect when authenticated
   useEffect(() => {
-    if (isAuthenticated && token && !isConnected) {
-      socketService.connect(token);
+    if (isAuthenticated && accessToken && !isConnected) {
+      socketService.connect(accessToken);
     }
 
     // Listen for connection changes
@@ -26,7 +26,7 @@ export function useSocket() {
     return () => {
       unsubscribe();
     };
-  }, [isAuthenticated, token, isConnected, dispatch]);
+  }, [isAuthenticated, accessToken, isConnected, dispatch]);
 
   const emit = useCallback(
     (event: string, data?: unknown) => {

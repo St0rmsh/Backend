@@ -10,7 +10,7 @@ import { User } from "@/shared/types/user.types";
 
 export const authService = {
   login: async (data: LoginFormData) => {
-    const response = await axiosInstance.post<ApiResponse<LoginResponse>>("/auth/login", data);
+    const response = await axiosInstance.post<ApiResponse<LoginResponse>>("/auth/login", data);    
     return response.data;
   },
 

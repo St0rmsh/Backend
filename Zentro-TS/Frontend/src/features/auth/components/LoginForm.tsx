@@ -67,16 +67,11 @@ export const LoginForm = () => {
         <div className="relative">
           <PasswordInput
             id="password"
+            label="Password"
             placeholder=" "
             className="pt-5 pb-2 peer"
             {...register("password")}
           />
-          <Label 
-            htmlFor="password"
-            className="absolute left-3 top-1.5 text-xs text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary pointer-events-none"
-          >
-            Password
-          </Label>
           {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
         </div>
 

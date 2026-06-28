@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 /* ============================================================================
    THEME CONFIGURATION — Tailwind CSS v4

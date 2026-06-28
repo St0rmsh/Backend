@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import { SOCKET_URL } from "@/app/config/env";
+import { SOCKET_URL } from "@/App/config/env";
 
 class SocketService {
   private socket: Socket | null = null;
@@ -38,7 +38,7 @@ class SocketService {
 
   on(event: string, callback: (...args: unknown[]) => void) {
     if (!this.socket) return;
-    this.socket.off(event, callback); // prevent duplicate listeners
+    this.socket.off(event, callback); 
     this.socket.on(event, callback);
     this.customListeners.add(event);
   }

@@ -1,30 +1,32 @@
 import { Outlet } from "react-router-dom";
+import { Sidebar } from "./components/Sidebar";
+import { RightSidebar } from "./components/RightSidebar";
+import { TopNavigation } from "./components/TopNavigation";
+import { BottomNavigation } from "./components/BottomNavigation";
 
 /**
  * Main Layout Component
  * Layout for main application pages (feed, explore, posts, profile, etc.)
- * Includes header, sidebar, and main content area
- * TODO: Implement header and sidebar components
  */
 export const MainLayout = () => {
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* TODO: Add Sidebar Component */}
-      {/* <Sidebar /> */}
+    <div className="flex min-h-screen bg-background text-foreground w-full max-w-[1400px] mx-auto">
+      <Sidebar />
 
-      <div className="flex-1 flex flex-col">
-        {/* TODO: Add Header Component */}
-        {/* <Header /> */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <TopNavigation />
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 w-full pb-16 md:pb-0">
+          <div className="max-w-2xl mx-auto w-full min-h-screen border-x border-border/40 bg-background relative">
             <Outlet />
           </div>
         </main>
+        
+        <BottomNavigation />
       </div>
 
-      {/* TODO: Add Right Sidebar for recommendations, trending, etc. */}
+      <RightSidebar />
     </div>
   );
 };
