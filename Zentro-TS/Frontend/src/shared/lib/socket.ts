@@ -6,11 +6,13 @@ class SocketService {
   private connectionCallbacks: ((isConnected: boolean) => void)[] = [];
   private customListeners = new Set<string>();
 
-  connect(token: string) {
+  connect(accessToken: string) {
+      console.log("Socket Token:", accessToken);
+
     if (this.socket?.connected) return;
 
     this.socket = io(SOCKET_URL, {
-      auth: { token },
+      auth: { token:accessToken },
       autoConnect: true,
       withCredentials: true,
       transports: ["websocket"],

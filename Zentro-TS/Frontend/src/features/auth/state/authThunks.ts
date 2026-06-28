@@ -19,6 +19,7 @@ export const loginThunk = createAsyncThunk(
       if (response.success && response.data) {
         setTokens(response.data.accessToken, response.data.refreshToken);
         socketService.connect(response.data.accessToken);
+        
         return response.data;
       }
       return rejectWithValue(response.message);

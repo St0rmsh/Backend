@@ -76,9 +76,11 @@ export const loginController = async (req: Request<{}, {}, RegisterBody>,
         return res.status(200).json({
             success: true,
             message: "User logged in successfully",
-            data: user,
-            accessToken,
-            refreshToken
+            data: {
+                user,
+                accessToken,
+                refreshToken
+            }
         })
 
 

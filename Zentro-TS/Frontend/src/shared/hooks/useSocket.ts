@@ -14,6 +14,10 @@ export function useSocket() {
 
   // Auto-connect when authenticated
   useEffect(() => {
+
+     console.log("isAuthenticated:", isAuthenticated);
+    console.log("accessToken:", accessToken);
+
     if (isAuthenticated && accessToken && !isConnected) {
       socketService.connect(accessToken);
     }
