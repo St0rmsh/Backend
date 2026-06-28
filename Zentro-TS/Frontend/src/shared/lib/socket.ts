@@ -7,7 +7,6 @@ class SocketService {
   private customListeners = new Set<string>();
 
   connect(accessToken: string) {
-      console.log("Socket Token:", accessToken);
 
     if (this.socket?.connected) return;
 

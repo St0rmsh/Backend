@@ -29,9 +29,11 @@ export const registrationController = async (req: Request<{}, {}, RegisterBody>,
         res.status(201).json({
             success: true,
             message: "User registered successfully",
-            data: user,
-            accessToken,
-            refreshToken
+            data: {user,
+                accessToken,
+                refreshToken
+            }
+            
         })
 
 

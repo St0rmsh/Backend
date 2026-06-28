@@ -21,6 +21,7 @@ export const authService = {
 
   getCurrentUser: async () => {
     const response = await axiosInstance.get<ApiResponse<User>>("/auth/me");
+    console.log("Current User:", response.data);
     return response.data;
   },
 

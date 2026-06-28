@@ -41,12 +41,12 @@ export const registerUserService = async (data:RegisterBody) =>{
 
         return {
             user: {
-        _id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-        fullname: newUser.fullname,
-        isVerified: newUser.isVerified
-    },
+                _id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                fullname: newUser.fullname,
+                isVerified: newUser.isVerified
+        },
             accessToken,
             refreshToken
 

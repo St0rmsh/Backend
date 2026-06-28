@@ -9,7 +9,7 @@ const authRouter = express.Router()
 
 
 //@Method         POST
-//@Route          /api/v1/auth/register
+//@Route          /api/auth/register
 //@Description    Register a new user
 //@Access         Public
 authRouter.post("/register", registerValidator, registrationController)
@@ -18,7 +18,7 @@ authRouter.post("/register", registerValidator, registrationController)
 
 
 //@Method         POST
-//@Route          /api/v1/auth/login
+//@Route          /api/auth/login
 //@Description    Login a new user
 //@Access         Public
 authRouter.post("/login", loginValidator, loginController)
@@ -27,7 +27,7 @@ authRouter.post("/login", loginValidator, loginController)
 
 
 //@Method         GET
-//@Route          /api/v1/auth/me
+//@Route          /api/auth/me
 //@Description    Get current user profile
 //@Access         Private
 authRouter.get("/me", authMiddleware, getUser)
@@ -36,7 +36,7 @@ authRouter.get("/me", authMiddleware, getUser)
 
 
 //@Method         POST
-//@Route          /api/v1/auth/refresh-access-token
+//@Route          /api/auth/refresh-access-token
 //@Description    Refresh access token
 //@Access         Public
 authRouter.post("/refresh-access-token", refreshAccessTokenController)
@@ -45,7 +45,7 @@ authRouter.post("/refresh-access-token", refreshAccessTokenController)
 
 
 //@Method         POST
-//@Route          /api/v1/auth/logout
+//@Route          /api/auth/logout
 //@Description    Logout a user
 //@Access         Private
 authRouter.post("/logout", authMiddleware, logoutController)
@@ -54,7 +54,7 @@ authRouter.post("/logout", authMiddleware, logoutController)
 
 
 //@Method         PATCH
-//@Route          /api/v1/auth/update-profile
+//@Route          /api/auth/update-profile
 //@Description    Update user profile
 //@Access         Private
 authRouter.patch("/update-profile", authMiddleware, uploadFile.fields([{ name: "avatar", maxCount: 1 },
@@ -64,7 +64,7 @@ authRouter.patch("/update-profile", authMiddleware, uploadFile.fields([{ name: "
 
 
 //@Method         POST
-//@Route          /api/v1/auth/send-otp
+//@Route          /api/auth/send-otp
 //@Description    Send OTP to user
 //@Access         Private
 authRouter.post("/send-otp", authMiddleware, sendOtpController)
@@ -73,7 +73,7 @@ authRouter.post("/send-otp", authMiddleware, sendOtpController)
 
 
 //@Method         POST
-//@Route          /api/v1/auth/verify-otp
+//@Route          /api/auth/verify-otp
 //@Description    Verify OTP
 //@Access         Private
 authRouter.post("/verify-otp", authMiddleware, verifyOtpController)
@@ -81,7 +81,7 @@ authRouter.post("/verify-otp", authMiddleware, verifyOtpController)
 
 
 //@Method        PATCH
-//@Route          /api/v1/auth/change-password
+//@Route          /api/auth/change-password
 //@Description    Change user password
 //@Access         Private
 authRouter.patch("/change-password", authMiddleware, changePasswordController)
@@ -89,14 +89,14 @@ authRouter.patch("/change-password", authMiddleware, changePasswordController)
 
 
 //@Method        POST
-//@Route          /api/v1/auth/forgot-password
+//@Route          /api/auth/forgot-password
 //@Description    Forget user password
 //@Access         Private
 authRouter.post("/forgot-password", forgotPasswordController)
 
 
 //@Method        POST
-//@Route          /api/v1/auth/reset-password
+//@Route          /api/auth/reset-password
 //@Description    Reset user password
 //@Access         Private
 authRouter.post("/reset-password", resetPasswordValidator, resetPasswordController)
