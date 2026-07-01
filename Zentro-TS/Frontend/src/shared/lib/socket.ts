@@ -7,11 +7,10 @@ class SocketService {
   private customListeners = new Set<string>();
 
   connect(accessToken: string) {
-
     if (this.socket?.connected) return;
 
     this.socket = io(SOCKET_URL, {
-      auth: { token:accessToken },
+      auth: { token: accessToken },
       autoConnect: true,
       withCredentials: true,
       transports: ["websocket"],
@@ -27,6 +26,32 @@ class SocketService {
       console.error("Socket connection error:", err.message);
       this.notifyConnectionChange(false);
     });
+  }
+
+  /**
+   * Reconnect socket with a new access token
+   * Called when the access token is refreshed
+   * Ensures socket always uses the latest authentication token
+   */
+  reconnectWithToken(newAccessToken: string) {
+    if (!this.socket) {
+      this.connect(newAccessToken);
+      return;
+    }
+
+    // Update socket auth token
+    this.socket.auth = { token: newAccessToken };
+
+    // Disconnect and reconnect to apply new token
+    if (this.socket.connected) {
+      this.socket.disconnect();
+      // Small delay to ensure clean disconnect
+      setTimeout(() => {
+        this.socket?.connect();
+      }, 100);
+    } else {
+      this.socket.connect();
+    }
   }
 
   disconnect() {

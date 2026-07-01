@@ -59,6 +59,22 @@ const ProfileSettingsPage = lazy(() =>
 );
 
 // ============================================================================
+// LAZY LOADED PROFILE PAGES
+// ============================================================================
+
+const ProfilePage = lazy(() =>
+  import("@/features/profile/pages/ProfilePage").then((m) => ({
+    default: m.ProfilePage,
+  }))
+);
+
+const SettingsPage = lazy(() =>
+  import("@/features/profile/pages/SettingsPage").then((m) => ({
+    default: m.SettingsPage,
+  }))
+);
+
+// ============================================================================
 // ROUTE CONFIGURATION
 // ============================================================================
 
@@ -74,7 +90,7 @@ export const routes: RouteObject[] = [
         element: <AuthLayout />,
         children: [
           {
-            path: ROUTES.LOGIN,
+            path: "login",
             element: (
               <GuestRoute>
                 <Suspense fallback={<PageLoader />}>
@@ -84,7 +100,7 @@ export const routes: RouteObject[] = [
             ),
           },
           {
-            path: ROUTES.REGISTER,
+            path: "register",
             element: (
               <GuestRoute>
                 <Suspense fallback={<PageLoader />}>
@@ -94,7 +110,7 @@ export const routes: RouteObject[] = [
             ),
           },
           {
-            path: ROUTES.FORGOT_PASSWORD,
+            path: "forgot-password",
             element: (
               <GuestRoute>
                 <Suspense fallback={<PageLoader />}>
@@ -104,7 +120,7 @@ export const routes: RouteObject[] = [
             ),
           },
           {
-            path: ROUTES.RESET_PASSWORD,
+            path: "reset-password/:token",
             element: (
               <GuestRoute>
                 <Suspense fallback={<PageLoader />}>
@@ -114,7 +130,7 @@ export const routes: RouteObject[] = [
             ),
           },
           {
-            path: ROUTES.VERIFY_OTP,
+            path: "verify-otp",
             element: (
               <GuestRoute>
                 <Suspense fallback={<PageLoader />}>
@@ -124,7 +140,7 @@ export const routes: RouteObject[] = [
             ),
           },
           {
-            path: ROUTES.CHANGE_PASSWORD,
+            path: "change-password",
             element: (
               <ProtectedRoute>
                 <Suspense fallback={<PageLoader />}>
@@ -149,6 +165,23 @@ export const routes: RouteObject[] = [
             index: true,
             element: <Navigate to={ROUTES.FEED} replace />,
           },
+          // Profile Routes
+          {
+            path: "profile",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <ProfilePage isOwnProfile />
+              </Suspense>
+            ),
+          },
+          {
+            path: "profile/:username",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <ProfilePage />
+              </Suspense>
+            ),
+          },
           // TODO: Add feed, explore, posts, etc. routes here
         ],
       },
@@ -164,17 +197,20 @@ export const routes: RouteObject[] = [
         children: [
           {
             index: true,
-            element: <Navigate to={ROUTES.PROFILE_SETTINGS} replace />,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <SettingsPage />
+              </Suspense>
+            ),
           },
           {
-            path: ROUTES.PROFILE_SETTINGS,
+            path: "profile",
             element: (
               <Suspense fallback={<PageLoader />}>
                 <ProfileSettingsPage />
               </Suspense>
             ),
           },
-          // TODO: Add other settings routes
         ],
       },
 

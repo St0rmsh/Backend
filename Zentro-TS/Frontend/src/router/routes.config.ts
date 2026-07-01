@@ -16,7 +16,8 @@ export const ROUTES = {
   HOME: "/",
   FEED: "/feed",
   EXPLORE: "/explore",
-  PROFILE: "/profile/:username",
+  OWN_PROFILE: "/app/profile",
+  PROFILE: "/app/profile/:username",
   SETTINGS: "/settings",
 
   // Feature Routes

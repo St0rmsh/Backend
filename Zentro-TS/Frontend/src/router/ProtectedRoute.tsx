@@ -12,16 +12,19 @@ interface ProtectedRouteProps {
  * Protected Route Component
  * Redirects to login if user is not authenticated
  * Redirects to unauthorized if user lacks required permissions
+ * Shows loader while initial auth check is in progress
  */
 export const ProtectedRoute = ({
   children,
   requiresAdmin = false,
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, user, loading } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user, loading, initialCheckComplete } = useAppSelector((state) => state.auth);
   const isAdmin = user?.role === "admin";
 
-  // Show loader while checking authentication
-  if (loading) {
+  // Show loader while:
+  // 1. Initial auth check is in progress
+  // 2. Any other loading state (login, register, etc.)
+  if (!initialCheckComplete || loading) {
     return <PageLoader />;
   }
 

@@ -59,6 +59,7 @@ Retry
 
 ---
 
+
 # Folder Structure
 
 Create:
@@ -77,6 +78,8 @@ Follow the 4-layer architecture.
 
 ---
 
+
+
 # Feed Page
 
 Create:
@@ -92,6 +95,8 @@ Recommended Feed (placeholder)
 Do NOT duplicate layouts.
 
 ---
+
+
 
 # Feed Layout
 
@@ -120,6 +125,8 @@ Bottom Navigation
 Reuse existing layouts.
 
 ---
+
+
 
 # Feed Card
 
@@ -163,6 +170,8 @@ Read More
 
 ---
 
+
+
 # Feed Card Components
 
 Create:
@@ -191,6 +200,8 @@ AuthorInfo
 
 ---
 
+
+
 # Reading Progress
 
 Implement:
@@ -207,6 +218,8 @@ Future-ready.
 
 ---
 
+
+
 # Infinite Scroll
 
 Implement:
@@ -222,6 +235,8 @@ Retry
 No page refresh.
 
 ---
+
+
 
 # Feed States
 
@@ -243,6 +258,8 @@ Future Personalized Feed
 
 ---
 
+
+
 # Right Sidebar
 
 Create placeholders:
@@ -262,6 +279,8 @@ Recent Activity
 No backend yet.
 
 ---
+
+
 
 # Redux
 
@@ -287,6 +306,8 @@ Use Redux Toolkit + Thunks.
 
 ---
 
+
+
 # Services
 
 Create:
@@ -296,6 +317,8 @@ feed.service.ts
 No API logic inside components.
 
 ---
+
+
 
 # Components
 
@@ -333,6 +356,7 @@ RefreshButton
 
 ---
 
+
 # Animations
 
 Use Framer Motion.
@@ -354,6 +378,8 @@ Content Reveal
 Keep animations subtle.
 
 ---
+
+
 
 # Responsive Design
 
