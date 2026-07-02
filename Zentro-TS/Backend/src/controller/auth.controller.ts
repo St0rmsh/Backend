@@ -151,7 +151,7 @@ export const refreshAccessTokenController = async (req: Request, res: Response) 
         res.status(200).json({
             success: true,
             message: "Access token refreshed successfully",
-            data: accessToken,
+            data: { accessToken },
         })
 
     } catch (error) {
