@@ -18,13 +18,11 @@ export const ProtectedRoute = ({
   children,
   requiresAdmin = false,
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, user, loading, initialCheckComplete } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user, hydrationCompleted } = useAppSelector((state) => state.auth);
   const isAdmin = user?.role === "admin";
 
-  // Show loader while:
-  // 1. Initial auth check is in progress
-  // 2. Any other loading state (login, register, etc.)
-  if (!initialCheckComplete || loading) {
+  // Wait for hydration to complete
+  if (!hydrationCompleted) {
     return <PageLoader />;
   }
 

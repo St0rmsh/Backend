@@ -8,7 +8,6 @@ import { ForgotPasswordFormData } from "../schemas/forgotPassword.schema";
 import { ResetPasswordFormData } from "../schemas/resetPassword.schema";
 import { ChangePasswordFormData } from "../schemas/changePassword.schema";
 import { handleApiError } from "@/shared/utils/errorHandler";
-import { setTokens, clearTokens } from "@/shared/lib/cookies";
 import { socketService } from "@/shared/lib/socket";
 
 export const loginThunk = createAsyncThunk(
@@ -17,8 +16,7 @@ export const loginThunk = createAsyncThunk(
     try {
       const response = await authService.login(data);
       if (response.success && response.data) {
-        setTokens(response.data.accessToken, response.data.refreshToken);
-        socketService.connect(response.data.accessToken);
+        socketService.connect();
         
         return response.data;
       }
@@ -35,8 +33,7 @@ export const registerThunk = createAsyncThunk(
     try {
       const response = await authService.register(data);
       if (response.success && response.data) {
-        setTokens(response.data.accessToken, response.data.refreshToken);
-        socketService.connect(response.data.accessToken);
+        socketService.connect();
         return response.data;
       }
       return rejectWithValue(response.message);
@@ -46,8 +43,8 @@ export const registerThunk = createAsyncThunk(
   }
 );
 
-export const fetchCurrentUserThunk = createAsyncThunk(
-  "auth/fetchCurrentUser",
+export const hydrateAuthThunk = createAsyncThunk(
+  "auth/hydrateAuth",
   async (_, { rejectWithValue }) => {
     try {
       const response = await authService.getCurrentUser();
@@ -66,11 +63,9 @@ export const logoutThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await authService.logout();
-      clearTokens();
       socketService.disconnect();
       return true;
     } catch (error) {
-      clearTokens();
       socketService.disconnect();
       return rejectWithValue(handleApiError(error));
     }

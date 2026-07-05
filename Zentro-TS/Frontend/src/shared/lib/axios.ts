@@ -1,5 +1,5 @@
 import axios, { InternalAxiosRequestConfig } from "axios";
-import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./cookies.js";
+
 import { API_BASE_URL } from "@/App/config/env.js";
 import { ROUTES } from "../constants/routes";
 import { socketService } from "./socket.js";
@@ -19,14 +19,10 @@ export const axiosInstance = axios.create({
 
 /**
  * Request interceptor
- * Adds access token and unique request ID to all requests
+ * Adds unique request ID to all requests
  */
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     // Add unique request ID for tracking
     config.headers['X-Request-ID'] = crypto.randomUUID();
     return config;
@@ -53,14 +49,14 @@ export const registerLogoutCallback = (callback: () => void) => {
 
 /**
  * Process queued requests after token refresh
- * Either retries them with new token or rejects them
+ * Either retries them or rejects them
  */
-const processQueue = (error: unknown, token: string | null = null) => {
+const processQueue = (error: unknown) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve();
     }
   });
   failedQueue = [];
@@ -83,8 +79,7 @@ axiosInstance.interceptors.response.use(
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+          .then(() => {
             return axiosInstance(originalRequest);
           })
           .catch((err) => Promise.reject(err));
@@ -94,49 +89,34 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) {
-          throw new Error("No refresh token available");
-        }
-
         // Call refresh endpoint
-        const response = await axios.post(
+        await axios.post(
           `${API_BASE_URL}/auth/refresh-access-token`,
-          { refreshToken },
-          { timeout: 10000 } // 10 second timeout for refresh
+          {},
+          { 
+            timeout: 10000, // 10 second timeout for refresh
+            withCredentials: true // ensure httpOnly cookies are sent
+          } 
         );
 
-        // Backend returns only accessToken (no refreshToken rotation yet)
-        const newAccessToken = response.data.data?.accessToken;
-        if (!newAccessToken) {
-          throw new Error("Invalid refresh response: no access token");
-        }
-
-        // Update tokens (keep existing refresh token)
-        setTokens(newAccessToken, refreshToken);
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
         // Update socket token and reconnect
-        socketService.reconnectWithToken(newAccessToken);
+        socketService.reconnect();
 
         // Broadcast token refresh to other tabs
         if (typeof window !== "undefined" && window.localStorage) {
           window.localStorage.setItem('auth_token_refreshed', JSON.stringify({
-            timestamp: Date.now(),
-            token: newAccessToken
+            timestamp: Date.now()
           }));
         }
 
-        // Process queued requests with new token
-        processQueue(null, newAccessToken);
+        // Process queued requests
+        processQueue(null);
         
-        // Retry original request with new token
+        // Retry original request with new cookies
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         // Token refresh failed - likely refresh token expired
-        processQueue(refreshError, null);
-        clearTokens();
+        processQueue(refreshError);
         socketService.disconnect();
 
         // Notify other tabs about logout via localStorage

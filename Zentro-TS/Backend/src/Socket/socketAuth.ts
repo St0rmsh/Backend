@@ -1,12 +1,13 @@
 import jwt from "jsonwebtoken";
 import config from "../config/config.js";
 import type { ExtendedError } from "socket.io";
+import cookie from "cookie";
 
 export const socketAuth = (socket: any,next: (err?: ExtendedError) => void) => {
 
     try {
-
-        const token = socket.handshake.auth.token;
+        const cookies = cookie.parse(socket.handshake.headers.cookie || "");
+        const token = socket.handshake.auth.token || cookies.accessToken;
 
         if (!token) {
             return next(new Error("Unauthorized"));

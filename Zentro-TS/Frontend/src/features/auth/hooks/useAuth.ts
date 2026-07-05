@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
-import {selectAuthUser,selectAuthIsAuthenticated,selectAuthLoading,selectAuthError,selectAuthAccessToken} from "../state/authSelectors";
+import {selectAuthUser,selectAuthIsAuthenticated,selectAuthLoading,selectAuthError,selectHydrationCompleted} from "../state/authSelectors";
 import {loginThunk,registerThunk,logoutThunk,updateProfileThunk} from "../state/authThunks";
 import { clearError } from "../state/authSlice";
 import { LoginFormData } from "../schemas/login.schema";
@@ -13,7 +13,7 @@ export const useAuth = () => {
   const isAuthenticated = useAppSelector(selectAuthIsAuthenticated);
   const loading = useAppSelector(selectAuthLoading);
   const error = useAppSelector(selectAuthError);
-  const accessToken = useAppSelector(selectAuthAccessToken);
+  const hydrationCompleted = useAppSelector(selectHydrationCompleted);
 
   const login = useCallback(
     (data: LoginFormData) => dispatch(loginThunk(data)).unwrap(),
@@ -40,7 +40,7 @@ export const useAuth = () => {
     isAuthenticated,
     loading,
     error,
-    accessToken,
+    hydrationCompleted,
     login,
     register,
     logout,

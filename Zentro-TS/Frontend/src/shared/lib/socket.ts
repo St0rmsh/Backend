@@ -6,11 +6,10 @@ class SocketService {
   private connectionCallbacks: ((isConnected: boolean) => void)[] = [];
   private customListeners = new Set<string>();
 
-  connect(accessToken: string) {
+  connect() {
     if (this.socket?.connected) return;
 
     this.socket = io(SOCKET_URL, {
-      auth: { token: accessToken },
       autoConnect: true,
       withCredentials: true,
       transports: ["websocket"],
@@ -29,20 +28,16 @@ class SocketService {
   }
 
   /**
-   * Reconnect socket with a new access token
-   * Called when the access token is refreshed
-   * Ensures socket always uses the latest authentication token
+   * Reconnect socket
+   * Called when the access token is refreshed via cookie
    */
-  reconnectWithToken(newAccessToken: string) {
+  reconnect() {
     if (!this.socket) {
-      this.connect(newAccessToken);
+      this.connect();
       return;
     }
 
-    // Update socket auth token
-    this.socket.auth = { token: newAccessToken };
-
-    // Disconnect and reconnect to apply new token
+    // Disconnect and reconnect to apply new token from cookie
     if (this.socket.connected) {
       this.socket.disconnect();
       // Small delay to ensure clean disconnect

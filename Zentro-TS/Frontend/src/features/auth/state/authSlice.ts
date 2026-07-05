@@ -3,7 +3,7 @@ import { initialState } from "./authInitialState";
 import {
   loginThunk,
   registerThunk,
-  fetchCurrentUserThunk,
+  hydrateAuthThunk,
   logoutThunk,
   updateProfileThunk,
   forgotPasswordThunk,
@@ -16,10 +16,7 @@ import { User } from "@/shared/types/user.types";
 
 const authSlice = createSlice({
   name: "auth",
-  initialState: {
-    ...initialState,
-    initialCheckComplete: false,
-  },
+  initialState: initialState,
   reducers: {
     clearError: (state) => {
       state.error = null;
@@ -30,11 +27,13 @@ const authSlice = createSlice({
     resetAuth: (state) => {
       Object.assign(state, {
         ...initialState,
-        initialCheckComplete: true, // Keep it true once checked
+        isHydrating: false,
+        hydrationCompleted: true,
+        authChecked: true,
       });
     },
-    setInitialCheckComplete: (state, action: PayloadAction<boolean>) => {
-      state.initialCheckComplete = action.payload;
+    setHydrationComplete: (state, action: PayloadAction<boolean>) => {
+      state.hydrationCompleted = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -46,8 +45,9 @@ const authSlice = createSlice({
     builder.addCase(loginThunk.fulfilled, (state, action) => {
       state.loading = false;
       state.user = action.payload.user;
-      state.accessToken = action.payload.accessToken;
       state.isAuthenticated = true;
+      state.hydrationCompleted = true;
+      state.authChecked = true;
     });
     builder.addCase(loginThunk.rejected, (state, action) => {
       state.loading = false;
@@ -62,8 +62,9 @@ const authSlice = createSlice({
     builder.addCase(registerThunk.fulfilled, (state, action) => {
       state.loading = false;
       state.user = action.payload.user;
-      state.accessToken = action.payload.accessToken;
       state.isAuthenticated = true;
+      state.hydrationCompleted = true;
+      state.authChecked = true;
     });
     builder.addCase(registerThunk.rejected, (state, action) => {
       state.loading = false;
@@ -71,30 +72,35 @@ const authSlice = createSlice({
     });
 
     // Current User
-    builder.addCase(fetchCurrentUserThunk.pending, (state) => {
+    builder.addCase(hydrateAuthThunk.pending, (state) => {
       state.loading = true;
       state.error = null;
+      state.isHydrating = true;
     });
-    builder.addCase(fetchCurrentUserThunk.fulfilled, (state, action) => {
+    builder.addCase(hydrateAuthThunk.fulfilled, (state, action) => {
       state.loading = false;
       state.user = action.payload;
       state.isAuthenticated = true;
-      state.initialCheckComplete = true;
+      state.isHydrating = false;
+      state.hydrationCompleted = true;
+      state.authChecked = true;
     });
-    builder.addCase(fetchCurrentUserThunk.rejected, (state) => {
+    builder.addCase(hydrateAuthThunk.rejected, (state) => {
       state.loading = false;
       state.isAuthenticated = false;
       state.user = null;
-      state.accessToken = null;
-      state.initialCheckComplete = true;
+      state.isHydrating = false;
+      state.hydrationCompleted = true;
+      state.authChecked = true;
     });
 
     // Logout
     builder.addCase(logoutThunk.fulfilled, (state) => {
       state.user = null;
-      state.accessToken = null;
       state.isAuthenticated = false;
       state.error = null;
+      state.hydrationCompleted = true;
+      state.authChecked = true;
     });
 
     // Update Profile
@@ -153,5 +159,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, setAuthenticated, resetAuth, setInitialCheckComplete } = authSlice.actions;
+export const { clearError, setAuthenticated, resetAuth, setHydrationComplete } = authSlice.actions;
 export default authSlice.reducer;
