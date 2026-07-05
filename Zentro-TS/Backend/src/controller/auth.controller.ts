@@ -109,15 +109,15 @@ export const getUser = async (req: Request, res: Response) => {
             });
         }
 
-        const user = await getMyProfileService(id);
-        if (!user) {
+        const result = await getMyProfileService(id);
+        if (!result) {
             throw new Error("User not found")
         }
 
         res.status(200).json({
             success: true,
             message: "User fetched successfully",
-            data: user,
+            data: result.user,
         })
 
     } catch (error) {

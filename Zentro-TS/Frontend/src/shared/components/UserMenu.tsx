@@ -29,7 +29,7 @@ export const UserMenu = () => {
         <Button variant="ghost" className="relative h-9 w-9 rounded-full focus-visible:ring-1 p-0">
           <Avatar className="h-9 w-9 border border-border">
             <AvatarImage src={user?.avatar || ""} alt={user.username} />
-            <AvatarFallback>{user.fullname?.charAt(0) || user.username.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{user.fullname?.charAt(0) || user.username?.charAt(0) || "?"}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

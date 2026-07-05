@@ -1,11 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Github, Twitter, Linkedin, Globe } from "lucide-react";
+import {  Globe } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 interface SocialLink {
-  platform: "github" | "twitter" | "linkedin" | "website";
+  platform:  "website";
   url: string;
   username?: string;
 }
@@ -16,16 +16,10 @@ interface SocialLinksProps {
 }
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
-  github: <Github className="h-4 w-4" />,
-  twitter: <Twitter className="h-4 w-4" />,
-  linkedin: <Linkedin className="h-4 w-4" />,
   website: <Globe className="h-4 w-4" />,
 };
 
 const SOCIAL_LABELS: Record<string, string> = {
-  github: "GitHub",
-  twitter: "Twitter",
-  linkedin: "LinkedIn",
   website: "Website",
 };
 
