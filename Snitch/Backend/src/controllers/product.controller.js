@@ -263,8 +263,14 @@ export const fetchAllProducts = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error("Error fetching products:", error);
-        res.status(500).json({ message: "Internal server error" });
+         console.error(error);
+        console.error(error.stack);
+
+    res.status(500).json({
+        success: false,
+        message: error.message,
+        stack: error.stack
+    });
     }
 };
 

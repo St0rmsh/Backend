@@ -64,7 +64,7 @@ class ProductDAO {
                 { title: { $regex: query, $options: "i" } },
                 { description: { $regex: query, $options: "i" } },
                 { "variants.value": { $regex: query, $options: "i" } },
-                { "variants.attributes": { $regex: query, $options: "i" } } // This works for Map values in Mongoose
+                { "variants.attributes": { $regex: query, $options: "i" } }
             ];
         }
 
