@@ -35,7 +35,6 @@ const PaymentPage = () => {
             }));
 
             const res = await axios.post('/api/order/create', {
-                items,
                 shippingAddress: address
             }, {
                 withCredentials: true
@@ -56,7 +55,9 @@ const PaymentPage = () => {
     const handlePayment = async () => {
         setLoading(true);
         try {
-            const res = await axios.post(`/api/order/${orderId}/complete-payment`, {}, {
+            const res = await axios.post(`/api/order/complete-payment`, {
+                orderId,
+            }, {
                 withCredentials: true
             });
 

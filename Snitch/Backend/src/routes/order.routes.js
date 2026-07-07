@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post("/checkout", checkout);
+router.post("/create", checkout);
 router.post("/complete-payment", completePayment);
 router.get("/my-orders", getUserOrders);
 router.get("/:id", getOrderById);

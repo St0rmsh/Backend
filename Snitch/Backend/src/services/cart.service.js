@@ -2,15 +2,34 @@ import cartDao from "../daos/cart.dao.js";
 import productDao from "../daos/product.dao.js";
 
 class CartService {
-    async getCart(userId) {
+
+    async _getOrCreateCart(userId) {
+
         let cart = await cartDao.findByUserId(userId);
+
         if (!cart) {
             cart = await cartDao.create({ user: userId, items: [] });
         }
+        
         return cart;
     }
 
+
+   async getCart(userId) {
+
+    let cart = await this._getOrCreateCart(userId);
+
+    const computed = await cartDao.getCartWithComputedTotal(userId);
+
+    return {
+        cart,
+        total: computed.total,
+        liveItems: computed.items
+    };
+}
+
     async addToCart(userId, productId, variantId, quantity) {
+
         const product = await productDao.findById(productId);
         if (!product) throw new Error("Product not found");
 
@@ -35,7 +54,7 @@ class CartService {
 
         if (quantity > stock) throw new Error("Not enough stock");
 
-        let cart = await this.getCart(userId);
+        let cart = await this._getOrCreateCart(userId);
 
         const itemIndex = cart.items.findIndex(item => {
             const itemProdId = item.product._id
@@ -58,7 +77,7 @@ class CartService {
             cart.items.push({
                 product: productId,
                 variant: variantId === "BASE" ? null : variantId,
-                variantKey: variantId || "BASE",   // 🔥 IMPORTANT FIX
+                variantKey: variantId || "BASE",  
                 productName,
                 variantName,
                 quantity,
@@ -66,7 +85,9 @@ class CartService {
             });
         }
 
-        return await cartDao.updateByUserId(userId, { items: cart.items });
+        await cartDao.updateByUserId(userId, { items: cart.items });
+        return await this.getCart(userId);
+
     }
 
     async updateQuantity(userId, productId, variantId, quantity) {
@@ -91,7 +112,7 @@ class CartService {
 
         if (quantity > stock) throw new Error("Not enough stock");
 
-        let cart = await this.getCart(userId);
+        let cart = await this._getOrCreateCart(userId);
 
         const itemIndex = cart.items.findIndex(item => {
             const itemProdId = item.product._id
@@ -108,13 +129,15 @@ class CartService {
 
         cart.items[itemIndex].quantity = quantity;
 
-        return await cartDao.updateByUserId(userId, { items: cart.items });
+        await cartDao.updateByUserId(userId, { items: cart.items });
+        return await this.getCart(userId);
+
     }
 
     async removeFromCart(userId, productId, variantId) {
         if (!variantId) variantId = "BASE";
 
-        let cart = await this.getCart(userId);
+        let cart = await this._getOrCreateCart(userId);
 
         cart.items = cart.items.filter(item => {
             const itemProdId = item.product._id
@@ -127,7 +150,8 @@ class CartService {
             );
         });
 
-        return await cartDao.updateByUserId(userId, { items: cart.items });
+        await cartDao.updateByUserId(userId, { items: cart.items });
+        return await this.getCart(userId);
     }
 }
 

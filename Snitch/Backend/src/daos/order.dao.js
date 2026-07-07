@@ -19,8 +19,8 @@ class OrderDAO {
             .populate("items.product");
     }
 
-    async updateStatus(orderId, orderStatus, paymentStatus) {
-        let update = {};
+    async updateStatus(orderId, orderStatus, paymentStatus,extra = {}) {
+        let update = { ...extra };
         if (orderStatus) update.orderStatus = orderStatus;
         if (paymentStatus) update.paymentStatus = paymentStatus;
         
@@ -49,6 +49,10 @@ class OrderDAO {
             .populate("items.product")
             .populate("user", "fullname email");
     }
+
+    async findByRazorpayOrderId(razorpayOrderId) {
+    return await Order.findOne({ razorpayOrderId });
+}
 }
 
 export default new OrderDAO();
