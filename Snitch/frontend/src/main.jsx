@@ -6,6 +6,7 @@ import { Provider } from 'react-redux'
 import { ThemeProvider } from './context/ThemeContext'
 import { CartProvider } from './context/CartContext'
 import { WishlistProvider } from './context/WishlistContext'
+import LenisProvider from './components/LenisProvider'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <WishlistProvider>
           <CartProvider>
-            <App />
+            <LenisProvider>
+              <App />
+            </LenisProvider>
           </CartProvider>
         </WishlistProvider>
       </ThemeProvider>

@@ -12,6 +12,7 @@ const OneProduct = () => {
     const { isDark } = useTheme();
 
     const [currentImageIdx, setCurrentImageIdx] = useState(0);
+    const [selectedVariant, setSelectedVariant] = useState(null);
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
