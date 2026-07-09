@@ -1,6 +1,12 @@
 import ProductModel from "../models/product.model.js";
 
 class ProductDAO {
+
+    async findById(id) {
+    return await Product.findById(id)
+        .populate("seller", "_id fullname");
+    }
+
     async create(productData) {
         const product = new ProductModel(productData);
         return await product.save();
@@ -34,8 +40,9 @@ class ProductDAO {
     async addVariant(productId, variantData) {
         return await ProductModel.findByIdAndUpdate(
             productId,
-            { $push: { variants: variantData },
-              $set: { type: "variant_required" }   
+            {
+                $push: { variants: variantData },
+                $set: { type: "variant_required" }   // product now has variants — stop treating it as simple
             },
             { new: true, runValidators: true }
         );
@@ -57,7 +64,7 @@ class ProductDAO {
         );
     }
 
-      async deductStock(productId, quantity) {
+    async deductStock(productId, quantity) {
         // Atomic: only succeeds if stock is still sufficient at write-time
         return await ProductModel.findOneAndUpdate(
             { _id: productId, stock: { $gte: quantity } },
@@ -72,6 +79,11 @@ class ProductDAO {
             { $inc: { "variants.$.stock": -quantity } },
             { new: true }
         );
+    }
+
+    async distinctSubcategories() {
+        const results = await ProductModel.distinct("subcategory", { subcategory: { $ne: "Uncategorized" } });
+        return results.sort();
     }
 
     async search(query, filters = {}, options = {}) {

@@ -1,14 +1,34 @@
-import dotenv from 'dotenv'
+import dotenv from "dotenv";
+import { z } from "zod";
 
-dotenv.config()
+dotenv.config();
 
-const config = {
-    port: process.env.PORT || 5000,
-    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || '',
-    MISTRAL_API_KEY: process.env.MISTRAL_API_KEY || '',
-    COHERE_API_KEY: process.env.COHERE_API_KEY || '',
-    TAVILY_API_KEY: process.env.TAVILY_API_KEY || '',
+const envSchema = z.object({
+  PORT: z.coerce.number().default(5000),
 
+  GOOGLE_API_KEY: z.string().min(1, "GOOGLE_API_KEY is required"),
+
+  MISTRAL_API_KEY: z.string().min(1, "MISTRAL_API_KEY is required"),
+
+  COHERE_API_KEY: z.string().min(1, "COHERE_API_KEY is required"),
+
+  TAVILY_API_KEY: z.string().min(1, "TAVILY_API_KEY is required"),
+
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+});
+
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  console.error("\n❌ Invalid Environment Variables\n");
+
+  console.error(parsed.error.format());
+
+  process.exit(1);
 }
 
-export default config
+const config = parsed.data;
+
+export default config;

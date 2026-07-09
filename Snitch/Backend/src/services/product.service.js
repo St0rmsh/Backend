@@ -60,6 +60,10 @@ class ProductService {
         
         return await productDao.deleteVariant(productId, variantId);
     }
+
+    async getDistinctSubcategories() {
+        return await productDao.distinctSubcategories();
+    }
 }
 
 export default new ProductService();

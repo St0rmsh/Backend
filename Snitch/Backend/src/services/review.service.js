@@ -74,7 +74,7 @@ class ReviewService {
             const replies = await reviewDao.findReplies(review._id);
             return { ...review.toObject(), replies };
         }));
-        return reviewsWithReplies;
+        return { reviews: reviewsWithReplies, products };
     }
 
     async updateReview(userId, reviewId, updateData) {

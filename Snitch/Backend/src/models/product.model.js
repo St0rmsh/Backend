@@ -84,6 +84,10 @@ const productSchema = new mongoose.Schema({
         type: String,
         default: "Uncategorized"
     },
+    subcategory: {
+        type: String,
+        default: "Uncategorized"
+    },
     type: {
         type: String,
         enum: ["simple", "variant_required", "variant_optional"],

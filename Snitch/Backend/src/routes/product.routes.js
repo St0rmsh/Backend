@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {createProduct,getAllProducts,getProductById, updateProduct, deleteProduct, createProductReview, getProductReviews, updateProductReview, deleteProductReview, fetchAllProducts, fetchProductById, getSellerReviews, addProductVariant, deleteProductVariant} from "../controllers/product.controller.js";
+import {createProduct,getAllProducts,getProductById, updateProduct, deleteProduct, createProductReview, getProductReviews, updateProductReview, deleteProductReview, fetchAllProducts, fetchProductById, getSellerReviews, addProductVariant, deleteProductVariant, getSubcategories, getCategoryOptions, replyToReviewController} from "../controllers/product.controller.js";
 import {validateCreateProduct} from "../validators/product.validate.js";
 import {authSeller, authMiddleware} from "../Middleware/auth.middleware.js";
 import multer from "multer";
@@ -36,6 +36,20 @@ router.post("/create",authSeller,upload.array("images",7),validateCreateProduct,
 // @route GET /api/product
 // @access Public
 router.get("/",authSeller,getAllProducts)
+
+
+
+
+// @desc Get live list of subcategories in use (for filter UI)
+// @route GET /api/product/subcategories
+// @access Public
+router.get("/subcategories", getSubcategories);
+
+
+// @desc Get full category/subcategory tree (for seller create-product picker)
+// @route GET /api/product/category-options
+// @access Public
+router.get("/category-options", getCategoryOptions);
 
 
 // @desc Update Product
@@ -89,5 +103,11 @@ router.delete("/:id/reviews/:reviewId", authMiddleware, deleteProductReview);
 // @route GET /api/product/:id
 // @access Public
 router.get("/:id", getProductById)
+
+// @desc Reply to review
+// @route POST /api/product/:id/reviews/:reviewId/reply
+// @access Private Seller
+router.post("/:id/reviews/:reviewId/reply",authSeller,replyToReviewController);
+
 
 export default router;

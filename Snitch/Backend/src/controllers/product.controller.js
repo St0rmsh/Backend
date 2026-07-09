@@ -1,10 +1,11 @@
 import productService from "../services/product.service.js";
 import reviewService from "../services/review.service.js";
 import { uploadFile } from "../services/storage.service.js";
+import { suggestCategory, getCategoryTree } from "../utils/categorize.util.js";
 
 export const createProduct = async (req, res) => {
     try {
-        const { title, description, priceAmount, priceCurrency, stock } = req.body;
+        const { title, description, priceAmount, priceCurrency, stock, category, subcategory } = req.body;
         const seller = req.user;
 
         const images = await Promise.all(req.files.map(async (file) => {
@@ -15,12 +16,24 @@ export const createProduct = async (req, res) => {
             return result;
         }));
 
+        // Auto-suggest category/subcategory from title+description if the
+        // seller didn't explicitly provide one (or left it "Uncategorized").
+        let finalCategory = category;
+        let finalSubcategory = subcategory;
+        if (!finalCategory || finalCategory === "Uncategorized" || !finalSubcategory || finalSubcategory === "Uncategorized") {
+            const suggested = suggestCategory(title, description);
+            finalCategory = finalCategory && finalCategory !== "Uncategorized" ? finalCategory : suggested.category;
+            finalSubcategory = finalSubcategory && finalSubcategory !== "Uncategorized" ? finalSubcategory : suggested.subcategory;
+        }
+
         const product = await productService.createProduct({
             title,
             description,
             price: { amount: Number(priceAmount), currency: priceCurrency },
             stock: Number(stock),
-            images: images.map(img => ({ url: img.url }))
+            images: images.map(img => ({ url: img.url })),
+            category: finalCategory,
+            subcategory: finalSubcategory
         }, req.user.id
         );
 
@@ -71,12 +84,14 @@ export const updateProduct = async (req, res) => {
     try {
         const sellerId = req.user._id;
         const productId = req.params.id;
-        const { title, description, priceAmount, priceCurrency, stock } = req.body;
+        const { title, description, priceAmount, priceCurrency, stock, category, subcategory } = req.body;
 
         const updateData = {};
         if (title) updateData.title = title;
         if (description) updateData.description = description;
         if (stock !== undefined) updateData.stock = Number(stock);
+        if (category) updateData.category = category;
+        if (subcategory) updateData.subcategory = subcategory;
         if (priceAmount || priceCurrency) {
             updateData.price = {
                 amount: Number(priceAmount),
@@ -205,8 +220,8 @@ export const getProductReviews = async (req, res) => {
 export const getSellerReviews = async (req, res) => {
     try {
         const sellerId = req.user._id;
-        const reviews = await reviewService.getSellerReviews(sellerId);
-        res.status(200).json({ message: "Seller reviews fetched", success: true, reviews });
+        const { reviews, products } = await reviewService.getSellerReviews(sellerId);
+        res.status(200).json({ message: "Seller reviews fetched", success: true, reviews, products });
     } catch (error) {
         console.error("Error fetching seller reviews:", error);
         res.status(500).json({ message: "Internal server error" });
@@ -227,7 +242,7 @@ export const fetchAllProducts = async (req, res) => {
             filters.averageRating = { $gte: Number(rating) };
         }
         if (category && category !== 'All') {
-            filters.category = category;
+            filters.subcategory = category;
         }
 
         const options = {
@@ -311,5 +326,58 @@ export const deleteProductReview = async (req, res) => {
     } catch (error) {
         console.error("Error deleting review:", error);
         res.status(500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+export const getSubcategories = async (req, res) => {
+    try {
+        const subcategories = await productService.getDistinctSubcategories();
+        res.status(200).json({ success: true, subcategories });
+    } catch (error) {
+        console.error("Error fetching subcategories:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const getCategoryOptions = async (req, res) => {
+    try {
+        const tree = getCategoryTree();
+        res.status(200).json({ success: true, categories: tree });
+    } catch (error) {
+        console.error("Error fetching category tree:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+
+export const replyToReviewController = async (req, res) => {
+    try {
+
+        const { reviewId } = req.params;
+        const { comment } = req.body;
+
+        const sellerId = req.user._id;
+
+        const result = await reviewService.replyToReview(
+            sellerId,
+            reviewId,
+            comment,
+            sellerId
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Reply added successfully",
+            data: result
+        });
+
+    } catch (err) {
+
+        return res.status(400).json({
+            success: false,
+            message: err.message
+        });
+
     }
 };

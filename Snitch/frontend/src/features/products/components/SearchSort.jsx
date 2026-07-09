@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 
 const SearchSort = ({ 
     search, 
@@ -17,6 +18,8 @@ const SearchSort = ({
 }) => {
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [liveCategories, setLiveCategories] = useState([]);
+    const [localSearch, setLocalSearch] = useState(search);
     const sortRef = useRef(null);
     const filterRef = useRef(null);
 
@@ -27,7 +30,36 @@ const SearchSort = ({
         { label: 'PRICE: HIGH TO LOW', value: 'price_high' }
     ];
 
-    const categories = ['All', 'Clothing', 'Footwear', 'Accessories', 'Electronics', 'Lifestyle'];
+    // Debounce the search input — only push to parent (and thus fire a fetch)
+    // 350ms after the user stops typing, instead of on every keystroke.
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (localSearch !== search) setSearch(localSearch);
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [localSearch]);
+
+    // Keep localSearch in sync if search is cleared externally (e.g. "Clear all filters")
+    useEffect(() => {
+        setLocalSearch(search);
+    }, [search]);
+
+    // Pull the live, actually-in-use subcategory list instead of a static array —
+    // new product types sellers list automatically appear here.
+    useEffect(() => {
+        const fetchSubcategories = async () => {
+            try {
+                const res = await axios.get('/api/product/subcategories');
+                if (res.data.success) {
+                    setLiveCategories(['All', ...res.data.subcategories]);
+                }
+            } catch (err) {
+                console.error('Failed to load categories', err);
+                setLiveCategories(['All']);
+            }
+        };
+        fetchSubcategories();
+    }, []);
 
     const currentSortLabel = sortOptions.find(opt => opt.value === sortBy)?.label || 'SORT BY';
 
@@ -60,8 +92,8 @@ const SearchSort = ({
                     <input
                         type="text"
                         placeholder="Search for items, brands and more..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        value={localSearch}
+                        onChange={(e) => setLocalSearch(e.target.value)}
                         className={`w-full h-[56px] pl-12 pr-12 rounded-2xl text-sm font-semibold border outline-none transition-all duration-300
                             ${isDark 
                                 ? 'bg-[#111] border-[#1e1e1e] text-white focus:border-[#444] focus:bg-[#161616] placeholder-[#333]' 
@@ -70,9 +102,9 @@ const SearchSort = ({
                     />
 
                     {/* Clear Button */}
-                    {search && (
+                    {localSearch && (
                         <button
-                            onClick={() => setSearch('')}
+                            onClick={() => setLocalSearch('')}
                             className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-all duration-300 hover:scale-110 active:scale-90
                                 ${isDark ? 'text-[#444] hover:text-white' : 'text-[#999] hover:text-black'}`}
                         >
@@ -84,9 +116,9 @@ const SearchSort = ({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    {/* Category Filter */}
+                    {/* Category Filter — live subcategories, not a hardcoded list */}
                     <div className="flex bg-transparent overflow-x-auto scrollbar-hide gap-2 p-1">
-                        {categories.map(cat => (
+                        {liveCategories.map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setCategory(cat)}

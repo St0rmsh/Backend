@@ -38,11 +38,11 @@ const SellerReviews = () => {
         fetchReviews();
     }, [fetchReviews]);
 
-    const handleReply = async (reviewId) => {
+    const handleReply = async (reviewId, productId) => {
         if (!replyText.trim()) return;
         setSubmitting(true);
         try {
-            const res = await axios.post(`/api/products/reviews/${reviewId}/reply`, { comment: replyText }, { withCredentials: true });
+            const res = await axios.post(`/api/product/${productId}/reviews/${reviewId}/reply`, { comment: replyText }, { withCredentials: true });
             if (res.data.success) {
                 setMsg({ type: 'success', text: 'Reply posted successfully' });
                 setReplyingTo(null);
@@ -57,11 +57,14 @@ const SellerReviews = () => {
         }
     };
 
-    const allReviews = reviewsData.map(review => {
-        const product = productsData.find(p => p._id === review.productId);
+  const allReviews = reviewsData.map(review => {
+        // review.productId is populated ({_id, title}) rather than a plain string
+        const reviewProductId = review.productId?._id || review.productId;
+        const product = productsData.find(p => p._id === reviewProductId);
         return {
             ...review,
-            productTitle: product?.title || 'Unknown Product',
+            productId: reviewProductId, // normalize back to a plain string id for filtering
+            productTitle: product?.title || review.productId?.title || 'Unknown Product',
             productImage: product?.images?.[0]?.url,
             name: review.userId?.fullname || 'Anonymous'
         };
@@ -95,7 +98,7 @@ const SellerReviews = () => {
                         <Link to="/seller" className={`p-2.5 rounded-2xl border transition-all active:scale-95 ${isDark ? 'border-[#1e1e1e] hover:bg-[#111]' : 'border-[#e5e5df] hover:bg-white'}`}>
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                         </Link>
-                        <h1 className="text-3xl font-black italic tracking-tighter">CUSTOMER FEEDBACK</h1>
+                        <h1 className="text-3xl font-black italic tracking-tighter">CUSTOMER REVIEWS</h1>
                     </div>
                     <p className={`text-[11px] font-bold uppercase tracking-widest opacity-30`}>Manage your product reputation</p>
                 </div>
@@ -251,7 +254,7 @@ const SellerReviews = () => {
                                                         <div className="flex justify-end gap-3">
                                                             <button onClick={() => { setReplyingTo(null); setReplyText(''); }} className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100">Cancel</button>
                                                             <button 
-                                                                onClick={() => handleReply(review._id)}
+                                                                onClick={() => handleReply(review._id, review.productId)}
                                                                 disabled={submitting || !replyText.trim()}
                                                                 className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-30 ${isDark ? 'bg-white text-black' : 'bg-black text-white'}`}
                                                             >
@@ -264,7 +267,7 @@ const SellerReviews = () => {
                                                         onClick={() => setReplyingTo(review._id)}
                                                         className={`text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl border transition-all active:scale-95 ${isDark ? 'border-[#1e1e1e] text-white hover:bg-white hover:text-black' : 'border-[#e5e5df] text-black hover:bg-black hover:text-white'}`}
                                                     >
-                                                        {review.replies?.some(r => r.role === 'seller') ? 'Update Reply' : 'Reply to Feedback'}
+                                                        {review.replies?.some(r => r.role === 'seller') ? 'Update Reply' : 'Reply to Review'}
                                                     </button>
                                                 )}
                                             </div>
