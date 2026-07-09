@@ -4,11 +4,12 @@ export const checkout = async (req, res) => {
     try {
         const userId = req.user._id;
         const { shippingAddress } = req.body;
-        const order = await orderService.createOrder(userId, shippingAddress);
-        res.status(201).json({ 
-            message: "Order placed successfully. Please complete payment.", 
-            success: true, 
-            order 
+        const { order, razorpayOrder } = await orderService.createOrder(userId, shippingAddress);
+        res.status(201).json({
+            message: "Order placed successfully. Please complete payment.",
+            success: true,
+            order,
+            razorpayOrder   // frontend needs this for the Razorpay checkout widget — was being dropped before
         });
     } catch (error) {
         console.error("Checkout error:", error);
@@ -18,13 +19,9 @@ export const checkout = async (req, res) => {
 
 export const completePayment = async (req, res) => {
     try {
-        const { orderId } = req.body;
-        const order = await orderService.completePayment(orderId);
-        res.status(200).json({ 
-            message: "Payment successful. Stock updated.", 
-            success: true, 
-            order 
-        });
+        const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+        const order = await orderService.completePayment({ orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature });
+        res.status(200).json({ message: "Payment successful. Stock updated.", success: true, order });
     } catch (error) {
         console.error("Payment error:", error);
         res.status(400).json({ message: error.message || "Payment completion failed" });

@@ -109,14 +109,14 @@ export const getCart = async () => {
 }
 
 export const updateCartItem = async (productId, variantId, quantity) => {
-    const response = await cartApi.put(`/item`, { quantity }, {
+    const response = await cartApi.put(`/update`, { quantity }, {
         params: { productId, variantId }
     });
     return response.data;
 }
 
 export const deleteCartItem = async (productId, variantId) => {
-    const response = await cartApi.delete(`/item`, {
+    const response = await cartApi.delete(`/remove`, {
         params: { productId, variantId }
     });
     return response.data;

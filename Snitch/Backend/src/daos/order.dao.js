@@ -35,7 +35,7 @@ class OrderDAO {
         const order = await Order.findOne({
             user: userId,
             "items.product": productId,
-            paymentStatus: "Paid"
+            paymentStatus: "paid"
         });
         return !!order;
     }

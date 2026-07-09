@@ -186,102 +186,72 @@ const ProductDetails = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Reset image error state when variant or main image changes
+  // Reset to the first image whenever the selected variant changes
   useEffect(() => {
+    setActiveImg(0);
     setImgError(false);
     setImgLoaded(false);
-  }, [selectedVariant?._id, activeImg]);
+  }, [selectedVariant?._id]);
+
+  // Reset loading state when browsing between images within the active set
+  useEffect(() => {
+    setImgLoaded(false);
+  }, [activeImg]);
 
   const [reviewsTotal, setReviewsTotal] = useState(0);
   const [reviewsSkip, setReviewsSkip] = useState(0);
   const REVIEWS_LIMIT = 5;
 
-  // const fetchReviews = useCallback(async (productId, append = false) => {
-  //   if (!append) setReviewsLoading(true);
-  //   try {
-  //     const data = await handleGetReviews(productId, { 
-  //       limit: REVIEWS_LIMIT, 
-  //       skip: append ? reviewsSkip + REVIEWS_LIMIT : 0 
-  //     });
-      
-  //     const newReviews = data?.reviews || [];
-  //     setReviewsTotal(data?.total || 0);
-      
-  //     if (append) {
-  //       setReviewsSkip(prev => prev + REVIEWS_LIMIT);
-  //     } else {
-  //       setReviewsSkip(0);
-  //     }
+  const fetchReviews = useCallback(async (productId, append = false) => {
+    if (!append) setReviewsLoading(true);
 
-  //     const combinedReviews = append ? [...reviews, ...newReviews] : newReviews;
-  //     setReviews(combinedReviews);
-  //   } catch (err) {
-  //     console.error(err);
-  //   } finally {
-  //     setReviewsLoading(false);
-  //   }
-  // }, [handleGetReviews, reviews, reviewsSkip]);
+    try {
+      const data = await handleGetReviews(productId, { 
+        limit: REVIEWS_LIMIT, 
+        skip: append ? reviewsSkip + REVIEWS_LIMIT : 0 
+      });
 
-const fetchReviews = useCallback(async (productId, append = false) => {
-  if (!append) setReviewsLoading(true);
+      const newReviews = data?.reviews || [];
+      setReviewsTotal(data?.total || 0);
 
-  try {
-    const data = await handleGetReviews(productId, { 
-      limit: REVIEWS_LIMIT, 
-      skip: append ? reviewsSkip + REVIEWS_LIMIT : 0 
-    });
+      setReviews(prev => append ? [...prev, ...newReviews] : newReviews);
 
-    const newReviews = data?.reviews || [];
-    setReviewsTotal(data?.total || 0);
+      if (append) {
+        setReviewsSkip(prev => prev + REVIEWS_LIMIT);
+      } else {
+        setReviewsSkip(0);
+      }
 
-    setReviews(prev => append ? [...prev, ...newReviews] : newReviews);
-
-    if (append) {
-      setReviewsSkip(prev => prev + REVIEWS_LIMIT);
-    } else {
-      setReviewsSkip(0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setReviewsLoading(false);
     }
-
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setReviewsLoading(false);
-  }
-}, [handleGetReviews, reviewsSkip]); // ❗ removed reviews
-
-
-  // useEffect(() => { 
-  //   if (id) {
-  //     handleFetchPublicProductById(id);
-  //     fetchReviews(id);
-  //   }
-  // }, [id, handleFetchPublicProductById, fetchReviews]);
+  }, [handleGetReviews, reviewsSkip]);
 
   useEffect(() => { 
-  if (!id) return;
+    if (!id) return;
+    handleFetchPublicProductById(id);
+    fetchReviews(id);
+  }, [id]);
 
-  handleFetchPublicProductById(id);
-  fetchReviews(id);
-
-}, [id]);
-
+  useEffect(() => {
+    if (!product) return;
+    setActiveImg(0);
+    setImgLoaded(false);
+    setSelectedVariant(null);
+    setQty(1);
+  }, [product]);
 
   useEffect(() => { 
     setActiveImg(0); 
     setImgLoaded(false); 
     setSelectedVariant(null);
     setQty(1);
-    if (product) {
-      console.log("DEBUG: Product Loaded", {
-        id: product._id,
-        type: product.type,
-        variantsCount: product.variants?.length,
-        variants: product.variants
-      });
-    }
   }, [product?._id]);
 
   const images = product?.images || [];
+  const activeImages = selectedVariant?.image?.length > 0 ? selectedVariant.image : images;
   const isBuyer = user?.role === 'buyer';
   const userReview = reviews?.find(r => (r.userId?._id === user?._id || r.userId?._id === user?.id) && !r.parentId);
   
@@ -298,8 +268,10 @@ const fetchReviews = useCallback(async (productId, append = false) => {
   );
   const cartQty = cartItem?.quantity || 0;
 
-  const displayPrice = selectedVariant ? selectedVariant.price : product?.price;
-  const sym = SYM[displayPrice?.currency] || displayPrice?.currency || '';
+  const basePrice = product?.price;
+
+  const displayPrice = selectedVariant?.price?.amount != null ? selectedVariant.price : basePrice;
+  const sym = SYM[displayPrice?.currency || basePrice?.currency] || displayPrice?.currency || basePrice?.currency || "";
   
   const actualStock = selectedVariant ? selectedVariant.stock : (product?.stock || 0);
   const displayStock = Math.max(0, actualStock - cartQty);
@@ -461,9 +433,9 @@ const fetchReviews = useCallback(async (productId, append = false) => {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
           <div className="w-full lg:w-[55%] flex flex-col-reverse sm:flex-row gap-3">
-            {images.length > 1 && (
+            {activeImages.length > 1 && (
               <div className="flex sm:flex-col gap-2 sm:w-[72px] overflow-x-auto sm:overflow-y-auto sm:max-h-[520px] scrollbar-hide shrink-0 pb-1 sm:pb-0">
-                {images.map((img, i) => (
+                {activeImages.map((img, i) => (
                   <button
                     key={i}
                     onMouseEnter={() => { setActiveImg(i); setImgLoaded(false); }}
@@ -481,17 +453,17 @@ const fetchReviews = useCallback(async (productId, append = false) => {
             )}
 
             <div className={`relative flex-1 aspect-[4/5] sm:aspect-auto sm:h-[520px] rounded-xl overflow-hidden border ${isDark ? 'bg-[#111] border-[#1e1e1e]' : 'bg-white border-[#e5e5df]'}`}>
-              {!imgLoaded && (images.length > 0 || (selectedVariant && selectedVariant.image?.length > 0)) && (
+              {!imgLoaded && activeImages.length > 0 && (
                 <div className={`absolute inset-0 animate-pulse ${isDark ? 'bg-[#161616]' : 'bg-[#eee]'}`} />
               )}
               
               {/* Dynamic Image Selection with Fallback */}
               <img
-                key={selectedVariant?._id || activeImg}
+                key={`${selectedVariant?._id || 'base'}-${activeImg}`}
                 src={
-                  (selectedVariant?.image?.length > 0 && !imgError) 
-                    ? selectedVariant.image[0].url 
-                    : (images[activeImg]?.url || images[0]?.url || 'https://placehold.co/600x800?text=Product+Image')
+                  !imgError
+                    ? (activeImages[activeImg]?.url || activeImages[0]?.url || 'https://placehold.co/600x800?text=Product+Image')
+                    : (images[0]?.url || 'https://placehold.co/600x800?text=Product+Image')
                 }
                 alt={product.title}
                 onLoad={() => setImgLoaded(true)}
@@ -519,9 +491,9 @@ const fetchReviews = useCallback(async (productId, append = false) => {
                 </div>
               )}
 
-              {images.length > 1 && (
+              {activeImages.length > 1 && (
                 <span className={`absolute bottom-3 right-3 text-[10px] font-semibold px-2 py-1 rounded ${isDark ? 'bg-black/70 text-white' : 'bg-white/80 text-black'}`}>
-                  {activeImg + 1} / {images.length}
+                  {activeImg + 1} / {activeImages.length}
                 </span>
               )}
             </div>
@@ -667,7 +639,7 @@ const fetchReviews = useCallback(async (productId, append = false) => {
               <button
                 disabled={isOutOfStock || addingToCart}
                 onClick={async () => {
-                  if (product.type === 'variant_required' && !selectedVariant) {
+                  if (hasVariants && !selectedVariant) {
                     alert(`Please select a ${variants[0]?.attributes ? Object.keys(variants[0].attributes)[0] : 'variant'} to proceed.`);
                     return;
                   }
@@ -689,7 +661,7 @@ const fetchReviews = useCallback(async (productId, append = false) => {
                 <button
                   disabled={isOutOfStock || addingToCart}
                   onClick={async () => {
-                    if (product.type === 'variant_required' && !selectedVariant) {
+                    if (hasVariants && !selectedVariant) {
                         alert(`Please select a ${variants[0]?.attributes ? Object.keys(variants[0].attributes)[0] : 'variant'} to proceed.`);
                         return;
                     }

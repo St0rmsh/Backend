@@ -34,10 +34,10 @@ class CartService {
         if (!product) throw new Error("Product not found");
 
         // FORCE BASE VARIANT
-        if (product.type === "simple") {
+        const hasVariants = product.variants && product.variants.length > 0;
+        if (!hasVariants || !variantId || variantId === "BASE") {
             variantId = "BASE";
         }
-
         let stock = product.stock;
         let price = product.price;
         let productName = product.title;
@@ -55,35 +55,35 @@ class CartService {
         if (quantity > stock) throw new Error("Not enough stock");
 
         let cart = await this._getOrCreateCart(userId);
+        const currentVariantKey = variantId && variantId !== "" ? variantId : "BASE";
 
         const itemIndex = cart.items.findIndex(item => {
-            const itemProdId = item.product._id
-                ? item.product._id.toString()
-                : item.product.toString();
+         const itemProdId = item.product._id
+        ? item.product._id.toString()
+        : item.product.toString();
 
-            const itemVarId = item.variantKey || "BASE";
-
-            return (
-                itemProdId === productId.toString() &&
-                itemVarId === (variantId || "BASE")
-            );
-        });
+      return (
+        itemProdId === productId.toString() &&
+        item.variantKey === currentVariantKey
+     );
+});
 
         if (itemIndex > -1) {
             const newQty = cart.items[itemIndex].quantity + quantity;
             if (newQty > stock) throw new Error("Not enough stock");
             cart.items[itemIndex].quantity = newQty;
         } else {
-            cart.items.push({
-                product: productId,
-                variant: variantId === "BASE" ? null : variantId,
-                variantKey: variantId || "BASE",  
-                productName,
-                variantName,
-                quantity,
-                price
-            });
-        }
+
+           cart.items.push({
+           product: productId,
+           variant: currentVariantKey === "BASE" ? null : currentVariantKey,
+           variantKey: currentVariantKey,
+           productName,
+           variantName,
+           quantity,
+           price
+        });
+     }
 
         await cartDao.updateByUserId(userId, { items: cart.items });
         return await this.getCart(userId);
@@ -94,7 +94,8 @@ class CartService {
         const product = await productDao.findById(productId);
         if (!product) throw new Error("Product not found");
 
-        if (product.type === "simple") {
+        const hasVariants = product.variants && product.variants.length > 0;
+        if (!hasVariants || !variantId || variantId === "BASE") {
             variantId = "BASE";
         }
 
@@ -113,17 +114,17 @@ class CartService {
         if (quantity > stock) throw new Error("Not enough stock");
 
         let cart = await this._getOrCreateCart(userId);
-
+        const currentVariantKey = variantId && variantId !== "" ? variantId : "BASE";
         const itemIndex = cart.items.findIndex(item => {
-            const itemProdId = item.product._id
-                ? item.product._id.toString()
-                : item.product.toString();
+        const itemProdId = item.product._id
+        ? item.product._id.toString()
+        : item.product.toString();
 
-            return (
-                itemProdId === productId.toString() &&
-                (item.variantKey || "BASE") === (variantId || "BASE")
-            );
-        });
+        return (
+        itemProdId === productId.toString() &&
+        item.variantKey === currentVariantKey
+        );
+    });
 
         if (itemIndex === -1) throw new Error("Item not in cart");
 
@@ -135,8 +136,7 @@ class CartService {
     }
 
     async removeFromCart(userId, productId, variantId) {
-        if (!variantId) variantId = "BASE";
-
+        const currentVariantKey = variantId && variantId !== "" ? variantId : "BASE";
         let cart = await this._getOrCreateCart(userId);
 
         cart.items = cart.items.filter(item => {
@@ -146,8 +146,7 @@ class CartService {
 
             return !(
                 itemProdId === productId.toString() &&
-                (item.variantKey || "BASE") === variantId
-            );
+                item.variantKey === currentVariantKey            );
         });
 
         await cartDao.updateByUserId(userId, { items: cart.items });

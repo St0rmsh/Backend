@@ -95,13 +95,15 @@ export const CartProvider = ({ children }) => {
     const removeFromCart = useCallback(async (productId, variantId = null) => {
         if (!user) return;
         const previousItems = [...cartItems];
-        setCartItems(prev => prev.filter(item => 
-            !(item.productId === productId && (variantId ? item.variantId === variantId : !item.variantId))
-        ));
+        const currentVariant = variantId || "BASE";
+        setCartItems(prev => prev.filter(item =>!(item.productId === productId && item.variantId === currentVariant
+        )
+    )
+);
 
         try {
-            const res = await cartApi.delete(`/remove?productId=${productId}${variantId ? `&variantId=${variantId}` : ''}`);
-            if (!res.data.success) {
+       const res = await cartApi.delete(`/remove?productId=${productId}&variantId=${currentVariant}`);  
+          if (!res.data.success) {
                 setCartItems(previousItems);
                 alert(res.data.message || "Failed to remove item");
             }
@@ -114,16 +116,27 @@ export const CartProvider = ({ children }) => {
     const updateQuantity = useCallback(async (productId, variantId = null, quantity) => {
         if (!user) return;
         const previousItems = [...cartItems];
-        setCartItems(prev => prev.map(item => {
-            if (item.productId === productId && 
-                (variantId ? item.variantId === variantId : !item.variantId)) {
-                return { ...item, quantity };
-            }
-            return item;
-        }));
+      const currentVariant = variantId || "BASE";
+
+     setCartItems(prev =>
+      prev.map(item => {
+    if (
+    item.productId === productId &&
+    item.variantId === currentVariant
+    ) {
+            return {
+                ...item,
+                quantity
+            };
+        }
+
+        return item;
+    })
+);
 
         try {
-            const res = await cartApi.put(`/update?productId=${productId}${variantId ? `&variantId=${variantId}` : ''}`, { quantity });
+
+            const res = await cartApi.put(`/update?productId=${productId}&variantId=${currentVariant}`,{ quantity });
             if (!res.data.success) {
                 setCartItems(previousItems);
                 alert(res.data.message || "Failed to update quantity");

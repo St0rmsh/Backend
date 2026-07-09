@@ -34,7 +34,9 @@ class ProductDAO {
     async addVariant(productId, variantData) {
         return await ProductModel.findByIdAndUpdate(
             productId,
-            { $push: { variants: variantData } },
+            { $push: { variants: variantData },
+              $set: { type: "variant_required" }   
+            },
             { new: true, runValidators: true }
         );
     }
@@ -51,6 +53,23 @@ class ProductDAO {
         return await ProductModel.findByIdAndUpdate(
             productId,
             { $pull: { variants: { _id: variantId } } },
+            { new: true }
+        );
+    }
+
+      async deductStock(productId, quantity) {
+        // Atomic: only succeeds if stock is still sufficient at write-time
+        return await ProductModel.findOneAndUpdate(
+            { _id: productId, stock: { $gte: quantity } },
+            { $inc: { stock: -quantity } },
+            { new: true }
+        );
+    }
+
+    async deductVariantStock(productId, variantId, quantity) {
+        return await ProductModel.findOneAndUpdate(
+            { _id: productId, "variants._id": variantId, "variants.stock": { $gte: quantity } },
+            { $inc: { "variants.$.stock": -quantity } },
             { new: true }
         );
     }

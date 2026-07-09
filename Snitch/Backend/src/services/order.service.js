@@ -1,7 +1,7 @@
 import orderDao from "../daos/order.dao.js";
 import cartDao from "../daos/cart.dao.js";
 import productDao from "../daos/product.dao.js";
-import { createOrder as createRazorpayOrder } from "./razorpay.service.js";
+import { createOrder as createRazorpayOrder, verifyPaymentSignature } from "./razorpay.service.js";
 
 class OrderService {
     async createOrder(userId, shippingAddress) {
@@ -32,71 +32,98 @@ class OrderService {
             } else {
                 price = product.price;
                 stock = product.stock;
-                variantName = undefined; 
+                variantName = undefined;
             }
 
             if (item.quantity > stock) {
                 throw new Error(`Not enough stock for ${product.title}`);
             }
 
-            const unitPrice = price.amount; 
+            const unitPrice = price.amount; // flat number — matches orderItemSchema.priceAtPurchase
             subtotal += unitPrice * item.quantity;
 
             orderItems.push({
                 product: productId,
                 variant: effectiveVariantId,
-                productName: product.title,    
+                productName: product.title,   // now always populated
                 variantName,
                 quantity: item.quantity,
-                priceAtPurchase: unitPrice       
+                priceAtPurchase: unitPrice
             });
         }
 
         const shippingFee = 50;
-        const tax = Math.round(subtotal * 0.18 * 100) / 100; 
-        const totalAmount = subtotal + shippingFee + tax;
+        const tax = Math.round(subtotal * 0.18 * 100) / 100;
+        const totalAmount = Number((subtotal + shippingFee + tax).toFixed(2));
 
         const order = await orderDao.create({
             user: userId,
             items: orderItems,
-            subtotal,                
+            subtotal,             // now included, matches required schema field
             tax,
             shipping: shippingFee,
             totalAmount,
             currency: "INR",
             shippingAddress,
-            paymentStatus: "pending", 
-            orderStatus: "pending"    
+            paymentStatus: "pending",  // lowercase, matches enum
+            orderStatus: "pending"
         });
 
-        const razorpayOrder = await createRazorpayOrder({ amount: totalAmount, currency: "INR" });
-        await orderDao.updateStatus(order._id, undefined, undefined, { razorpayOrderId: razorpayOrder.id });
+        const razorpayOrder = await createRazorpayOrder({
+            amount: totalAmount,
+            currency: "INR",
+            receipt: order._id.toString()
+        });
+
+        const updatedOrder = await orderDao.updateStatus(order._id, undefined, undefined, {
+            razorpayOrderId: razorpayOrder.id
+        });
 
         await cartDao.clearCart(userId);
 
-       return {
-            order: { ...order.toObject(), razorpayOrderId: razorpayOrder.id },
-            razorpayOrder
-        };
+        return { order: updatedOrder, razorpayOrder };
     }
 
-    async completePayment(orderId) {
+    async _deductStockForOrder(order) {
+        for (const item of order.items) {
+            const productId = item.product._id || item.product;
+            if (item.variant) {
+                const updated = await productDao.deductVariantStock(productId, item.variant, item.quantity);
+                if (!updated) throw new Error(`Stock unavailable for ${item.productName} (${item.variantName})`);
+            } else {
+                const updated = await productDao.deductStock(productId, item.quantity);
+                if (!updated) throw new Error(`Stock unavailable for ${item.productName}`);
+            }
+        }
+    }
+
+    // Frontend-confirm path — called from the Razorpay checkout.js handler callback
+    async completePayment({ orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature }) {
         const order = await orderDao.findById(orderId);
         if (!order) throw new Error("Order not found");
-        if (order.paymentStatus === "paid") return order; 
+        if (order.paymentStatus === "paid") return order; // idempotent
 
-        for (const item of order.items) {
-            const product = await productDao.findById(item.product._id || item.product);
-            if (item.variant) {
-                const variant = product.variants.id(item.variant);
-                variant.stock -= item.quantity;
-            } else {
-                product.stock -= item.quantity;
-            }
-            await product.save();
-        }
+        const isValid = verifyPaymentSignature({ razorpayOrderId, razorpayPaymentId, razorpaySignature });
+        if (!isValid) throw new Error("Payment verification failed");
 
-        return await orderDao.updateStatus(orderId, "processing", "paid"); 
+        await this._deductStockForOrder(order);
+
+        return await orderDao.updateStatus(orderId, "processing", "paid", {
+            razorpayOrderId, razorpayPaymentId, razorpaySignature
+        });
+    }
+
+    // Independent webhook path — Issue 2's second confirmation path
+    async completePaymentFromWebhook({ razorpayOrderId, razorpayPaymentId, razorpaySignature }) {
+        const order = await orderDao.findByRazorpayOrderId(razorpayOrderId);
+        if (!order) throw new Error("Order not found for webhook event");
+        if (order.paymentStatus === "paid") return order; // idempotent — prevents double stock deduction
+
+        await this._deductStockForOrder(order);
+
+        return await orderDao.updateStatus(order._id, "processing", "paid", {
+            razorpayPaymentId, razorpaySignature
+        });
     }
 
     async getOrderById(orderId) {
@@ -116,7 +143,7 @@ class OrderService {
     async updateOrderStatus(orderId, status, sellerId) {
         const order = await orderDao.findById(orderId);
         if (!order) throw new Error("Order not found");
-        return await orderDao.updateStatus(orderId, status); 
+        return await orderDao.updateStatus(orderId, status);
     }
 }
 

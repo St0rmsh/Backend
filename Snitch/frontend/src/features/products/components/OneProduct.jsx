@@ -58,6 +58,10 @@ const OneProduct = () => {
         }
     }, [id]);
 
+    useEffect(() => {
+        setCurrentImageIdx(0);
+      }, [selectedVariant]);
+
 
     useEffect(() => {
         if (isEditing && product) {
@@ -242,6 +246,8 @@ const OneProduct = () => {
     const distribution = getRatingDistribution();
     const totalReviews = product.numReviews || 0;
 
+   
+
     return (
         <div className={`min-h-screen ${isDark ? 'bg-[#0f0f0f] text-[#f5f5f5]' : 'bg-[#f5f5ef] text-[#1a1a1a]'} px-6 py-10 lg:px-12 transition-colors duration-300 font-sans flex justify-center`}>
             <div className="w-full max-w-5xl">
@@ -281,8 +287,13 @@ const OneProduct = () => {
                     <div className="w-full lg:w-1/2 flex flex-col gap-4">
                         <div className={`aspect-[4/5] rounded-xl overflow-hidden ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e5e5]'}`}>
                             {!isEditing ? (
-                                product.images && product.images.length > 0 ? (
-                                    <img src={product.images[currentImageIdx]?.url} alt={product.title} className="w-full h-full object-contain bg-white dark:bg-[#111]" />
+                                (selectedVariant?.image?.length > 0 ? selectedVariant.image : product.images)?.length > 0 ? (
+                                    <img
+                                        src={(selectedVariant?.image?.length > 0 ? selectedVariant.image : product.images)[currentImageIdx]?.url
+                                             || (selectedVariant?.image?.[0]?.url || product.images?.[0]?.url)}
+                                        alt={product.title}
+                                        className="w-full h-full object-contain bg-white dark:bg-[#111]"
+                                    />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center opacity-30">No Media Available</div>
                                 )
@@ -345,23 +356,26 @@ const OneProduct = () => {
                                 </div>
                             )}
                         </div>
-                        {!isEditing && product.images && product.images.length > 1 && (
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                {product.images.map((img, idx) => (
-                                    <button 
-                                        key={idx} 
-                                        onClick={() => setCurrentImageIdx(idx)}
-                                        className={`w-20 h-24 shrink-0 rounded-md overflow-hidden border-2 transition-all bg-white dark:bg-[#111] ${
-                                            currentImageIdx === idx 
-                                            ? (isDark ? 'border-white' : 'border-black')
-                                            : 'border-transparent opacity-60 hover:opacity-100'
-                                        }`}
-                                    >
-                                        <img src={img.url} alt="Thumbnail" className="w-full h-full object-contain" />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        {!isEditing && (() => {
+                            const activeImages = selectedVariant?.image?.length > 0 ? selectedVariant.image : product.images;
+                            return activeImages && activeImages.length > 1 && (
+                                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                    {activeImages.map((img, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setCurrentImageIdx(idx)}
+                                            className={`w-20 h-24 shrink-0 rounded-md overflow-hidden border-2 transition-all bg-white dark:bg-[#111] ${
+                                                currentImageIdx === idx
+                                                ? (isDark ? 'border-white' : 'border-black')
+                                                : 'border-transparent opacity-60 hover:opacity-100'
+                                            }`}
+                                        >
+                                            <img src={img.url} alt="Thumbnail" className="w-full h-full object-contain" />
+                                        </button>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     <div className="w-full lg:w-1/2 flex flex-col py-2">
@@ -447,8 +461,8 @@ const OneProduct = () => {
                                         <span className="text-sm font-semibold">{(product.averageRating || 0).toFixed(1)}</span>
                                         <span className={`text-sm ${isDark ? 'text-[#666]' : 'text-[#999]'}`}>({totalReviews} reviews)</span>
                                     </div>
-                                    <p className="text-2xl font-medium tracking-wide">
-                                        {product.price?.currency} {product.price?.amount}
+                                   <p className="text-2xl font-medium tracking-wide">
+                                        {(selectedVariant?.price?.currency || product.price?.currency)} {(selectedVariant?.price?.amount ?? product.price?.amount)}
                                     </p>
                                 </div>
 
@@ -463,7 +477,7 @@ const OneProduct = () => {
                                 
                                 <div className="mt-auto pt-4 flex flex-col gap-2">
                                     <p className={`text-xs ${isDark ? 'text-[#666]' : 'text-[#999]'}`}>
-                                        Base Stock: <span className="font-mono text-current">{product.stock}</span>
+                                        {selectedVariant ? 'Variant Stock' : 'Base Stock'}: <span className="font-mono text-current">{selectedVariant ? selectedVariant.stock : product.stock}</span>
                                     </p>
                                     <p className={`text-xs ${isDark ? 'text-[#666]' : 'text-[#999]'}`}>
                                         ID: <span className="font-mono">{product._id}</span>
@@ -588,27 +602,42 @@ const OneProduct = () => {
 
                     {product.variants && product.variants.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                            {product.variants.map((variant) => (
-                                <div key={variant._id} className={`flex flex-col p-4 rounded-xl border ${isDark ? 'border-[#333] bg-[#161616]' : 'border-[#e5e5df] bg-[#fafaf7]'}`}>
-                                    <div className="flex justify-between items-start mb-3">
-                                        <h4 className="font-bold text-lg">{variant.value}</h4>
-                                        <button onClick={() => onDeleteVariant(variant._id)} className="text-red-500 opacity-60 hover:opacity-100">
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
-                                    </div>
-                                    <div className={`text-sm mb-3 space-y-1 ${isDark ? 'text-[#aaa]' : 'text-[#666]'}`}>
-                                        <p>Stock: <span className="font-medium text-current">{variant.stock}</span></p>
-                                        <p>Price: <span className="font-medium text-current">{variant.price?.currency} {variant.price?.amount}</span></p>
-                                    </div>
-                                    {variant.image && variant.image.length > 0 && (
-                                        <div className="flex gap-2 mt-auto overflow-x-auto pb-1 scrollbar-hide">
-                                            {variant.image.map((img, i) => (
-                                                <img key={i} src={img.url} alt={variant.value} className="w-12 h-12 object-cover rounded border border-[#333]" />
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                           {product.variants.map((variant) => {
+                            const isSelected = selectedVariant?._id === variant._id;
+                            return (
+                                    <div key={variant._id}
+                                        onClick={() => setSelectedVariant(isSelected ? null : variant)}
+                                        className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${isSelected
+                                                ? (isDark ? 'border-white bg-[#1a1a1a]' : 'border-black bg-[#f5f5ef]')
+                                                : (isDark ? 'border-[#333] bg-[#161616] hover:border-[#555]' : 'border-[#e5e5df] bg-[#fafaf7] hover:border-[#aaa]')
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-start mb-3">
+                                                <h4 className="font-bold text-lg">{variant.value}</h4>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); onDeleteVariant(variant._id); }}
+                                                    className="text-red-500 opacity-60 hover:opacity-100"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </div>
+                                            <div className={`text-sm mb-3 space-y-1 ${isDark ? 'text-[#aaa]' : 'text-[#666]'}`}>
+                                                <p>Stock: <span className="font-medium text-current">{variant.stock}</span></p>
+                                                <p>Price: <span className="font-medium text-current">{variant.price?.currency} {variant.price?.amount}</span></p>
+                                            </div>
+                                            {variant.image && variant.image.length > 0 && (
+                    <div className="flex gap-2 mt-auto overflow-x-auto pb-1 scrollbar-hide">
+                    {variant.image.map((img, i) => (
+                        <img key={i} src={img.url} alt={variant.value} className="w-12 h-12 object-cover rounded border border-[#333]" />
+                    ))}
+                </div>
+            )}
+            {isSelected && (
+                <span className={`mt-2 text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-[#d4a017]' : 'text-[#a67c00]'}`}>Viewing: {variant.value}</span>
+            )}
+        </div>
+    );
+})}
                         </div>
                     ) : (
                         <div className={`p-8 text-center rounded-xl border border-dashed ${isDark ? 'border-[#333] text-[#666]' : 'border-[#ccc] text-[#888]'}`}>
