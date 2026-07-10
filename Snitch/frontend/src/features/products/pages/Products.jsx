@@ -7,6 +7,7 @@ import { useCart } from '../../../context/CartContext';
 import SearchSort from '../components/SearchSort';
 import LogoutButton from '../components/LogoutButton';
 import { useWishlist } from '../../../context/WishlistContext';
+import Skeleton from '../components/ui/Skeleton';
 
 const SYM = { INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
 
@@ -153,15 +154,13 @@ const Products = () => {
     return () => clearTimeout(timer);
   }, [search, sortBy, category, minPrice, maxPrice, page, handleFetchAllPublicProducts]);
 
-  const Skeleton = () => (
+ const ProductSkeleton = () => (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
       {Array.from({ length: 12 }).map((_, i) => (
-        <div key={i} className="space-y-4">
-          <div className={`aspect-[3/4] rounded-2xl animate-pulse ${isDark ? 'bg-[#141414]' : 'bg-[#eee]'}`} />
-          <div className="space-y-2">
-            <div className={`h-3 rounded w-3/4 animate-pulse ${isDark ? 'bg-[#141414]' : 'bg-[#eee]'}`} />
-            <div className={`h-3 rounded w-1/2 animate-pulse ${isDark ? 'bg-[#141414]' : 'bg-[#eee]'}`} />
-          </div>
+        <div key={i} className="space-y-3">
+          <Skeleton isDark={isDark} className="aspect-[3/4] rounded-2xl" />
+          <Skeleton isDark={isDark} className="h-3 w-3/4" />
+          <Skeleton isDark={isDark} className="h-3 w-1/2" />
         </div>
       ))}
     </div>
@@ -230,7 +229,7 @@ const Products = () => {
         />
 
         {loading && page === 1 ? (
-          <Skeleton />
+          <ProductSkeleton />
         ) : (products?.length || 0) === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 text-center">
             <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'}`}>

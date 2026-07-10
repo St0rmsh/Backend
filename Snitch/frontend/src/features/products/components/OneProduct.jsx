@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useProduct } from '../hook/useProduct';
 import { useSelector } from 'react-redux';
 import { useTheme } from '../../../context/ThemeContext';
+import Skeleton from "../components/ui/Skeleton";
 
 const OneProduct = () => {
     const { id } = useParams();
@@ -217,12 +218,51 @@ const OneProduct = () => {
         return dist;
     };
 
-    if (loading && !product && !isUpdating) {
+   if (loading && !product && !isUpdating) {
         return (
-            <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#0f0f0f] text-white' : 'bg-[#f5f5ef] text-black'}`}>
-                <div className="animate-pulse flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-current animate-spin mb-4"></div>
-                    <p className="text-sm font-medium tracking-widest uppercase opacity-50">Loading Item...</p>
+            <div className={`min-h-screen ${isDark ? 'bg-[#0f0f0f] text-[#f5f5f5]' : 'bg-[#f5f5ef] text-[#1a1a1a]'} px-6 py-10 lg:px-12 font-sans flex justify-center`}>
+                <div className="w-full max-w-5xl">
+                    <div className="mb-8 flex items-center justify-between">
+                        <Skeleton isDark={isDark} className="h-10 w-24 rounded-full" />
+                        <div className="flex gap-3">
+                            <Skeleton isDark={isDark} className="h-10 w-32 rounded-lg" />
+                            <Skeleton isDark={isDark} className="h-10 w-24 rounded-lg" />
+                        </div>
+                    </div>
+
+                    <div className={`flex flex-col lg:flex-row gap-10 lg:gap-16 p-8 rounded-2xl border ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>
+                        <div className="w-full lg:w-1/2 flex flex-col gap-4">
+                            <Skeleton isDark={isDark} className="aspect-[4/5] rounded-xl" />
+                            <div className="flex gap-2">
+                                {[1, 2, 3, 4].map(i => (
+                                    <Skeleton key={i} isDark={isDark} className="w-20 h-24 rounded-md" />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="w-full lg:w-1/2 flex flex-col gap-4 py-2">
+                            <Skeleton isDark={isDark} className="h-9 w-4/5" />
+                            <Skeleton isDark={isDark} className="h-5 w-40" />
+                            <Skeleton isDark={isDark} className="h-8 w-32" />
+                            <div className={`w-full border-t my-2 ${isDark ? 'border-[#222]' : 'border-[#e5e5df]'}`}></div>
+                            <Skeleton isDark={isDark} className="h-4 w-full" />
+                            <Skeleton isDark={isDark} className="h-4 w-full" />
+                            <Skeleton isDark={isDark} className="h-4 w-2/3" />
+                            <div className="mt-auto pt-4 space-y-2">
+                                <Skeleton isDark={isDark} className="h-3 w-32" />
+                                <Skeleton isDark={isDark} className="h-3 w-48" />
+                                <Skeleton isDark={isDark} className="h-3 w-40" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`mt-10 p-6 sm:p-8 rounded-2xl border ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-[#e5e5df] shadow-sm'}`}>
+                        <Skeleton isDark={isDark} className="h-7 w-56 mb-6" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {[1, 2, 3].map(i => (
+                                <Skeleton key={i} isDark={isDark} className="h-32 rounded-xl" />
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
