@@ -2,6 +2,7 @@ import productService from "../services/product.service.js";
 import reviewService from "../services/review.service.js";
 import { uploadFile } from "../services/storage.service.js";
 import { suggestCategory, getCategoryTree } from "../utils/categorize.util.js";
+import { buildTextSearchClause } from "../utils/search.util.js";
 
 export const createProduct = async (req, res) => {
     try {
@@ -256,13 +257,10 @@ export const fetchAllProducts = async (req, res) => {
         else if (sort === "rating") options.sort.averageRating = -1;
         else options.sort.createdAt = -1;
 
-        const fullFilters = { ...filters };
-        if (search) {
-            fullFilters.$or = [
-                { title: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } }
-            ];
-        }
+        // Same tokenized text clause used for both fetching and counting,
+        // so pagination totals always match what's actually returned.
+        const textClause = buildTextSearchClause(search);
+        const fullFilters = { ...filters, ...textClause };
 
         const products = await productService.searchProducts(search, filters, options);
         const total = await productService.countProducts(fullFilters);

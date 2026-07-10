@@ -7,6 +7,9 @@ import { useCart } from '../../../context/CartContext';
 
 import { useWishlist } from '../../../context/WishlistContext';
 import LogoutButton from './LogoutButton';
+import Skeleton from './ui/Skeleton';
+
+
 const Stars = memo(({ rating, size = 'w-4 h-4' }) => (
   <div className="flex gap-0.5">
     {[1,2,3,4,5].map(s => (
@@ -350,13 +353,67 @@ const ProductDetails = () => {
     finally { setDeleting(false); }
   };
 
-  if (loading && !product) {
+if (loading && !product) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#0a0a0a]' : 'bg-[#f4f4ef]'}`}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-current border-t-transparent rounded-full animate-spin opacity-40"></div>
-          <span className={`text-xs tracking-widest uppercase font-medium ${isDark ? 'text-[#555]' : 'text-[#999]'}`}>Loading…</span>
-        </div>
+      <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0a]' : 'bg-[#f4f4ef]'} font-sans`}>
+        <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1e1e1e]' : 'bg-[#f4f4ef]/95 border-[#ddd]'}`}>
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+            <span className="text-xl font-black italic tracking-[-0.04em]">SNITCH</span>
+          </div>
+        </nav>
+
+        <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
+          <Skeleton isDark={isDark} className="h-4 w-48 mb-5" />
+
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Image gallery skeleton */}
+            <div className="w-full lg:w-[55%] flex flex-col-reverse sm:flex-row gap-3">
+              <div className="flex sm:flex-col gap-2 sm:w-[72px] shrink-0">
+                {[1, 2, 3, 4].map(i => (
+                  <Skeleton key={i} isDark={isDark} className="w-[60px] h-[72px] sm:w-full rounded-lg" />
+                ))}
+              </div>
+              <Skeleton isDark={isDark} className="flex-1 aspect-[4/5] sm:aspect-auto sm:h-[520px] rounded-xl" />
+            </div>
+
+            {/* Info column skeleton */}
+            <div className="w-full lg:w-[45%] flex flex-col gap-4">
+              <Skeleton isDark={isDark} className="h-7 w-3/4" />
+              <Skeleton isDark={isDark} className="h-4 w-32" />
+              <div className={`border-t my-2 ${isDark ? 'border-[#1e1e1e]' : 'border-[#e5e5df]'}`} />
+              <Skeleton isDark={isDark} className="h-9 w-40" />
+              <div className={`border-t my-2 ${isDark ? 'border-[#1e1e1e]' : 'border-[#e5e5df]'}`} />
+              <Skeleton isDark={isDark} className="h-4 w-full" />
+              <Skeleton isDark={isDark} className="h-4 w-5/6" />
+              <Skeleton isDark={isDark} className="h-4 w-2/3" />
+              <div className="flex gap-3 mt-4">
+                <Skeleton isDark={isDark} className="h-12 w-20 rounded-2xl" />
+                <Skeleton isDark={isDark} className="h-12 w-20 rounded-2xl" />
+                <Skeleton isDark={isDark} className="h-12 w-20 rounded-2xl" />
+              </div>
+              <div className={`border-t my-2 ${isDark ? 'border-[#1e1e1e]' : 'border-[#e5e5df]'}`} />
+              <Skeleton isDark={isDark} className="h-10 w-40" />
+              <Skeleton isDark={isDark} className="h-14 w-full rounded-xl mt-2" />
+              <div className="flex gap-3">
+                <Skeleton isDark={isDark} className="h-14 flex-1 rounded-xl" />
+                <Skeleton isDark={isDark} className="h-14 w-14 rounded-lg" />
+              </div>
+            </div>
+          </div>
+
+          {/* Reviews section skeleton */}
+          <div className={`mt-10 rounded-2xl border p-6 sm:p-8 ${isDark ? 'bg-[#111] border-[#1e1e1e]' : 'bg-white border-[#e5e5df]'}`}>
+            <Skeleton isDark={isDark} className="h-6 w-48 mb-6" />
+            <div className="flex gap-6 mb-8">
+              <Skeleton isDark={isDark} className="h-20 w-20 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <Skeleton isDark={isDark} className="h-3 w-full" />
+                <Skeleton isDark={isDark} className="h-3 w-full" />
+                <Skeleton isDark={isDark} className="h-3 w-full" />
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -638,8 +695,8 @@ const ProductDetails = () => {
             <div className="flex flex-col gap-3">
               <button
                 disabled={isOutOfStock || addingToCart}
-                onClick={async () => {
-                  if (hasVariants && !selectedVariant) {
+               onClick={async () => {
+                  if (product.type === 'variant_required' && !selectedVariant) {
                     alert(`Please select a ${variants[0]?.attributes ? Object.keys(variants[0].attributes)[0] : 'variant'} to proceed.`);
                     return;
                   }
@@ -660,8 +717,8 @@ const ProductDetails = () => {
               <div className="flex gap-3">
                 <button
                   disabled={isOutOfStock || addingToCart}
-                  onClick={async () => {
-                    if (hasVariants && !selectedVariant) {
+                onClick={async () => {
+                    if (product.type === 'variant_required' && !selectedVariant) {
                         alert(`Please select a ${variants[0]?.attributes ? Object.keys(variants[0].attributes)[0] : 'variant'} to proceed.`);
                         return;
                     }

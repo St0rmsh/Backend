@@ -1,4 +1,5 @@
 import ProductModel from "../models/product.model.js";
+import { buildTextSearchClause } from "../utils/search.util.js";
 
 class ProductDAO {
 
@@ -37,13 +38,14 @@ class ProductDAO {
         return await ProductModel.findByIdAndDelete(id);
     }
 
-    async addVariant(productId, variantData) {
+   async addVariant(productId, variantData, newType) {
+        const update = { $push: { variants: variantData } };
+        if (newType) {
+            update.$set = { type: newType };
+        }
         return await ProductModel.findByIdAndUpdate(
             productId,
-            {
-                $push: { variants: variantData },
-                $set: { type: "variant_required" }   // product now has variants — stop treating it as simple
-            },
+            update,
             { new: true, runValidators: true }
         );
     }
@@ -88,16 +90,8 @@ class ProductDAO {
 
     async search(query, filters = {}, options = {}) {
         const { sort = { createdAt: -1 }, limit = 10, skip = 0 } = options;
-        
-        let mongoFilter = { ...filters };
-        if (query) {
-            mongoFilter.$or = [
-                { title: { $regex: query, $options: "i" } },
-                { description: { $regex: query, $options: "i" } },
-                { "variants.value": { $regex: query, $options: "i" } },
-                { "variants.attributes": { $regex: query, $options: "i" } }
-            ];
-        }
+        const textClause = buildTextSearchClause(query);
+        const mongoFilter = { ...filters, ...textClause };
 
         return await ProductModel.find(mongoFilter)
             .sort(sort)
@@ -106,5 +100,6 @@ class ProductDAO {
             .populate("seller", "name email");
     }
 }
+
 
 export default new ProductDAO();

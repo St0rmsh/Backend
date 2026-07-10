@@ -19,7 +19,6 @@ const SearchSort = ({
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [liveCategories, setLiveCategories] = useState([]);
-    const [localSearch, setLocalSearch] = useState(search);
     const sortRef = useRef(null);
     const filterRef = useRef(null);
 
@@ -30,19 +29,9 @@ const SearchSort = ({
         { label: 'PRICE: HIGH TO LOW', value: 'price_high' }
     ];
 
-    // Debounce the search input — only push to parent (and thus fire a fetch)
-    // 350ms after the user stops typing, instead of on every keystroke.
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (localSearch !== search) setSearch(localSearch);
-        }, 350);
-        return () => clearTimeout(timer);
-    }, [localSearch]);
-
-    // Keep localSearch in sync if search is cleared externally (e.g. "Clear all filters")
-    useEffect(() => {
-        setLocalSearch(search);
-    }, [search]);
+    // Note: search debouncing happens once, in the parent (Products.jsx),
+    // 400ms after `search` changes. No local debounce here — stacking two
+    // debounces just doubles the delay before results update.
 
     // Pull the live, actually-in-use subcategory list instead of a static array —
     // new product types sellers list automatically appear here.
@@ -92,8 +81,8 @@ const SearchSort = ({
                     <input
                         type="text"
                         placeholder="Search for items, brands and more..."
-                        value={localSearch}
-                        onChange={(e) => setLocalSearch(e.target.value)}
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         className={`w-full h-[56px] pl-12 pr-12 rounded-2xl text-sm font-semibold border outline-none transition-all duration-300
                             ${isDark 
                                 ? 'bg-[#111] border-[#1e1e1e] text-white focus:border-[#444] focus:bg-[#161616] placeholder-[#333]' 
@@ -102,9 +91,9 @@ const SearchSort = ({
                     />
 
                     {/* Clear Button */}
-                    {localSearch && (
+                    {search && (
                         <button
-                            onClick={() => setLocalSearch('')}
+                            onClick={() => setSearch('')}
                             className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-all duration-300 hover:scale-110 active:scale-90
                                 ${isDark ? 'text-[#444] hover:text-white' : 'text-[#999] hover:text-black'}`}
                         >
