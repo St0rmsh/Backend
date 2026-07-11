@@ -1,95 +1,296 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Wand2 } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Send,
+  Sparkles,
+  Loader2,
+  Wand2,
+  X,
+  ArrowUp,
+} from "lucide-react";
 
-export const ChatInput = ({ onSend, isLoading }) => {
-  const [input, setInput] = useState('');
+const suggestions = [
+  "Write Merge Sort in JavaScript",
+  "Optimize Dijkstra Algorithm",
+  "Build JWT Authentication in Node.js",
+  "React Infinite Scroll",
+];
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (input.trim() && !isLoading) {
-      onSend(input);
-      setInput('');
+export default function ChatInput({
+  onSend,
+  isLoading,
+}) {
+  const [message, setMessage] = useState("");
+  const [focused, setFocused] = useState(false);
+
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    autoResize();
+  }, [message]);
+
+  const autoResize = () => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) return;
+
+    textarea.style.height = "0px";
+    textarea.style.height = `${Math.min(
+      textarea.scrollHeight,
+      220
+    )}px`;
+  };
+
+  const send = () => {
+    if (!message.trim()) return;
+    if (isLoading) return;
+
+    onSend(message.trim());
+
+    setMessage("");
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "56px";
     }
-    
+  };
+
+  const handleKeyDown = (e) => {
+    if (
+      e.key === "Enter" &&
+      !e.shiftKey
+    ) {
+      e.preventDefault();
+      send();
+    }
   };
 
   return (
-    <div className="relative group/input">
+    <div className="w-full relative">
+
+      {/* Glow */}
+
+      <div className="absolute inset-0 blur-3xl bg-indigo-500/10 rounded-full pointer-events-none" />
+
+      {/* Suggestions */}
+
       <AnimatePresence>
-        {isLoading && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="absolute -top-16 left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-2.5 glass rounded-2xl text-[10px] font-black tracking-[0.2em] shadow-xl z-50 overflow-hidden"
+
+        {!message && !focused && !isLoading && (
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              opacity: 0,
+              y: 10,
+            }}
+            className="mb-5 flex flex-wrap gap-2 justify-center"
           >
-             {/* Luxury AI Wave Effect */}
-            <div className="flex items-center gap-1 h-4">
-              {[0.4, 0.7, 1, 0.6, 0.9, 0.4].map((h, i) => (
-                <motion.div
-                  key={i}
-                  animate={{ 
-                    height: ["30%", "100%", "30%"],
-                    opacity: [0.3, 1, 0.3]
-                  }}
-                  transition={{ 
-                    duration: 1.2, 
-                    repeat: Infinity, 
-                    delay: i * 0.15,
-                    ease: "easeInOut" 
-                  }}
-                  className="w-0.5 bg-(--link-color) rounded-full"
-                />
-              ))}
-            </div>
-            <motion.span 
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="bg-clip-text text-transparent bg-linear-to-r from-(--link-color) to-(--accent-color) uppercase italic"
-            >
-              Synthesizing
-            </motion.span>
+
+            {suggestions.map((item) => (
+
+              <motion.button
+                key={item}
+                whileHover={{
+                  scale: 1.05,
+                }}
+                whileTap={{
+                  scale: 0.95,
+                }}
+                onClick={() => setMessage(item)}
+                className="glass px-4 py-2 rounded-full text-xs font-semibold transition hover:border-indigo-500"
+              >
+                {item}
+              </motion.button>
+
+            ))}
+
           </motion.div>
+
         )}
+
       </AnimatePresence>
 
-      <motion.div 
-        animate={{ y: [0, -2, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="glass p-2 rounded-2xl flex items-center gap-3 relative shadow-xl ring-1 ring-(--glass-border) hover:ring-(--link-color)/30 transition-all duration-700"
+      <motion.div
+        layout
+        className={`glass rounded-3xl border transition-all duration-500 ${
+          focused
+            ? "border-indigo-500 shadow-[0_0_35px_rgba(99,102,241,.25)]"
+            : "border-white/10"
+        }`}
       >
-        <div className="pl-4 text-(--link-color)/60 group-focus-within/input:text-(--link-color) transition-colors duration-500">
-          <Wand2 size={18} />
-        </div>
-        
-        <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask anything..."
-            disabled={isLoading}
-            className="flex-1 bg-transparent py-3 text-sm font-medium focus:outline-none placeholder:text-(--text-secondary)/40 disabled:opacity-50 transition-all"
-          />
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className={`p-3 rounded-xl shadow-lg text-white transition-all duration-500 group relative overflow-hidden ${
-              input.trim() ? 'bg-linear-to-tr from-(--link-color) to-(--accent-color)' : 'bg-slate-300 dark:bg-slate-800 opacity-50 cursor-not-allowed'
-            }`}
+
+        <div className="flex items-end gap-4 p-4">
+
+          {/* AI Icon */}
+
+          <motion.div
+            animate={{
+              rotate: isLoading
+                ? 360
+                : 0,
+            }}
+            transition={{
+              duration: 3,
+              repeat: isLoading
+                ? Infinity
+                : 0,
+              ease: "linear",
+            }}
+            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-white shrink-0"
           >
-            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity blur-lg" />
-            <Send size={16} className="relative z-10" />
-          </motion.button>
-        </form>
+            {isLoading ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              <Sparkles size={20} />
+            )}
+          </motion.div>
+
+          {/* Textarea */}
+
+          <div className="flex-1">
+
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={message}
+              disabled={isLoading}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onChange={(e) =>
+                setMessage(e.target.value)
+              }
+              onKeyDown={handleKeyDown}
+              placeholder="Ask Battle Arena anything..."
+              className="w-full bg-transparent resize-none outline-none text-sm leading-7 placeholder:text-gray-400 max-h-[220px]"
+            />
+
+            <div className="mt-3 flex items-center justify-between">
+
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+
+                <div className="flex items-center gap-1">
+
+                  <Wand2 size={13} />
+
+                  AI Battle
+
+                </div>
+
+                <div>
+
+                  {message.length}/4000
+
+                </div>
+
+              </div>
+
+              <div className="text-xs text-gray-400">
+
+                Enter ↵ Send
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Buttons */}
+
+          <div className="flex flex-col gap-2">
+
+            {message && (
+
+              <motion.button
+                whileTap={{
+                  scale: .9,
+                }}
+                onClick={() => setMessage("")}
+                className="w-10 h-10 rounded-xl glass flex items-center justify-center"
+              >
+                <X size={16} />
+              </motion.button>
+
+            )}
+
+            <motion.button
+              whileHover={{
+                scale: 1.05,
+              }}
+              whileTap={{
+                scale: .9,
+              }}
+              onClick={send}
+              disabled={
+                !message.trim() ||
+                isLoading
+              }
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300
+
+${
+  message.trim()
+    ? "bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-xl"
+    : "bg-gray-800 text-gray-500 cursor-not-allowed"
+}
+`}
+            >
+
+              {isLoading ? (
+
+                <Loader2
+                  size={18}
+                  className="animate-spin"
+                />
+
+              ) : (
+
+                <ArrowUp size={18} />
+
+              )}
+
+            </motion.button>
+
+          </div>
+
+        </div>
+
       </motion.div>
-      
-      {/* Input Under-glow */}
-      <div className="absolute inset-0 bg-linear-to-r from-(--link-color)/5 to-transparent blur-2xl rounded-full opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-1000 -z-10" />
+
+      {/* Bottom Hint */}
+
+      <AnimatePresence>
+
+        {focused && (
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 8,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              opacity: 0,
+            }}
+            className="mt-3 text-center text-xs text-gray-500"
+          >
+
+            Press <b>Enter</b> to send • <b>Shift + Enter</b> for new line
+
+          </motion.div>
+
+        )}
+
+      </AnimatePresence>
+
     </div>
   );
-};
+}

@@ -2,15 +2,39 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../../context/CartContext';
 import { useTheme } from '../../../context/ThemeContext';
-import axios from 'axios';
 import { useSelector } from 'react-redux';
+import { useOrder } from '../../products/hook/useOrder';
 
 const SYM = { INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
+
+// Loads the Razorpay checkout script once and caches the promise so repeated
+// clicks (or remounts) don't inject the <script> tag multiple times.
+let razorpayScriptPromise = null;
+const loadRazorpayScript = () => {
+    if (razorpayScriptPromise) return razorpayScriptPromise;
+    razorpayScriptPromise = new Promise((resolve, reject) => {
+        if (window.Razorpay) {
+            resolve(true);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => {
+            razorpayScriptPromise = null;
+            reject(new Error('Failed to load Razorpay checkout script'));
+        };
+        document.body.appendChild(script);
+    });
+    return razorpayScriptPromise;
+};
 
 const PaymentPage = () => {
     const { cartItems, totalPrice, clearCart } = useCart();
     const { isDark, toggleTheme } = useTheme();
     const navigate = useNavigate();
+    const user = useSelector(state => state.auth.user);
+    const { handleCreateOrder, handleCompletePayment } = useOrder();
 
     const [address, setAddress] = useState({
         street: '',
@@ -23,52 +47,93 @@ const PaymentPage = () => {
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Success
     const [orderId, setOrderId] = useState(null);
+    const [razorpayOrder, setRazorpayOrder] = useState(null);
+    const [paymentError, setPaymentError] = useState('');
 
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setPaymentError('');
         try {
-            const items = cartItems.map(item => ({
-                product: item.productId,
-                variant: item.variantId?._id || item.variantId,
-                quantity: item.quantity
-            }));
-
-            const res = await axios.post('/api/order/create', {
-                shippingAddress: address
-            }, {
-                withCredentials: true
-            });
-
-            if (res.data.success) {
-                setOrderId(res.data.order._id);
+            const data = await handleCreateOrder(address);
+            if (data.success) {
+                setOrderId(data.order._id);
+                setRazorpayOrder(data.razorpayOrder);
                 setStep(2);
             }
         } catch (error) {
             console.error("Order creation failed", error);
-            alert(error.response?.data?.message || "Order creation failed");
+            alert(error.message || "Order creation failed");
         } finally {
             setLoading(false);
         }
     };
 
     const handlePayment = async () => {
+        if (!razorpayOrder) {
+            setPaymentError('Order was not set up correctly. Please go back and try again.');
+            return;
+        }
+
         setLoading(true);
+        setPaymentError('');
+
         try {
-            const res = await axios.post(`/api/order/complete-payment`, {
-                orderId,
-            }, {
-                withCredentials: true
+            await loadRazorpayScript();
+
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                name: 'Snitch',
+                description: `Order #${orderId?.slice(-6).toUpperCase()}`,
+                order_id: razorpayOrder.id,
+                prefill: {
+                    name: user?.fullname || '',
+                    email: user?.email || '',
+                },
+                theme: { color: isDark ? '#ffffff' : '#111111' },
+                handler: async (response) => {
+                    try {
+                        const confirmRes = await handleCompletePayment({
+                            orderId,
+                            razorpayOrderId: response.razorpay_order_id,
+                            razorpayPaymentId: response.razorpay_payment_id,
+                            razorpaySignature: response.razorpay_signature,
+                        });
+
+                        if (confirmRes.success) {
+                            setStep(3);
+                            clearCart();
+                        } else {
+                            setPaymentError(confirmRes.message || 'Payment could not be verified.');
+                        }
+                    } catch (err) {
+                        console.error('Payment confirmation failed', err);
+                        setPaymentError(err.message || 'Payment could not be verified. If money was deducted, contact support with your order ID.');
+                    } finally {
+                        setLoading(false);
+                    }
+                },
+                modal: {
+                    ondismiss: () => {
+                        setLoading(false);
+                    },
+                },
+            };
+
+            const razorpayInstance = new window.Razorpay(options);
+
+            razorpayInstance.on('payment.failed', (response) => {
+                console.error('Razorpay payment failed', response.error);
+                setPaymentError(response.error?.description || 'Payment failed. Please try again.');
+                setLoading(false);
             });
 
-            if (res.data.success) {
-                setStep(3);
-                clearCart();
-            }
-        } catch (error) {
-            console.error("Payment failed", error);
-            alert(error.response?.data?.message || "Payment failed");
-        } finally {
+            razorpayInstance.open();
+        } catch (err) {
+            console.error('Could not open Razorpay checkout', err);
+            setPaymentError('Could not load the payment gateway. Please check your connection and try again.');
             setLoading(false);
         }
     };
@@ -84,9 +149,14 @@ const PaymentPage = () => {
                     </div>
                     <h1 className="text-3xl font-black italic mb-3 tracking-tight">ORDER PLACED!</h1>
                     <p className={`text-sm mb-8 opacity-60`}>Your order #{orderId?.slice(-6).toUpperCase()} has been confirmed and is being processed.</p>
-                    <Link to="/products" className={`inline-block px-10 py-4 rounded-xl font-bold text-sm tracking-widest ${isDark ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                        CONTINUE SHOPPING
-                    </Link>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <Link to={`/orders/${orderId}`} className={`inline-block px-10 py-4 rounded-xl font-bold text-sm tracking-widest border ${isDark ? 'border-white text-white hover:bg-white hover:text-black' : 'border-black text-black hover:bg-black hover:text-white'}`}>
+                            VIEW ORDER
+                        </Link>
+                        <Link to="/products" className={`inline-block px-10 py-4 rounded-xl font-bold text-sm tracking-widest ${isDark ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                            CONTINUE SHOPPING
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
@@ -135,13 +205,21 @@ const PaymentPage = () => {
                                         <div className="flex gap-2">
                                             <div className="w-10 h-6 bg-[#1a1a1a] rounded flex items-center justify-center text-[8px] font-bold text-white">VISA</div>
                                             <div className="w-10 h-6 bg-[#1a1a1a] rounded flex items-center justify-center text-[8px] font-bold text-white">MC</div>
+                                            <div className="w-10 h-6 bg-[#1a1a1a] rounded flex items-center justify-center text-[8px] font-bold text-white">UPI</div>
                                         </div>
-                                        <span className="text-[10px] font-bold uppercase opacity-40">Secure Payment</span>
+                                        <span className="text-[10px] font-bold uppercase opacity-40">Secure Payment via Razorpay</span>
                                     </div>
-                                    <p className="text-sm mb-2 opacity-60 italic">Simulated Payment Gateway</p>
-                                    <p className="text-xs mb-6 opacity-40">In a production environment, this would be integrated with Stripe, Razorpay, or PayPal.</p>
+                                    <p className="text-sm mb-2 opacity-60">You'll be redirected to Razorpay's secure checkout to complete payment.</p>
+                                    <p className="text-xs mb-6 opacity-40">Cards, UPI, netbanking, and wallets are supported.</p>
+
+                                    {paymentError && (
+                                        <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium border ${isDark ? 'bg-red-900/20 border-red-800/30 text-red-400' : 'bg-red-50 border-red-200 text-red-600'}`}>
+                                            {paymentError}
+                                        </div>
+                                    )}
+
                                     <button onClick={handlePayment} disabled={loading} className={`w-full py-4 rounded-xl font-bold text-sm tracking-widest transition-all ${isDark ? 'bg-white text-black' : 'bg-black text-white'} disabled:opacity-50`}>
-                                        {loading ? 'PAYING...' : `PAY ${SYM[cartItems[0]?.price?.currency] || ''}${totalPrice.toLocaleString()}`}
+                                        {loading ? 'OPENING PAYMENT…' : `PAY ${SYM[cartItems[0]?.price?.currency] || ''}${totalPrice.toLocaleString()}`}
                                     </button>
                                 </div>
                             </div>

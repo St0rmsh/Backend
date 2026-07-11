@@ -22,7 +22,7 @@ export const GoogleAI = new ChatGoogleGenerativeAI({
    Mistral
 ============================================================ */
 
-export const MistralAI = new ChatMistralAI({
+export const MistralAI: ChatMistralAI = new ChatMistralAI({
   apiKey: config.MISTRAL_API_KEY,
 
   model: "mistral-medium-latest",
@@ -36,7 +36,7 @@ export const MistralAI = new ChatMistralAI({
    Cohere
 ============================================================ */
 
-export const CohereAI = new ChatCohere({
+export const CohereAI: ChatCohere = new ChatCohere({
   apiKey: config.COHERE_API_KEY,
 
   model: "command-a-03-2025",

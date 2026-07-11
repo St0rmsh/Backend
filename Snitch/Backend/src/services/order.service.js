@@ -126,8 +126,21 @@ class OrderService {
         });
     }
 
-    async getOrderById(orderId) {
-        return await orderDao.findById(orderId);
+    async getOrderById(orderId, requestingUser) {
+        const order = await orderDao.findById(orderId);
+        if (!order) throw new Error("Order not found");
+
+        const isBuyer = order.user._id.toString() === requestingUser._id.toString();
+        const isSellerOfSomeItem = order.items.some(item => {
+            const product = item.product;
+            return product?.seller && product.seller.toString() === requestingUser._id.toString();
+        });
+
+        if (!isBuyer && !isSellerOfSomeItem) {
+            throw new Error("Unauthorized: you do not have access to this order");
+        }
+
+        return order;
     }
 
     async getUserOrders(userId, options = {}) {
@@ -139,10 +152,19 @@ class OrderService {
         const productIds = products.map(p => p._id);
         return await orderDao.findByProductIds(productIds, options);
     }
-
+    
     async updateOrderStatus(orderId, status, sellerId) {
         const order = await orderDao.findById(orderId);
         if (!order) throw new Error("Order not found");
+
+        const sellsInThisOrder = order.items.some(item => {
+            const product = item.product;
+            return product?.seller && product.seller.toString() === sellerId.toString();
+        });
+        if (!sellsInThisOrder) {
+            throw new Error("Unauthorized: you do not sell any product in this order");
+        }
+
         return await orderDao.updateStatus(orderId, status);
     }
 }

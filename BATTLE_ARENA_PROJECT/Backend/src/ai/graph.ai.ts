@@ -1,315 +1,87 @@
-import {
-    StateGraph,
-    START,
-    END,
-    Annotation,
-} from "@langchain/langgraph";
+import { performance } from "node:perf_hooks";
 
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { z } from "zod";
+import { performResearch } from "./research.ai.js";
+import { generateSolutions } from "./solution.ai.js";
+import { judgeSolutions } from "./judge.ai.js";
+import { generateSummary } from "./summary.ai.js";
 
-import {
-    GoogleAI,
-    MistralAI,
-    CohereAI,
-} from "./model.ai.js";
+import type {
+  BattleResponse,
+} from "../types/battle.types.js";
 
-import { searchInternet } from "../services/tavily.services.js";
-import {
-    solutionPrompt,
-    judgePrompt,
-} from "./prompt.js";
+/* ============================================================
+   Battle Arena Pipeline
+============================================================ */
 
-/* ==========================================================
-STATE
-========================================================== */
+export async function runBattleArena(
+  problem: string
+): Promise<BattleResponse & { executionTime: number }> {
 
-const BattleState = Annotation.Root({
+  const start = performance.now();
 
-    problem: Annotation<string>(),
+  /* --------------------------------------------------------
+      STEP 1
+      Internet Research
+  -------------------------------------------------------- */
 
-    research: Annotation<string>({
-        default: () => "",
-    }),
+  const {
+    research,
+    context,
+  } = await performResearch(problem);
 
-    solution1: Annotation<string>({
-        default: () => "",
-    }),
+  /* --------------------------------------------------------
+      STEP 2
+      Generate Solutions
+  -------------------------------------------------------- */
 
-    solution2: Annotation<string>({
-        default: () => "",
-    }),
+  const {
+    solutionA,
+    solutionB,
+  } = await generateSolutions(
+    problem,
+    context
+  );
 
-    judge: Annotation<{
-        solution_1_score: number;
-        solution_2_score: number;
-        solution_1_reasoning: string;
-        solution_2_reasoning: string;
-        winner: "solution_1" | "solution_2";
-    }>({
-        default: () => ({
-            solution_1_score: 0,
-            solution_2_score: 0,
-            solution_1_reasoning: "",
-            solution_2_reasoning: "",
-            winner: "solution_1",
-        }),
-    }),
+  /* --------------------------------------------------------
+      STEP 3
+      Judge Solutions
+  -------------------------------------------------------- */
 
-    executionTime: Annotation<number>({
-        default: () => 0,
-    }),
+  const judgement = await judgeSolutions(
+    problem,
+    solutionA,
+    solutionB
+  );
 
-});
+  /* --------------------------------------------------------
+      STEP 4
+      Generate Final Summary
+  -------------------------------------------------------- */
 
-/* ==========================================================
-RESEARCH NODE
-========================================================== */
+  const summary = await generateSummary(
+    problem,
+    judgement
+  );
 
-async function researchNode(
-    state: typeof BattleState.State
-) {
+  const end = performance.now();
 
-    const result = await searchInternet(state.problem);
+  return {
+    problem,
 
-    const research = [
+    research,
 
-        result.answer,
+    solutionA,
 
-        ...result.results.map(
+    solutionB,
 
-            (r) =>
+    judgement,
 
-                `Title: ${r.title}
+    summary,
 
-${r.content}`
-
-        ),
-
-    ].join("\n\n");
-
-    return {
-
-        research,
-
-    };
+    executionTime: Number(
+      (end - start).toFixed(2)
+    ),
+  };
 }
 
-/* ==========================================================
-SOLUTION NODE
-========================================================== */
-
-async function solutionNode(
-    state: typeof BattleState.State
-) {
-
-    const prompt = solutionPrompt(
-
-        state.problem,
-
-        state.research
-
-    );
-
-    const [mistral, cohere] = await Promise.all([
-
-        MistralAI.invoke([
-
-            new SystemMessage(prompt),
-
-            new HumanMessage(state.problem),
-
-        ]),
-
-        CohereAI.invoke([
-
-            new SystemMessage(prompt),
-
-            new HumanMessage(state.problem),
-
-        ]),
-
-    ]);
-
-    return {
-
-        solution1: mistral.text,
-
-        solution2: cohere.text,
-
-    };
-}
-
-/* ==========================================================
-JUDGE NODE
-========================================================== */
-
-const JudgeSchema = z.object({
-
-    solution_1_score: z.number(),
-
-    solution_2_score: z.number(),
-
-    solution_1_reasoning: z.string(),
-
-    solution_2_reasoning: z.string(),
-
-    winner: z.enum([
-        "solution_1",
-        "solution_2",
-    ]),
-
-});
-
-async function judgeNode(
-    state: typeof BattleState.State
-) {
-
-    const response = await GoogleAI.withStructuredOutput(
-
-        JudgeSchema
-
-    ).invoke([
-
-        new SystemMessage(
-
-            judgePrompt(
-
-                state.problem,
-
-                state.solution1,
-
-                state.solution2
-
-            )
-
-        ),
-
-    ]);
-
-    return {
-
-        judge: response,
-
-    };
-}
-
-/* ==========================================================
-TIME NODE
-========================================================== */
-
-async function timerNode(
-    state: typeof BattleState.State
-) {
-
-    return {
-
-        executionTime:
-
-            Date.now(),
-
-    };
-}
-
-/* ==========================================================
-GRAPH
-========================================================== */
-
-export const graph = new StateGraph(
-
-    BattleState
-
-)
-
-    .addNode(
-
-        "research",
-
-        researchNode
-
-    )
-
-    .addNode(
-
-        "solution",
-
-        solutionNode
-
-    )
-
-    .addNode(
-
-        "judge",
-
-        judgeNode
-
-    )
-
-    .addEdge(
-
-        START,
-
-        "research"
-
-    )
-
-    .addEdge(
-
-        "research",
-
-        "solution"
-
-    )
-
-    .addEdge(
-
-        "solution",
-
-        "judge"
-
-    )
-
-    .addEdge(
-
-        "judge",
-
-        END
-
-    )
-
-    .compile();
-
-/* ==========================================================
-RUN GRAPH
-========================================================== */
-
-export async function battleArena(
-
-    problem: string
-
-) {
-
-    const start = performance.now();
-
-    const result = await graph.invoke({
-
-        problem,
-
-    });
-
-    const end = performance.now();
-
-    return {
-
-        ...result,
-
-        executionTime: Number(
-
-            (end - start).toFixed(2)
-
-        ),
-
-    };
-}
-
-export default battleArena;
+export default runBattleArena;

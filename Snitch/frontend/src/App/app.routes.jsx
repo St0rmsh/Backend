@@ -21,6 +21,7 @@ import CreateProducts from "../features/products/pages/CreateProducts";
 import ViewProducts from "../features/products/pages/ViewProducts";
 import OneProduct from "../features/products/components/OneProduct";
 import SellerReviews from "../features/products/pages/SellerReviews";
+import SellerOrdersPage from "../features/cart/pages/SellerOrdersPage";
 
 // Public / Buyer Pages
 import Products from "../features/products/pages/Products";
@@ -29,6 +30,8 @@ import ProductDetails from "../features/products/components/ProductDetails";
 // Cart Suite
 import CartPage from "../features/cart/pages/CartPage";
 import PaymentPage from "../features/cart/pages/PaymentPage";
+import OrderHistoryPage from "../features/cart/pages/OrderHistoryPage";
+import OrderDetailPage from "../features/cart/pages/OrderDetailPage";
 import WishlistPage from "../features/wishlist/pages/WishlistPage";
 
 export const router = createBrowserRouter([
@@ -69,6 +72,14 @@ export const router = createBrowserRouter([
                         <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Home Page (Buyer Only)</p>
                     </div>
                 )
+            },
+            {
+                path: "/orders",
+                element: <OrderHistoryPage />
+            },
+            {
+                path: "/orders/:id",
+                element: <OrderDetailPage />
             }
         ]
     },
@@ -88,6 +99,10 @@ export const router = createBrowserRouter([
             {
                 path: "/seller/reviews",
                 element: <SellerReviews />
+            },
+            {
+                path: "/seller/orders",
+                element: <SellerOrdersPage />
             },
             {
                 path: "/seller/:id",
@@ -152,6 +167,8 @@ export const router = createBrowserRouter([
             }
         ]
     },
+
+    
 
     // ─── CATCH-ALL ──────────────────────────────────
     {

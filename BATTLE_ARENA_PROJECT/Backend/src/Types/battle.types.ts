@@ -11,7 +11,7 @@ export interface Solution {
 }
 
 export interface JudgeResult {
-  winner: string;
+  winner: "solution_1" | "solution_2";
 
   scoreA: number;
 

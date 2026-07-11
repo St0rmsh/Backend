@@ -1,36 +1,70 @@
-import express  from 'express';
-import type { Response, Request } from 'express';
-import { searchInternet } from './services/tavily.services.js';
-import runGraph from "./ai/graph.ai.js"
-import cors from 'cors';
+import express from "express";
+import cors from "cors";
+import errorMiddleware from "./middleware/error.middleware.js";
+
+import battleRoutes from "./routes/battle.routes.js";
 
 const app = express();
-app.use(cors({
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    credentials: true
-}));
-app.use(express.json())
 
-app.get('/', async (req, res) => {
+/* ============================================================
+   Middlewares
+============================================================ */
 
-    const problem = "write function to calculate factorial of a number in javascript";
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
-    const result = await runGraph(problem);
-    res.json(result);
+app.use(express.json());
+
+app.use(express.urlencoded({ extended: true }));
+
+/* ============================================================
+   Routes
+============================================================ */
+
+app.use("/api", battleRoutes);
+
+
+/* ============================================================
+   404
+============================================================ */
+
+app.use((_req, res) => {
+
+  res.status(404).json({
+    success: false,
+    message: "Route Not Found",
+  });
+
 });
 
+/* ============================================================
+   Error Middleware
+============================================================ */
 
-app.post('/chat', async (req, res) => {
+app.use(errorMiddleware);
 
-    const { message } = req.body;
-    const result = await runGraph(message);
-    res.status(200).json({
-        message:"Result from graph",
-        success:true,
-        data:result
+/* ============================================================
+   Global Error Handler
+============================================================ */
+
+app.use(
+  (
+    err: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction
+  ) => {
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
     });
-});
+  }
+);
 
-
-export default app
+export default app;

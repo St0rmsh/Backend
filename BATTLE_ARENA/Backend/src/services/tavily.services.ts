@@ -1,11 +1,11 @@
 import { tavily as Tavily } from "@tavily/core";
 import config from "../config/config.js";
-import type { TavilyResponse, TavilyResult } from "../Types/Tavily.Types.js"
+import type { TavilyResponse, TavilyResult } from "../Types/tavily.types.js";
 
-const tavily = Tavily({
-  apiKey: config.TAVILY_API_KEY,
-});
-
+// BUG FIX: instantiating the client at import time with an empty API key used to throw
+// as soon as the module loaded if TAVILY_API_KEY was unset. Guard it so the rest of the
+// app (which doesn't strictly need Tavily) still boots.
+const tavily = config.TAVILY_API_KEY ? Tavily({ apiKey: config.TAVILY_API_KEY }) : null;
 
 type TavilyRawResponse = {
   answer: string;
@@ -14,13 +14,17 @@ type TavilyRawResponse = {
 };
 
 export const searchInternet = async (query: string): Promise<TavilyResponse> => {
+  if (!tavily) {
+    // Feature is optional — degrade gracefully instead of throwing.
+    return { answer: "", results: [], images: [] };
+  }
+
   try {
-    const res = await tavily.search({
-      query,
+    const res = (await tavily.search(query, {
       searchDepth: "advanced",
       maxResults: 5,
       includeAnswer: true,
-    }) as TavilyRawResponse;
+    })) as TavilyRawResponse;
 
     return {
       answer: res.answer ?? "",
@@ -28,8 +32,8 @@ export const searchInternet = async (query: string): Promise<TavilyResponse> => 
       images: res.images ?? [],
     };
   } catch (error: unknown) {
-    const err = error instanceof Error ? error : new Error("Unknown error");
-    throw new Error(err.message);
+    console.error("Tavily search failed:", error);
+    // NEW: don't let a search-provider outage take down the whole graph run.
+    return { answer: "", results: [], images: [] };
   }
 };
-

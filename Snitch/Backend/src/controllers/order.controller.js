@@ -44,10 +44,26 @@ export const getUserOrders = async (req, res) => {
 
 export const getOrderById = async (req, res) => {
     try {
-        const order = await orderService.getOrderById(req.params.id);
+        const order = await orderService.getOrderById(req.params.id, req.user);
         if (!order) return res.status(404).json({ message: "Order not found" });
         res.status(200).json({ success: true, order });
     } catch (error) {
+        console.error("Get order error:", error);
+        res.status(error.message?.includes("Unauthorized") ? 403 : 500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+export const getSellerOrdersList = async (req, res) => {
+    try {
+        const sellerId = req.user._id;
+        const { page = 1, limit = 10 } = req.query;
+        const orders = await orderService.getSellerOrders(sellerId, {
+            limit: Number(limit),
+            skip: (Number(page) - 1) * Number(limit)
+        });
+        res.status(200).json({ success: true, orders });
+    } catch (error) {
+        console.error("Get seller orders error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
