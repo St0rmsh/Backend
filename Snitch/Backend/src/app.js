@@ -7,9 +7,8 @@ import { rateLimit } from 'express-rate-limit';
 import { config } from './config/config.js';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import path from 'path';
+import path from "path";
 import { fileURLToPath } from "url";
-
 import UserModel from './models/user.model.js';
 
 const app = express();
@@ -17,11 +16,18 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(express.static(path.join(process.cwd(), "public")));
+const publicPath = path.join(__dirname, "../public");
 
-app.get("*/splat", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "index.html"));
+app.use(express.static(publicPath));
+
+// Keep all your API routes above this point
+
+app.get("/{*splat}", (req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
 });
+
+
+
 
 // Security Middleware
 app.use(helmet({
