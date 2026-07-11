@@ -1,4 +1,6 @@
 import productDao from "../daos/product.dao.js";
+import { getComplementaryCategories } from "../utils/categorize.util.js";
+import restockService from "./restock.service.js";
 
 class ProductService {
     async createProduct(productData, sellerId) {
@@ -17,12 +19,27 @@ class ProductService {
         return await productDao.count(filter);
     }
 
+    // async updateProduct(id, updateData, sellerId) {
+    //     const product = await productDao.findById(id);
+    //     if (!product) throw new Error("Product not found");
+    //     if (product.seller._id.toString() !== sellerId.toString()) throw new Error("Unauthorized");
+        
+    //     return await productDao.updateById(id, updateData);
+    // }
+
     async updateProduct(id, updateData, sellerId) {
         const product = await productDao.findById(id);
         if (!product) throw new Error("Product not found");
         if (product.seller._id.toString() !== sellerId.toString()) throw new Error("Unauthorized");
         
-        return await productDao.updateById(id, updateData);
+        const wasOutOfStock = product.stock < 1;
+        const updated = await productDao.updateById(id, updateData);
+
+        if (wasOutOfStock && updated.stock > 0) {
+            restockService.notifyWaitlist(id, null).catch(err => console.error("Restock notify failed", err));
+        }
+
+        return updated;
     }
 
     async deleteProduct(id, sellerId) {
@@ -69,6 +86,13 @@ class ProductService {
 
     async getDistinctSubcategories() {
         return await productDao.distinctSubcategories();
+    }
+
+    async getCompleteTheLook(productId) {
+        const product = await productDao.findById(productId);
+        if (!product) throw new Error("Product not found");
+        const complementaryCategories = getComplementaryCategories(product.category);
+        return await productDao.findComplementary(complementaryCategories, productId, 4);
     }
 }
 

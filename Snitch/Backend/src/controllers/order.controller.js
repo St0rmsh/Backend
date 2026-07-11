@@ -79,3 +79,25 @@ export const updateOrderStatus = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+
+
+export const getFrequentlyBoughtTogether = async (req, res) => {
+    try {
+        const suggestions = await orderService.getFrequentlyBoughtTogether(req.params.productId);
+        res.status(200).json({ success: true, suggestions });
+    } catch (error) {
+        console.error("Frequently bought together error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+export const getSellerAnalytics = async (req, res) => {
+    try {
+        const analytics = await orderService.getSellerAnalytics(req.user._id);
+        res.status(200).json({ success: true, analytics });
+    } catch (error) {
+        console.error("Seller analytics error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

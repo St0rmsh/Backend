@@ -34,6 +34,13 @@ const CATEGORY_MAP = {
     },
 };
 
+const COMPLEMENTARY_MAP = {
+    Clothing: ["Footwear", "Accessories"],
+    Footwear: ["Clothing", "Accessories"],
+    Accessories: ["Clothing", "Footwear"],
+    Electronics: ["Accessories"],
+};
+
 /**
  * Given a product's title and description, suggest the best-matching
  * { category, subcategory } pair. Falls back to "Uncategorized" for both
@@ -60,4 +67,9 @@ export function getCategoryTree() {
     return Object.fromEntries(
         Object.entries(CATEGORY_MAP).map(([cat, subs]) => [cat, Object.keys(subs)])
     );
+}
+
+
+export function getComplementaryCategories(category) {
+    return COMPLEMENTARY_MAP[category] || [];
 }

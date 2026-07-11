@@ -3,20 +3,17 @@ import { buildTextSearchClause } from "../utils/search.util.js";
 
 class ProductDAO {
 
-    async findById(id) {
-    return await Product.findById(id)
-        .populate("seller", "_id fullname");
+     async findById(id) {
+        return await ProductModel.findById(id).populate("seller", "name email");
     }
+
 
     async create(productData) {
         const product = new ProductModel(productData);
         return await product.save();
     }
 
-    async findById(id) {
-        return await ProductModel.findById(id).populate("seller", "name email");
-    }
-
+   
     async find(filter = {}, options = {}) {
         const { sort = { createdAt: -1 }, limit = 10, skip = 0 } = options;
         return await ProductModel.find(filter)
@@ -97,6 +94,17 @@ class ProductDAO {
             .sort(sort)
             .limit(limit)
             .skip(skip)
+            .populate("seller", "name email");
+    }
+
+    async findComplementary(categories, excludeProductId, limit = 4) {
+        if (!categories || categories.length === 0) return [];
+        return await ProductModel.find({
+            category: { $in: categories },
+            _id: { $ne: excludeProductId }
+        })
+            .sort({ averageRating: -1, createdAt: -1 })
+            .limit(limit)
             .populate("seller", "name email");
     }
 }

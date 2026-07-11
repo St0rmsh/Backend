@@ -34,3 +34,13 @@ export const updateOrderStatus = async (id, status) => {
     const response = await orderApi.put(`/${id}/status`, { status });
     return response.data;
 };
+
+export const getFrequentlyBoughtTogether = async (productId) => {
+    const response = await orderApi.get(`/frequently-bought/${productId}`);
+    return response.data;
+};
+
+export const getSellerAnalytics = async () => {
+    const response = await orderApi.get("/seller/analytics");
+    return response.data;
+};

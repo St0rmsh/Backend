@@ -92,6 +92,16 @@ export const deleteReview = async (productId, reviewId) => {
 }
 
 
+export const fetchCompleteTheLook = async (id) => {
+    const response = await productApi.get(`/${id}/complete-the-look`);
+    return response.data;
+};
+
+export const joinRestockWaitlist = async (id, variantId) => {
+    const response = await productApi.post(`/${id}/restock-notify`, { variantId });
+    return response.data;
+};
+
 // ─── CART ENDPOINTS ────────────────────────────────────
 // NOTE: cart items are identified by (productId, variantId) together — there is
 // no separate "cart item id" on the backend. variantId must be passed through
@@ -146,3 +156,7 @@ export const getOrderById = async (id) => {
     const response = await orderApi.get(`/${id}`);
     return response.data;
 }
+
+
+
+

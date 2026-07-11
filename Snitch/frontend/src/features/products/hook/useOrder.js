@@ -6,6 +6,8 @@ import {
     getOrderById,
     getSellerOrders,
     updateOrderStatus,
+    getFrequentlyBoughtTogether,
+    getSellerAnalytics,
 } from "../services/order.service";
 
 export const useOrder = () => {
@@ -102,6 +104,31 @@ export const useOrder = () => {
         }
     }, []);
 
+    const handleGetFrequentlyBoughtTogether = useCallback(async (productId) => {
+        try {
+            const data = await getFrequentlyBoughtTogether(productId);
+            return data.suggestions || [];
+        } catch (err) {
+            console.error("Frequently bought together fetch failed", err);
+            return [];
+        }
+    }, []);
+
+    const handleGetSellerAnalytics = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getSellerAnalytics();
+            return data.analytics;
+        } catch (err) {
+            const formatted = { message: err.response?.data?.message || err.message, status: err.response?.status };
+            setError(formatted);
+            throw formatted;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     return {
         loading,
         error,
@@ -111,5 +138,7 @@ export const useOrder = () => {
         handleGetOrderById,
         handleGetSellerOrders,
         handleUpdateOrderStatus,
+        handleGetFrequentlyBoughtTogether,
+        handleGetSellerAnalytics,
     };
 };

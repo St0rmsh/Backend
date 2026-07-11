@@ -1,39 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../../../context/WishlistContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { useProduct } from '../hook/useProduct';
 import { useCart } from '../../../context/CartContext';
 
 const SYM = { INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
 
-const WishlistItem = ({ productId, isDark, toggleWishlist, addToCart }) => {
-    const { handleFetchPublicProductById } = useProduct();
-    const [product, setProduct] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchProduct = async () => {
-            try {
-                const data = await handleFetchPublicProductById(productId);
-                setProduct(data);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProduct();
-    }, [productId]);
-
-    if (loading) return (
-        <div className={`h-32 rounded-xl animate-pulse ${isDark ? 'bg-[#111]' : 'bg-white'}`} />
-    );
-
+const WishlistItem = ({ item, isDark, toggleWishlist, addToCart }) => {
+    const product = item.product;
     if (!product) return null;
 
     const sym = SYM[product.price?.currency] || '';
     const amount = product.price?.amount || 0;
+    const outOfStock = (product.stock ?? 0) < 1;
 
     return (
         <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${isDark ? 'bg-[#111] border-[#1e1e1e]' : 'bg-white border-[#e5e5df]'}`}>
@@ -49,17 +28,21 @@ const WishlistItem = ({ productId, isDark, toggleWishlist, addToCart }) => {
                     <span className={`text-[13px] font-bold ${isDark ? 'text-[#aaa]' : 'text-[#444]'}`}>
                         {sym}{amount.toLocaleString()}
                     </span>
+                    {outOfStock && (
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">Out of Stock</span>
+                    )}
                 </div>
                 
                 <div className="flex gap-2 mt-3">
                     <button 
-                        onClick={() => addToCart(product)}
-                        className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-colors ${isDark ? 'bg-white text-black hover:bg-[#e0e0e0]' : 'bg-black text-white hover:bg-[#333]'}`}
+                        onClick={() => addToCart(product, 1)}
+                        disabled={outOfStock}
+                        className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-colors disabled:opacity-40 ${isDark ? 'bg-white text-black hover:bg-[#e0e0e0]' : 'bg-black text-white hover:bg-[#333]'}`}
                     >
                         ADD TO CART
                     </button>
                     <button 
-                        onClick={() => toggleWishlist(product._id)}
+                        onClick={() => toggleWishlist(product._id, item.variant)}
                         className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border ${isDark ? 'border-[#333] text-[#666] hover:text-red-500 hover:border-red-500' : 'border-[#ddd] text-[#999] hover:text-red-600 hover:border-red-600'}`}
                     >
                         REMOVE
@@ -71,7 +54,7 @@ const WishlistItem = ({ productId, isDark, toggleWishlist, addToCart }) => {
 };
 
 const WishlistPage = () => {
-    const { wishlist, toggleWishlist } = useWishlist();
+    const { wishlistItems, loading, toggleWishlist } = useWishlist();
     const { isDark, toggleTheme } = useTheme();
     const { addToCart } = useCart();
 
@@ -95,16 +78,22 @@ const WishlistPage = () => {
                 <div className="flex items-center justify-between mb-8">
                     <h1 className="text-2xl font-black tracking-tight italic">WISHLIST</h1>
                     <span className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-[#444]' : 'text-[#999]'}`}>
-                        {wishlist.length} ITEM{wishlist.length !== 1 ? 'S' : ''}
+                        {wishlistItems.length} ITEM{wishlistItems.length !== 1 ? 'S' : ''}
                     </span>
                 </div>
 
-                {wishlist.length > 0 ? (
+                {loading ? (
                     <div className="space-y-4">
-                        {wishlist.map(id => (
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className={`h-32 rounded-xl animate-pulse ${isDark ? 'bg-[#111]' : 'bg-white'}`} />
+                        ))}
+                    </div>
+                ) : wishlistItems.length > 0 ? (
+                    <div className="space-y-4">
+                        {wishlistItems.map(item => (
                             <WishlistItem 
-                                key={id} 
-                                productId={id} 
+                                key={`${item.product?._id}-${item.variant || 'base'}`} 
+                                item={item} 
                                 isDark={isDark} 
                                 toggleWishlist={toggleWishlist} 
                                 addToCart={addToCart} 

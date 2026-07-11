@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {createProduct,getAllProducts,getProductById, updateProduct, deleteProduct, createProductReview, getProductReviews, updateProductReview, deleteProductReview, fetchAllProducts, fetchProductById, getSellerReviews, addProductVariant, deleteProductVariant, getSubcategories, getCategoryOptions, replyToReviewController} from "../controllers/product.controller.js";
+import {createProduct,getAllProducts,getProductById, updateProduct, deleteProduct, createProductReview, getProductReviews, updateProductReview, deleteProductReview, fetchAllProducts, fetchProductById, getSellerReviews, addProductVariant, deleteProductVariant, getSubcategories, getCategoryOptions, replyToReviewController, getCompleteTheLook, updateProductVariant, joinRestockWaitlist} from "../controllers/product.controller.js";
 import {validateCreateProduct} from "../validators/product.validate.js";
 import {authSeller, authMiddleware} from "../Middleware/auth.middleware.js";
 import multer from "multer";
@@ -51,6 +51,17 @@ router.get("/subcategories", getSubcategories);
 // @access Public
 router.get("/category-options", getCategoryOptions);
 
+// @desc Update Product Variant
+// @route PUT /api/product/:id/variants/:variantId
+// @access Private Seller
+router.put("/:id/variants/:variantId", authSeller, updateProductVariant);
+
+
+// @desc Join Restock Waitlist
+// @route POST /api/product/:id/restock-notify
+// @access Private
+router.post("/:id/restock-notify", authMiddleware, joinRestockWaitlist);
+
 
 // @desc Update Product
 // @route PUT /api/product/:id
@@ -76,6 +87,10 @@ router.delete("/:id/variants/:variantId", authSeller, deleteProductVariant);
 // @route GET /api/product/seller/reviews
 // @access Private Seller
 router.get("/seller/reviews", authSeller, getSellerReviews);
+
+
+
+router.get("/:id/complete-the-look", getCompleteTheLook);
 
 // ─── REVIEW ROUTES ─────────────────────────────────────────
 

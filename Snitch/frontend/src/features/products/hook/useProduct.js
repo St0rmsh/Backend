@@ -14,7 +14,9 @@ import {
     updateReview, 
     deleteReview, 
     addProductVariant, 
-    deleteProductVariant 
+    deleteProductVariant, 
+    fetchCompleteTheLook,
+    joinRestockWaitlist
 } from "../services/product.service";
 import { 
     setProducts, 
@@ -284,6 +286,27 @@ export const useProduct = () => {
         }
     }, [dispatch]);
 
+
+    const handleJoinRestockWaitlist = useCallback(async (productId, variantId) => {
+        try {
+            const data = await joinRestockWaitlist(productId, variantId);
+            return data;
+        } catch (error) {
+            const formattedError = { message: error.response?.data?.message || error.message };
+            throw formattedError;
+        }
+    }, []);
+
+    const handleFetchCompleteTheLook = useCallback(async (productId) => {
+        try {
+            const data = await fetchCompleteTheLook(productId);
+            return data.suggestions || [];
+        } catch (error) {
+            console.error("Complete the look fetch failed", error);
+            return [];
+        }
+    }, []);
+
     return {
         handleCreateProduct,
         handleGetAllProducts,
@@ -298,6 +321,8 @@ export const useProduct = () => {
         handleDeleteReview,
         handleGetSellerReviews,
         handleAddProductVariant,
-        handleDeleteProductVariant
+        handleDeleteProductVariant,
+        handleJoinRestockWaitlist,
+        handleFetchCompleteTheLook,
     };
 }

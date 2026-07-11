@@ -715,7 +715,7 @@ const OneProduct = () => {
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
+                            {/* <div className="space-y-4">
                                 {product.reviews.map((review) => (
                                     <div key={review._id} className={`p-5 rounded-xl border ${isDark ? 'border-[#222] bg-[#0f0f0f]' : 'border-[#e5e5df] bg-[#fafaf7]'}`}>
                                         <div className="flex items-center justify-between mb-3">
@@ -737,7 +737,7 @@ const OneProduct = () => {
                                         </p>
                                     </div>
                                 ))}
-                            </div>
+                            </div> */}
                         </>
                     ) : (
                         <div className={`p-10 rounded-xl text-center border border-dashed ${isDark ? 'border-[#333] text-[#555]' : 'border-[#ccc] text-[#888]'}`}>

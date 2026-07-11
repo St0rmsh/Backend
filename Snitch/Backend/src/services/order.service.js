@@ -152,7 +152,7 @@ class OrderService {
         const productIds = products.map(p => p._id);
         return await orderDao.findByProductIds(productIds, options);
     }
-    
+
     async updateOrderStatus(orderId, status, sellerId) {
         const order = await orderDao.findById(orderId);
         if (!order) throw new Error("Order not found");
@@ -166,6 +166,14 @@ class OrderService {
         }
 
         return await orderDao.updateStatus(orderId, status);
+    }
+
+    async getFrequentlyBoughtTogether(productId) {
+        return await orderDao.findFrequentlyBoughtWith(productId, 4);
+    }
+
+    async getSellerAnalytics(sellerId) {
+        return await orderDao.getSellerAnalytics(sellerId);
     }
 }
 

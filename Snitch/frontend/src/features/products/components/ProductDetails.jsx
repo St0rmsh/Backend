@@ -4,11 +4,10 @@ import { useProduct } from '../hook/useProduct';
 import { useSelector } from 'react-redux';
 import { useTheme } from '../../../context/ThemeContext';
 import { useCart } from '../../../context/CartContext';
-
 import { useWishlist } from '../../../context/WishlistContext';
 import LogoutButton from './LogoutButton';
 import Skeleton from './ui/Skeleton';
-
+import { useOrder } from '../hook/useOrder';
 
 const Stars = memo(({ rating, size = 'w-4 h-4' }) => (
   <div className="flex gap-0.5">
@@ -52,7 +51,6 @@ const ReviewThread = ({ review, depth = 0, user, isDark, editId, setEditId, edit
   const isReplying = replyForm.parentId === review._id;
   const isSeller = review.role === 'seller';
   
-  // UI Depth limit: flatten visually after depth 5
   const indentLevel = Math.min(depth, 5);
   const indentClass = indentLevel > 0 ? `ml-${indentLevel * 4} sm:ml-${indentLevel * 6} border-l-2 pl-4 ${isDark ? 'border-[#333]' : 'border-[#e0e0e0]'}` : '';
 
@@ -159,7 +157,8 @@ const ReviewThread = ({ review, depth = 0, user, isDark, editId, setEditId, edit
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { handleFetchPublicProductById, handleAddReview, handleGetReviews, handleUpdateReview, handleDeleteReview } = useProduct();
+  const { handleFetchPublicProductById, handleAddReview, handleGetReviews, handleUpdateReview, handleDeleteReview, handleFetchCompleteTheLook, handleJoinRestockWaitlist } = useProduct();
+  const { handleGetFrequentlyBoughtTogether } = useOrder();
   const { product, loading, error } = useSelector(s => s.product);
   const user = useSelector(s => s.auth.user);
   const { isDark, toggleTheme } = useTheme();
@@ -189,14 +188,16 @@ const ProductDetails = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Reset to the first image whenever the selected variant changes
+  const [completeTheLook, setCompleteTheLook] = useState([]);
+  const [frequentlyBought, setFrequentlyBought] = useState([]);
+  const [verifiedCount, setVerifiedCount] = useState(0);
+
   useEffect(() => {
     setActiveImg(0);
     setImgError(false);
     setImgLoaded(false);
   }, [selectedVariant?._id]);
 
-  // Reset loading state when browsing between images within the active set
   useEffect(() => {
     setImgLoaded(false);
   }, [activeImg]);
@@ -253,6 +254,16 @@ const ProductDetails = () => {
     setQty(1);
   }, [product?._id]);
 
+  useEffect(() => {
+    if (!product?._id) return;
+    handleFetchCompleteTheLook(product._id).then(setCompleteTheLook);
+  }, [product?._id]);
+
+  useEffect(() => {
+    if (!product?._id) return;
+    handleGetFrequentlyBoughtTogether(product._id).then(setFrequentlyBought);
+  }, [product?._id]);
+
   const images = product?.images || [];
   const activeImages = selectedVariant?.image?.length > 0 ? selectedVariant.image : images;
   const isBuyer = user?.role === 'buyer';
@@ -261,7 +272,6 @@ const ProductDetails = () => {
   const variants = product?.variants || [];
   const hasVariants = variants.length > 0;
   
-  // Personalized stock calculation: subtract what's already in the cart
   const { cartItems } = useCart();
   const cartItem = cartItems.find(item => 
     item.productId.toString() === id.toString() && 
@@ -280,11 +290,10 @@ const ProductDetails = () => {
   const displayStock = Math.max(0, actualStock - cartQty);
   const isOutOfStock = displayStock < 1;
 
-  // Handle variant selection
   const handleVariantSelect = (variant) => {
     if (variant.stock < 1) return;
     setSelectedVariant(variant);
-    setQty(1); // Reset qty on variant change
+    setQty(1);
   };
 
   const dist = useMemo(() => {
@@ -306,7 +315,7 @@ const ProductDetails = () => {
       setReviewForm({ rating: 5, comment: '' });
       setReviewMsg('Review submitted!');
       fetchReviews(id);
-      handleFetchPublicProductById(id); // Re-fetch product metadata
+      handleFetchPublicProductById(id);
       setTimeout(() => setReviewMsg(''), 4000);
     } catch (err) { setReviewMsg(err.message || 'Failed'); }
     finally { setSubmitting(false); }
@@ -320,7 +329,7 @@ const ProductDetails = () => {
     try {
       await handleAddReview(id, replyForm);
       setReplyForm({ parentId: null, comment: '' });
-      fetchReviews(id); // refresh
+      fetchReviews(id);
     } catch (err) { setReviewMsg(err.message || 'Failed to post reply'); }
     finally { setSubmitting(false); }
   };
@@ -334,7 +343,7 @@ const ProductDetails = () => {
       setEditId(null);
       setReviewMsg('Review updated successfully!');
       fetchReviews(id);
-      handleFetchPublicProductById(id); // Sync global rating
+      handleFetchPublicProductById(id);
       setTimeout(() => setReviewMsg(''), 4000);
     } catch (err) { setReviewMsg(err.message || 'Failed to update review'); }
     finally { setSubmitting(false); }
@@ -347,13 +356,14 @@ const ProductDetails = () => {
       setDeleteId(null);
       setReviewMsg('Review deleted');
       fetchReviews(id);
-      handleFetchPublicProductById(id); // Sync global rating
+      handleFetchPublicProductById(id);
       setTimeout(() => setReviewMsg(''), 4000);
     } catch (err) { setReviewMsg(err.message || 'Failed to delete review'); }
     finally { setDeleting(false); }
   };
 
-if (loading && !product) {
+
+  if (loading && !product) {
     return (
       <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0a]' : 'bg-[#f4f4ef]'} font-sans`}>
         <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1e1e1e]' : 'bg-[#f4f4ef]/95 border-[#ddd]'}`}>
@@ -366,7 +376,6 @@ if (loading && !product) {
           <Skeleton isDark={isDark} className="h-4 w-48 mb-5" />
 
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            {/* Image gallery skeleton */}
             <div className="w-full lg:w-[55%] flex flex-col-reverse sm:flex-row gap-3">
               <div className="flex sm:flex-col gap-2 sm:w-[72px] shrink-0">
                 {[1, 2, 3, 4].map(i => (
@@ -376,7 +385,6 @@ if (loading && !product) {
               <Skeleton isDark={isDark} className="flex-1 aspect-[4/5] sm:aspect-auto sm:h-[520px] rounded-xl" />
             </div>
 
-            {/* Info column skeleton */}
             <div className="w-full lg:w-[45%] flex flex-col gap-4">
               <Skeleton isDark={isDark} className="h-7 w-3/4" />
               <Skeleton isDark={isDark} className="h-4 w-32" />
@@ -401,7 +409,6 @@ if (loading && !product) {
             </div>
           </div>
 
-          {/* Reviews section skeleton */}
           <div className={`mt-10 rounded-2xl border p-6 sm:p-8 ${isDark ? 'bg-[#111] border-[#1e1e1e]' : 'bg-white border-[#e5e5df]'}`}>
             <Skeleton isDark={isDark} className="h-6 w-48 mb-6" />
             <div className="flex gap-6 mb-8">
@@ -436,6 +443,14 @@ if (loading && !product) {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link to="/products" className="text-xl font-black italic tracking-[-0.04em]">SNITCH</Link>
           <div className="flex items-center gap-2">
+            {user && (
+                <Link
+                    to="/orders"
+                    className={`hidden sm:flex items-center px-3 h-9 rounded-lg text-xs font-semibold transition-colors ${isDark ? 'hover:bg-[#1a1a1a]' : 'hover:bg-[#e8e8e3]'}`}
+                >
+                    My Orders
+                </Link>
+            )}
             <button onClick={toggleTheme} className={`p-2 rounded-lg ${isDark ? 'hover:bg-[#1a1a1a]' : 'hover:bg-[#e8e8e3]'}`}>
               {isDark ? (
                 <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -514,7 +529,6 @@ if (loading && !product) {
                 <div className={`absolute inset-0 animate-pulse ${isDark ? 'bg-[#161616]' : 'bg-[#eee]'}`} />
               )}
               
-              {/* Dynamic Image Selection with Fallback */}
               <img
                 key={`${selectedVariant?._id || 'base'}-${activeImg}`}
                 src={
@@ -692,10 +706,37 @@ if (loading && !product) {
               </span>
             </div>
 
+            {isOutOfStock && (
+              <button
+                onClick={async () => {
+                  try {
+                    await handleJoinRestockWaitlist(product._id, selectedVariant?._id);
+                    alert("You'll get notified when this is back in stock!");
+                  } catch (err) {
+                    alert(err.message || "Something went wrong");
+                  }
+                }}
+                className={`w-full mb-3 py-3 rounded-xl font-bold text-sm border-2 border-dashed transition-all ${isDark ? 'border-[#333] hover:border-[#555] text-white' : 'border-[#ccc] hover:border-[#999] text-black'}`}
+              >
+                Notify Me When Back in Stock
+              </button>
+            )}
+
+            {(displayStock <= 5 && displayStock > 0) || verifiedCount > 0 ? (
+              <p className={`text-xs mb-4 ${isDark ? 'text-[#888]' : 'text-[#666]'}`}>
+                {displayStock > 0 && displayStock <= 5 && (
+                  <span className="text-red-500 font-bold">Only {displayStock} left{selectedVariant ? ` in ${selectedVariant.value}` : ''} · </span>
+                )}
+                {verifiedCount > 0 && (
+                  <span>{verifiedCount} verified buyer{verifiedCount > 1 ? 's' : ''} rated this {(product.averageRating || 0).toFixed(1)}★</span>
+                )}
+              </p>
+            ) : null}
+
             <div className="flex flex-col gap-3">
               <button
                 disabled={isOutOfStock || addingToCart}
-               onClick={async () => {
+                onClick={async () => {
                   if (product.type === 'variant_required' && !selectedVariant) {
                     alert(`Please select a ${variants[0]?.attributes ? Object.keys(variants[0].attributes)[0] : 'variant'} to proceed.`);
                     return;
@@ -717,7 +758,7 @@ if (loading && !product) {
               <div className="flex gap-3">
                 <button
                   disabled={isOutOfStock || addingToCart}
-                onClick={async () => {
+                  onClick={async () => {
                     if (product.type === 'variant_required' && !selectedVariant) {
                         alert(`Please select a ${variants[0]?.attributes ? Object.keys(variants[0].attributes)[0] : 'variant'} to proceed.`);
                         return;
@@ -864,6 +905,44 @@ if (loading && !product) {
             )}
           </div>
         </div>
+
+        {frequentlyBought.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Frequently Bought Together</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {frequentlyBought.map(p => (
+                <Link key={p._id} to={`/products/${p._id}`} className={`group rounded-2xl border overflow-hidden transition-all ${isDark ? 'bg-[#111] border-[#1e1e1e] hover:border-[#444]' : 'bg-white border-[#e5e5df] hover:shadow-lg'}`}>
+                  <div className={`aspect-[3/4] ${isDark ? 'bg-[#0a0a0a]' : 'bg-[#fafaf7]'}`}>
+                    <img src={p.images?.[0]?.url || 'https://placehold.co/400x500?text=No+Image'} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-xs font-bold truncate">{p.title}</p>
+                    <p className="text-sm font-black mt-1">{SYM[p.price?.currency] || '₹'}{p.price?.amount?.toLocaleString()}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {completeTheLook.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Complete the Look</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {completeTheLook.map(p => (
+                <Link key={p._id} to={`/products/${p._id}`} className={`group rounded-2xl border overflow-hidden transition-all ${isDark ? 'bg-[#111] border-[#1e1e1e] hover:border-[#444]' : 'bg-white border-[#e5e5df] hover:shadow-lg'}`}>
+                  <div className={`aspect-[3/4] ${isDark ? 'bg-[#0a0a0a]' : 'bg-[#fafaf7]'}`}>
+                    <img src={p.images?.[0]?.url || 'https://placehold.co/400x500?text=No+Image'} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-xs font-bold truncate">{p.title}</p>
+                    <p className="text-sm font-black mt-1">{SYM[p.price?.currency] || '₹'}{p.price?.amount?.toLocaleString()}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       {deleteId && (

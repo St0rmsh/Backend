@@ -48,6 +48,10 @@ class ReviewDAO {
     async deleteRepliesByParentId(parentId) {
         return await Review.deleteMany({ parentId });
     }
+
+    async countVerifiedByProductId(productId) {
+        return await Review.countDocuments({ productId, parentId: null, verifiedPurchase: true });
+    }
 }
 
 export default new ReviewDAO();

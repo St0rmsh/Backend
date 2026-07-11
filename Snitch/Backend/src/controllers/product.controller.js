@@ -1,4 +1,5 @@
 import productService from "../services/product.service.js";
+import restockService from "../services/restock.service.js";
 import reviewService from "../services/review.service.js";
 import { uploadFile } from "../services/storage.service.js";
 import { suggestCategory, getCategoryTree } from "../utils/categorize.util.js";
@@ -198,26 +199,6 @@ export const createProductReview = async (req, res) => {
     }
 };
 
-export const getProductReviews = async (req, res) => {
-    try {
-        const productId = req.params.id;
-        const { limit = 10, skip = 0 } = req.query;
-        const { reviews, total } = await reviewService.getReviewsByProduct(productId, { 
-            limit: Number(limit), 
-            skip: Number(skip) 
-        });
-        res.status(200).json({ 
-            message: "Product reviews fetched successfully", 
-            success: true, 
-            reviews,
-            total 
-        });
-    } catch (error) {
-        console.error("Error fetching product reviews:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
 export const getSellerReviews = async (req, res) => {
     try {
         const sellerId = req.user._id;
@@ -377,5 +358,87 @@ export const replyToReviewController = async (req, res) => {
             message: err.message
         });
 
+    }
+};
+
+
+
+export const getCompleteTheLook = async (req, res) => {
+    try {
+        const suggestions = await productService.getCompleteTheLook(req.params.id);
+        res.status(200).json({ success: true, suggestions });
+    } catch (error) {
+        console.error("Complete the look error:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+
+export const updateProductVariant = async (req, res) => {
+    try {
+        const sellerId = req.user._id;
+        const { id: productId, variantId } = req.params;
+        const { stock, priceAmount, priceCurrency, value } = req.body;
+
+        const product = await productService.getProductById(productId);
+        const existingVariant = product?.variants?.id(variantId);
+        const wasOutOfStock = existingVariant ? existingVariant.stock < 1 : false;
+
+        const variantData = {
+            value: value ?? existingVariant?.value,
+            stock: stock !== undefined ? Number(stock) : existingVariant?.stock,
+            price: {
+                amount: priceAmount !== undefined ? Number(priceAmount) : existingVariant?.price?.amount,
+                currency: priceCurrency || existingVariant?.price?.currency
+            },
+            image: existingVariant?.image || []
+        };
+
+        const updated = await productService.updateVariant(productId, variantId, variantData, sellerId);
+
+        const newVariant = updated?.variants?.id(variantId);
+        if (wasOutOfStock && newVariant && newVariant.stock > 0) {
+            restockService.notifyWaitlist(productId, variantId).catch(err => console.error("Restock notify failed", err));
+        }
+
+        res.status(200).json({ message: "Variant updated successfully", success: true, product: updated });
+    } catch (error) {
+        console.error("Error updating variant:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+export const joinRestockWaitlist = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { id: productId } = req.params;
+        const { variantId } = req.body;
+        await restockService.joinWaitlist(userId, productId, variantId || null);
+        res.status(200).json({ success: true, message: "You'll be notified when this is back in stock" });
+    } catch (error) {
+        console.error("Restock waitlist error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+export const getProductReviews = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const { limit = 10, skip = 0 } = req.query;
+        const { reviews, total, verifiedCount } = await reviewService.getReviewsByProduct(productId, { 
+            limit: Number(limit), 
+            skip: Number(skip) 
+        });
+        res.status(200).json({ 
+            message: "Product reviews fetched successfully", 
+            success: true, 
+            reviews,
+            total,
+            verifiedCount
+        });
+    } catch (error) {
+        console.error("Error fetching product reviews:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 };

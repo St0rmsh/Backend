@@ -27,16 +27,17 @@ class ReviewService {
         });
     }
 
-    async getReviewsByProduct(productId, options = {}) {
+  async getReviewsByProduct(productId, options = {}) {
         const reviews = await reviewDao.findByProductId(productId, options);
         const total = await reviewDao.countByProductId(productId);
+        const verifiedCount = await reviewDao.countVerifiedByProductId(productId);
         
         const reviewsWithReplies = await Promise.all(reviews.map(async (review) => {
             const replies = await reviewDao.findReplies(review._id);
             return { ...review.toObject(), replies };
         }));
         
-        return { reviews: reviewsWithReplies, total };
+        return { reviews: reviewsWithReplies, total, verifiedCount };
     }
 
     async replyToReview(userId, reviewId, comment, sellerId) {

@@ -22,11 +22,25 @@ const ViewProducts = () => {
           <p className={`text-sm ${isDark ? 'text-[#8b8b8b]' : 'text-[#5a5a5a]'}`}>Manage your catalog and inventory</p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-3">
+
+          <Link 
+            to="/seller/orders" 
+            className={`flex items-center justify-center h-10 px-5 font-semibold text-sm rounded-lg border transition-colors ${isDark ? 'border-[#444] hover:bg-[#1a1a1a]' : 'border-[#ccc] hover:bg-white'}`}
+          >
+            Orders
+          </Link>
+
           <Link 
             to="/seller/reviews" 
             className={`flex items-center justify-center h-10 px-5 font-semibold text-sm rounded-lg border transition-colors ${isDark ? 'border-[#444] hover:bg-[#1a1a1a]' : 'border-[#ccc] hover:bg-white'}`}
           >
             Reviews
+          </Link>
+            <Link 
+            to="/seller/analytics" 
+            className={`flex items-center justify-center h-10 px-5 font-semibold text-sm rounded-lg border transition-colors ${isDark ? 'border-[#444] hover:bg-[#1a1a1a]' : 'border-[#ccc] hover:bg-white'}`}
+          >
+            Analytics
           </Link>
           <Link 
             to="/seller/create" 

@@ -116,7 +116,15 @@ const CartPage = () => {
                         <span className="text-2xl font-black italic tracking-tighter">SNITCH</span>
                         <span className="hidden md:block text-[10px] font-bold tracking-[0.3em] uppercase opacity-30 mt-1">SHOPPING CART</span>
                     </Link>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3" >
+                                    {user && (
+                                <Link
+                                to="/orders"
+                                className={`hidden sm:flex items-center h-10 px-4 rounded-2xl text-[11px] font-black uppercase tracking-widest border transition-colors ${isDark ? 'border-[#1e1e1e] hover:bg-[#1a1a1a]' : 'border-[#e5e5df] hover:bg-[#e8e8e3]'}`}
+                            >
+                                My Orders
+                            </Link>
+                        )} 
                         <button onClick={toggleTheme} className={`w-10 h-10 flex items-center justify-center rounded-2xl transition-colors ${isDark ? 'hover:bg-[#1a1a1a]' : 'hover:bg-[#e8e8e3]'}`}>
                             {isDark ? (
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
