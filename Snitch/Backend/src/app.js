@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(process.cwd(), "public")));
 
-app.get("*", (req, res) => {
+app.get("*/splat", (req, res) => {
   res.sendFile(path.join(process.cwd(), "public", "index.html"));
 });
 
