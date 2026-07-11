@@ -7,11 +7,15 @@ import { rateLimit } from 'express-rate-limit';
 import { config } from './config/config.js';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import path from 'path';
+import { fileURLToPath } from "url";
 
 import UserModel from './models/user.model.js';
 
 const app = express();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(process.cwd(), "public")));
 
