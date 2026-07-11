@@ -20,11 +20,6 @@ const publicPath = path.join(__dirname, "../public");
 
 app.use(express.static(publicPath));
 
-// Keep all your API routes above this point
-
-app.get("/{*splat}", (req, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
-});
 
 
 
@@ -36,10 +31,10 @@ app.use(helmet({
 
 // Rate Limiting
 const limiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes
-	limit: 1000, // Limit each IP to 1000 requests per `window` (here, per 15 minutes).
-	standardHeaders: 'draft-7', // expose limit/remaining in headers
-	legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+	windowMs: 15 * 60 * 1000, 
+	limit: 1000, 
+	standardHeaders: 'draft-7', 
+	legacyHeaders: false, 
     message: { message: "Too many requests from this IP, please try again after 15 minutes", success: false }
 });
 app.use('/api/', limiter);
@@ -49,6 +44,7 @@ app.use(morgan('dev'));
 app.use(cookieParser());
 
 // CORS — allow the Vite dev server to talk to the API
+
 app.use(cors({
   origin: true,
   credentials: true,         
@@ -111,5 +107,11 @@ app.use('/api/order', orderRouter);
 // Wishlist Routes
 import wishlistRouter from './routes/wishlist.routes.js';
 app.use('/api/wishlist', wishlistRouter);
+
+
+app.get("/{*splat}", (req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
+});
+
 
 export default app;
