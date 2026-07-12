@@ -33,6 +33,10 @@ export const getFeedController = async (req:Request<
           Number(limit) || 10
         );
 
+
+console.log(result.posts.length);
+console.log(result.posts);
+
       return res.status(200).json({
         success: true,
         message:

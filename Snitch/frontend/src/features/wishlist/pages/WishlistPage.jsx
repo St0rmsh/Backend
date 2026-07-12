@@ -119,6 +119,7 @@ const WishlistPage = () => {
                                         >
                                             MOVE TO CART
                                         </button>
+                                      
                                     </div>
                                 </div>
                             );

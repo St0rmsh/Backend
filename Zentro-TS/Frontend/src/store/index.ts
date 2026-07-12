@@ -6,6 +6,7 @@ import themeReducer from "./slices/themeSlice";
 import uiReducer from "./slices/uiSlice";
 import socketReducer from "./slices/socketSlice";
 import loadingReducer from "./slices/loadingSlice";
+import feedReducer from "@/features/feed/state/feedSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     ui: uiReducer,
     socket: socketReducer,
     loading: loadingReducer,
+    feed: feedReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
 });

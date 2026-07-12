@@ -75,6 +75,16 @@ const SettingsPage = lazy(() =>
 );
 
 // ============================================================================
+// LAZY LOADED FEED PAGES
+// ============================================================================
+
+const FeedPage = lazy(() =>
+  import("@/features/feed/pages/FeedPage").then((m) => ({
+    default: m.FeedPage,
+  }))
+);
+
+// ============================================================================
 // ROUTE CONFIGURATION
 // ============================================================================
 
@@ -84,6 +94,10 @@ export const routes: RouteObject[] = [
     path: "/",
     element: <RootLayout />,
     children: [
+      {
+        index: true,
+        element: <Navigate to={ROUTES.FEED} replace />,
+      },
       // Auth Routes (Guest Only)
       {
         path: "auth",
@@ -147,6 +161,26 @@ export const routes: RouteObject[] = [
                   <ChangePasswordPage />
                 </Suspense>
               </ProtectedRoute>
+            ),
+          },
+        ],
+      },
+
+      // Feed Routes (Protected)
+      {
+        path: "feed",
+        element: (
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <FeedPage />
+              </Suspense>
             ),
           },
         ],

@@ -2,6 +2,145 @@ import { Types } from "mongoose";
 import PostModel from "../model/post.model.js";
 import UserInterestModel from "../model/userInterest.model.js";
 import FollowerModel from "../model/Follower.model.js";
+import type{ PipelineStage } from "mongoose";
+
+const buildFeedPipeline = (
+  matchStage: Record<string, any>,
+  skip: number,
+  limit: number
+): PipelineStage[] => [
+  {
+    $match: matchStage,
+  },
+
+  {
+    $addFields: {
+      ageHours: {
+        $divide: [
+          {
+            $subtract: [new Date(), "$createdAt"],
+          },
+          1000 * 60 * 60,
+        ],
+      },
+    },
+  },
+
+  {
+    $addFields: {
+      score: {
+        $subtract: [
+          {
+            $add: [
+              {
+                $multiply: [
+                  {
+                    $ifNull: ["$likesCount", 0],
+                  },
+                  5,
+                ],
+              },
+
+              {
+                $multiply: [
+                  {
+                    $ifNull: ["$commentsCount", 0],
+                  },
+                  10,
+                ],
+              },
+
+              {
+                $multiply: [
+                  {
+                    $ifNull: ["$viewsCount", 0],
+                  },
+                  0.1,
+                ],
+              },
+            ],
+          },
+
+          {
+            $multiply: ["$ageHours", 0.1],
+          },
+        ],
+      },
+    },
+  },
+
+  {
+    $sort: {
+      score: -1,
+      createdAt: -1,
+    },
+  },
+
+  {
+    $skip: skip,
+  },
+
+  {
+    $limit: limit,
+  },
+
+  {
+    $lookup: {
+      from: "users",
+      let: {
+        userId: "$user",
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: ["$_id", "$$userId"],
+            },
+          },
+        },
+
+        {
+          $project: {
+            username: 1,
+            fullname: 1,
+            avatar: 1,
+          },
+        },
+      ],
+      as: "user",
+    },
+  },
+
+  {
+    $unwind: {
+      path: "$user",
+      preserveNullAndEmptyArrays: true,
+    },
+  },
+
+  {
+    $project: {
+      _id: 1,
+      title: 1,
+      content: 1,
+      coverImage: 1,
+      category: 1,
+      tags: 1,
+      likesCount: 1,
+      commentsCount: 1,
+      viewsCount: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      score: 1,
+
+      "user._id": 1,
+      "user.username": 1,
+      "user.fullname": 1,
+      "user.avatar": 1,
+    },
+  },
+];
+
 
 export const getFeedService = async (userId:string, page: number, limit: number) => {
 
@@ -15,6 +154,10 @@ export const getFeedService = async (userId:string, page: number, limit: number)
     const userInterest = await UserInterestModel.findOne({
       user: userId
     }).lean();
+
+    
+
+    
 
     const topCategories = userInterest?.categories
     ?.sort((a, b) => b.score - a.score)
@@ -93,161 +236,11 @@ export const getFeedService = async (userId:string, page: number, limit: number)
         };
 
 
-
     const [posts, totalPosts] =
       await Promise.all([
-        PostModel.aggregate([
-          {
-            $match: matchStage
-          },
-
-          {
-            $addFields: {
-              ageHours: {
-                $divide: [
-                  {
-                    $subtract: [
-                      new Date(),
-                      "$createdAt"
-                    ]
-                  },
-                  1000 * 60 * 60
-                ]
-              }
-            }
-          },
-
-          {
-            $addFields: {
-              score: {
-                $subtract: [
-                  {
-                    $add: [
-                      {
-                        $multiply: [
-                          {
-                            $ifNull: [
-                              "$likesCount",
-                              0
-                            ]
-                          },
-                          5
-                        ]
-                      },
-
-                      {
-                        $multiply: [
-                          {
-                            $ifNull: [
-                              "$commentsCount",
-                              0
-                            ]
-                          },
-                          10
-                        ]
-                      },
-
-                      {
-                        $multiply: [
-                          {
-                            $ifNull: [
-                              "$viewsCount",
-                              0
-                            ]
-                          },
-                          0.1
-                        ]
-                      }
-                    ]
-                  },
-
-                  {
-                    $multiply: [
-                      "$ageHours",
-                      0.1
-                    ]
-                  }
-                ]
-              }
-            }
-          },
-
-          {
-            $sort: {
-              score: -1,
-              createdAt: -1
-            }
-          },
-
-          {
-            $skip: skip
-          },
-
-          {
-            $limit: safeLimit
-          },
-
-          {
-            $lookup: {
-              from: "users",
-              let: {
-                userId: "$user"
-              },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $eq: [
-                        "$_id",
-                        "$$userId"
-                      ]
-                    }
-                  }
-                },
-
-                {
-                  $project: {
-                    username: 1,
-                    fullname: 1,
-                    avatar: 1
-                  }
-                }
-              ],
-              as: "user"
-            }
-          },
-
-          {
-            $unwind: {
-              path: "$user",
-              preserveNullAndEmptyArrays:
-                true
-            }
-          },
-
-          {
-            $project: {
-              _id: 1,
-              title: 1,
-              content: 1,
-              coverImage: 1,
-              category: 1,
-              tags: 1,
-              likesCount: 1,
-              commentsCount: 1,
-              viewsCount: 1,
-              createdAt: 1,
-              updatedAt: 1,
-              score: 1,
-
-              "user._id": 1,
-              "user.username": 1,
-              "user.fullname": 1,
-              "user.avatar": 1
-            }
-          }
-        ]),
-
+        PostModel.aggregate(
+          buildFeedPipeline(matchStage, skip, safeLimit)
+        ),
         PostModel.countDocuments(matchStage)
       ]);
 
@@ -272,147 +265,7 @@ if (hasPersonalization && posts.length === 0) {
 
   const [fallbackPosts, fallbackTotal] =
     await Promise.all([
-      PostModel.aggregate([
-        {
-          $match: fallbackMatch
-        },
-
-        {
-          $addFields: {
-            ageHours: {
-              $divide: [
-                {
-                  $subtract: [
-                    new Date(),
-                    "$createdAt"
-                  ]
-                },
-                1000 * 60 * 60
-              ]
-            }
-          }
-        },
-
-        {
-          $addFields: {
-            score: {
-              $subtract: [
-                {
-                  $add: [
-                    {
-                      $multiply: [
-                        {
-                          $ifNull: [
-                            "$likesCount",
-                            0
-                          ]
-                        },
-                        5
-                      ]
-                    },
-                    {
-                      $multiply: [
-                        {
-                          $ifNull: [
-                            "$commentsCount",
-                            0
-                          ]
-                        },
-                        10
-                      ]
-                    },
-                    {
-                      $multiply: [
-                        {
-                          $ifNull: [
-                            "$viewsCount",
-                            0
-                          ]
-                        },
-                        0.1
-                      ]
-                    }
-                  ]
-                },
-                {
-                  $multiply: [
-                    "$ageHours",
-                    0.1
-                  ]
-                }
-              ]
-            }
-          }
-        },
-
-        {
-          $sort: {
-            score: -1,
-            createdAt: -1
-          }
-        },
-
-        {
-          $skip: skip
-        },
-
-        {
-          $limit: safeLimit
-        },
-
-        {
-  $lookup: {
-    from: "users",
-    let: {
-      userId: "$user"
-    },
-    pipeline: [
-      {
-        $match: {
-          $expr: {
-            $eq: ["$_id", "$$userId"]
-          }
-        }
-      },
-      {
-        $project: {
-          username: 1,
-          fullname: 1,
-          avatar: 1
-        }
-      }
-    ],
-    as: "user"
-  }
-},
-{
-  $unwind: {
-    path: "$user",
-    preserveNullAndEmptyArrays: true
-  }
-},
-{
-  $project: {
-    _id: 1,
-    title: 1,
-    content: 1,
-    coverImage: 1,
-    category: 1,
-    tags: 1,
-    likesCount: 1,
-    commentsCount: 1,
-    viewsCount: 1,
-    createdAt: 1,
-    updatedAt: 1,
-    score: 1,
-
-    "user._id": 1,
-    "user.username": 1,
-    "user.fullname": 1,
-    "user.avatar": 1
-  }
-}
-      ]),
+      PostModel.aggregate( buildFeedPipeline(fallbackMatch, skip, safeLimit)),
 
       PostModel.countDocuments(
         fallbackMatch
@@ -448,3 +301,4 @@ const totalPages = Math.max(1,Math.ceil(finalTotalPosts / safeLimit));
 
     }
 }
+

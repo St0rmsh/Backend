@@ -8,6 +8,7 @@ import PostRouter from "./routes/Posts.route.js";
 import likeRouter from "./routes/like.route.js";
 import CommentRouter from "./routes/comment.route.js";
 import bookmarkRouter from "./routes/bookmark.route.js";
+import feedRouter from "./routes/feed.route.js";
 import cors from "cors"
 const app = express()
 
@@ -47,6 +48,10 @@ app.use("/api/profile",userProfileRouter)
 
 // Post routes
 app.use("/api/post", PostRouter)
+
+
+// Feed routes
+app.use("/api/feed", feedRouter)
 
 
 // Like routes

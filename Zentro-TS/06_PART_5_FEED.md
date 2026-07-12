@@ -15,6 +15,7 @@ Everything implemented previously must remain untouched unless fixing bugs.
 
 This phase builds ONLY the Home Feed.
 
+
 Do NOT implement:
 
 - Comments
