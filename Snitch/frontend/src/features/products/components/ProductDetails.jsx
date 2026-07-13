@@ -441,7 +441,7 @@ const ProductDetails = () => {
 
       <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1e1e1e]' : 'bg-[#f4f4ef]/95 border-[#ddd]'}`}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link to="/products" className="text-xl font-black italic tracking-[-0.04em]">SNITCH</Link>
+          <Link to="/products" className="text-xl font-black italic tracking-[-0.04em]">SHOPSTREAM</Link>
           <div className="flex items-center gap-2">
             {user && (
                 <Link

@@ -44,7 +44,7 @@ const OrderHistoryPage = () => {
         <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0a] text-[#eee]' : 'bg-[#f5f5f0] text-[#111]'} font-sans`}>
             <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1a1a1a]' : 'bg-[#f5f5f0]/95 border-[#e0e0db]'}`}>
                 <div className="max-w-[1000px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
-                    <Link to="/products" className="text-2xl font-black italic tracking-tighter">SNITCH</Link>
+                    <Link to="/products" className="text-2xl font-black italic tracking-tighter">SHOPSTREAM</Link>
                 </div>
             </nav>
 

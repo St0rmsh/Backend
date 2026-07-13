@@ -92,7 +92,7 @@ const OrderDetailPage = () => {
         <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0a] text-[#eee]' : 'bg-[#f5f5f0] text-[#111]'} font-sans`}>
             <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1a1a1a]' : 'bg-[#f5f5f0]/95 border-[#e0e0db]'}`}>
                 <div className="max-w-[900px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
-                    <Link to="/products" className="text-2xl font-black italic tracking-tighter">SNITCH</Link>
+                    <Link to="/products" className="text-2xl font-black italic tracking-tighter">SHOPSTREAM</Link>
                     <Link to="/orders" className={`text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full border ${isDark ? 'border-[#1e1e1e] hover:bg-[#111]' : 'border-[#e5e5df] hover:bg-white'}`}>
                         All Orders
                     </Link>
