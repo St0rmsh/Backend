@@ -111,7 +111,7 @@ const CompleteProfilePage = () => {
     return (
         <div className="bg-[#131313] text-[#e5e2e1] font-sans selection:bg-[#00f0ff] selection:text-[#006970]">
             <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#131313]/40 backdrop-blur-md shadow-[0px_10px_30px_rgba(0,240,255,0.05)]">
-                <div className="text-2xl font-black italic text-[#E5E2E1] tracking-[-0.04em] font-sans">SNITCH</div>
+                <div className="text-2xl font-black italic text-[#E5E2E1] tracking-[-0.04em] font-sans">SHOPSTREAM</div>
             </header>
             
             <main className="min-h-screen pt-24 pb-12 px-6 flex items-center justify-center relative">

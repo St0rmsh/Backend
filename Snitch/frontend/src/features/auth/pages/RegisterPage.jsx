@@ -263,7 +263,7 @@ const RegisterPage = () => {
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
             <span className="text-white font-black text-xl leading-none">S</span>
           </div>
-          <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Snitch</span>
+          <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">ShopStream</span>
         </div>
 
         <div className="w-full max-w-lg bg-white dark:bg-white/5 backdrop-blur-xl
@@ -272,7 +272,7 @@ const RegisterPage = () => {
 
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create your account</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Join Snitch and start shopping the latest trends</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Join ShopStream and start shopping the latest trends</p>
           </div>
 
           {serverErr && (

@@ -149,7 +149,7 @@ const LoginPage = () => {
             </ul>
           </div>
 
-          <p className="relative text-xs text-violet-300">© 2026 Snitch. Crafted with ❤️</p>
+          <p className="relative text-xs text-violet-300">© 2026 ShopStream. Crafted with ❤️</p>
         </div>
 
         <div className="flex-1 flex items-center justify-center px-4 py-12 sm:px-8">
@@ -159,7 +159,7 @@ const LoginPage = () => {
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
                 <span className="text-white font-black text-xl leading-none">S</span>
               </div>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Snitch</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">ShopStream</span>
             </div>
 
             <div className="bg-white dark:bg-white/5 backdrop-blur-xl
@@ -168,7 +168,7 @@ const LoginPage = () => {
 
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome back 👋</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Sign in to your Snitch account</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Sign in to your ShopStream account</p>
               </div>
 
               {serverErr && (

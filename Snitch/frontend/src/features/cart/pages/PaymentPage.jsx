@@ -85,7 +85,7 @@ const PaymentPage = () => {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
                 amount: razorpayOrder.amount,
                 currency: razorpayOrder.currency,
-                name: 'Snitch',
+                name: 'Shopstream',
                 description: `Order #${orderId?.slice(-6).toUpperCase()}`,
                 order_id: razorpayOrder.id,
                 prefill: {
@@ -166,7 +166,7 @@ const PaymentPage = () => {
         <div className={`min-h-screen ${isDark ? 'bg-[#0a0a0a] text-[#f0f0f0]' : 'bg-[#f4f4ef] text-[#1a1a1a]'} font-sans`}>
             <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1e1e1e]' : 'bg-[#f4f4ef]/95 border-[#ddd]'}`}>
                 <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-                    <Link to="/cart" className="text-xl font-black italic tracking-[-0.04em]">SNITCH</Link>
+                    <Link to="/cart" className="text-xl font-black italic tracking-[-0.04em]">Shopstream</Link>
                     <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest opacity-40">
                         <span className={step === 1 ? 'opacity-100 text-current' : ''}>Shipping</span>
                         <span>/</span>

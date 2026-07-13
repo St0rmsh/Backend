@@ -113,7 +113,7 @@ const CartPage = () => {
             <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1a1a1a]' : 'bg-[#f5f5f0]/95 border-[#e0e0db]'}`}>
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
                     <Link to="/products" className="flex items-center gap-2">
-                        <span className="text-2xl font-black italic tracking-tighter">SNITCH</span>
+                        <span className="text-2xl font-black italic tracking-tighter">SHOPSTREAM</span>
                         <span className="hidden md:block text-[10px] font-bold tracking-[0.3em] uppercase opacity-30 mt-1">SHOPPING CART</span>
                     </Link>
                     <div className="flex items-center gap-3" >
@@ -228,7 +228,7 @@ const CartPage = () => {
                                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#f4f4ef]'}`}>
                                             <svg className="w-5 h-5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.040L3 20c3.859 2.222 8.141 2.222 12 0l-1.382-14.016z"/></svg>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Authentic Snitch Guaranteed</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Authentic Shopstream Guaranteed</span>
                                     </div>
                                     <div className="flex items-center gap-4 group">
                                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#f4f4ef]'}`}>

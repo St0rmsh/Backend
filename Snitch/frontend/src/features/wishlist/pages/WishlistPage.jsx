@@ -20,7 +20,7 @@ const WishlistPage = () => {
             <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-[#0a0a0a]/95 border-[#1a1a1a]' : 'bg-[#f5f5f0]/95 border-[#e0e0db]'}`}>
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
                     <Link to="/products" className="flex items-center gap-2">
-                        <span className="text-2xl font-black italic tracking-tighter">SNITCH</span>
+                        <span className="text-2xl font-black italic tracking-tighter">Shopstream</span>
                         <span className="hidden md:block text-[10px] font-bold tracking-[0.3em] uppercase opacity-30 mt-1">WISHLIST</span>
                     </Link>
                     <div className="flex items-center gap-3">

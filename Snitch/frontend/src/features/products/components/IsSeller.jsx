@@ -9,6 +9,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 const IsSeller = () => {
     const user = useSelector(state => state.auth.user);
 
+    <div>Shopstream</div>
+
     if (user?.role === 'seller') {
         return <Navigate to="/seller" replace />;
     }
