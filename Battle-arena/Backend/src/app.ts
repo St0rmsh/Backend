@@ -4,14 +4,51 @@ import { randomUUID } from 'crypto';
 import runGraph, { streamGraph } from "./ai/graph.ai.js";
 import { touchConversation, saveTurn, listThreads, getThreadTurns, renameThread, deleteThread } from "./db/history.service.js";
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from "url";
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+
 
 const app = express();
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const publicPath = path.join(__dirname, "../public");
+
+app.use(express.static(publicPath));
+
 
 app.use(cors({
     origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     credentials: true
 }));
+
+
+// Security Middleware
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+
+
+// Rate limiting middleware to prevent abuse
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Max 100 requests per IP per window
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many requests. Please try again later.",
+  },
+});
+
+
+app.use(limiter);
+
 app.use(express.json());
 
 app.get('/', async (req, res) => {
@@ -176,5 +213,11 @@ app.delete('/threads/:threadId', async (req: Request, res: Response) => {
         res.status(500).json({ success: false, message: "Failed to delete conversation" });
     }
 });
+
+
+app.get("/{*splat}", (req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
+});
+
 
 export default app;

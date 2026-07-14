@@ -14,7 +14,7 @@ export async function connectMongo() {
 
     await mongoClient.connect();
     isConnected = true;
-    console.log("✅ MongoDB connected");
+    console.log(" MongoDB connected");
 
     return mongoClient;
 }
