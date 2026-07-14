@@ -8,7 +8,7 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { Sidebar } from './components/Sidebar';
 import { SourceChips } from './components/SourceChips';
 
-const API_BASE = 'https://backend-m8c6.onrender.com/';
+const API_BASE = 'https://backend-m8c6.onrender.com';
 
 const containerVariants = {
   hidden: { opacity: 0 },
