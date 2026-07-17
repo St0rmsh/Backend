@@ -7,11 +7,20 @@ import dns from "dns";
 
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
-ConnectDB();
+const start = async () => {
+  try {
+    await ConnectDB();
 
-const httpServer = http.createServer(app);
-initSocket(httpServer);
+    const httpServer = http.createServer(app);
+    initSocket(httpServer);
 
-httpServer.listen(config.PORT, () => {
-  console.log(`🚀 Server running on port ${config.PORT}`);
-});
+    httpServer.listen(config.PORT, () => {
+      console.log(`Server running on port ${config.PORT}`);
+    });
+  } catch (err) {
+    console.error(" Failed to start server:", err.message);
+    process.exit(1);
+  }
+};
+
+start();

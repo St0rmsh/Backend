@@ -5,7 +5,6 @@ import {
     getChannelByHandle,
     updateChannel,
     getChannelVideos
-
 } from "../controllers/channel.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { optionalAuth } from "../middleware/optionalAuth.middleware.js";
@@ -18,12 +17,20 @@ const router = Router();
 router.post("/create", authMiddleware, uploadImage.fields([
     { name: "avatar", maxCount: 1 },
     { name: "banner", maxCount: 1 }
-  ]),createChannel);
+]), createChannel);
 
 
 // /api/channel/me
 // GET
 router.get("/me", authMiddleware, getMyChannel);
+
+
+// /api/channel/update
+// PUT
+router.put("/update", authMiddleware, uploadImage.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "banner", maxCount: 1 }
+]), updateChannel);
 
 
 // /api/channel/:handle/videos
@@ -34,13 +41,5 @@ router.get("/:handle/videos", optionalAuth, getChannelVideos);
 // /api/channel/:handle
 // GET
 router.get("/:handle", getChannelByHandle);
-
-
-// /api/channel/update
-// PUT
-router.put("/update", authMiddleware,uploadImage.fields([
-    { name: "avatar", maxCount: 1 },
-    { name: "banner", maxCount: 1 }
-  ]), updateChannel);
 
 export default router;

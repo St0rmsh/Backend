@@ -22,19 +22,19 @@ export const registerValidation = [
         .isLength({ min: 3, max: 30 }).withMessage("Username must be between 3 and 30 characters")
         .matches(/^[a-zA-Z0-9_]+$/)
         .withMessage("Username can only contain letters, numbers, and underscores"),
-    
+
     body("email")
         .trim()
         .notEmpty().withMessage("Email is required")
         .normalizeEmail()
         .isString().withMessage("Email must be a text string")
         .isEmail().withMessage("Invalid email address"),
-    
+
     body("password")
         .notEmpty().withMessage("Password is required")
         .isString().withMessage("Password must be a text string")
         .isLength({ min: 6 }).withMessage("Password must be at least 6 characters long"),
-    
+
     handleValidationErrors
 ];
 
@@ -52,7 +52,7 @@ export const loginValidation = [
         .notEmpty().withMessage("Email is required if provided")
         .isString().withMessage("Email must be a text string")
         .isEmail().withMessage("Invalid email address"),
-    
+
     body("username")
         .optional()
         .trim()
@@ -63,6 +63,6 @@ export const loginValidation = [
         .trim()
         .isString().withMessage("Password must be a text string")
         .notEmpty().withMessage("Password is required"),
-        
+
     handleValidationErrors
 ];

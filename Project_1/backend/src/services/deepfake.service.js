@@ -11,6 +11,8 @@ export async function loadDeepFakeModel() {
   }
 }
 
+
+
 export function detectDeepFakeFromImage(imageData) {
   if (!model) throw new Error("Model not loaded");
 
@@ -24,8 +26,8 @@ export function detectDeepFakeFromImage(imageData) {
       .div(255);
 
     const prediction = model.predict(tensor);
-    const data = prediction.dataSync(); 
+    const data = prediction.dataSync();
 
-    return data[0]; 
+    return data[0];
   });
 }

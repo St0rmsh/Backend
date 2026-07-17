@@ -1,0 +1,165 @@
+import { Link } from "react-router-dom";
+import { useRef, useState, memo } from "react";
+import { Play, ShieldCheck, ShieldAlert, Eye, Clock } from "lucide-react";
+
+const formatTimeAgo = (date) => {
+  if (!date) return "just now";
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    day: 86400,
+    hour: 3600,
+    minute: 60
+  };
+  for (let key in intervals) {
+    const value = Math.floor(seconds / intervals[key]);
+    if (value >= 1) return `${value} ${key}${value > 1 ? "s" : ""} ago`;
+  }
+  return "just now";
+};
+
+const formatViews = (n = 0) => {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
+  return `${n}`;
+};
+
+const VideoCard = ({ video }) => {
+  const channel = video?.channel || {};
+  const videoRef = useRef(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const hoverTimeoutRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovering(true);
+      videoRef.current?.play().catch(() => {});
+    }, 300);
+  };
+
+  const handleMouseLeave = () => {
+    clearTimeout(hoverTimeoutRef.current);
+    setIsHovering(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  return (
+    <div
+      className="w-full group cursor-pointer [content-visibility:auto] [contain-intrinsic-size:0_320px]"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <Link to={`/video/${video?._id}`}>
+        <div
+          className="relative aspect-video rounded-2xl overflow-hidden bg-surface-low mb-4 border border-white/5 shadow-sm transition-[border-color,box-shadow] duration-300 ease-out group-hover:border-brand-orange/20 group-hover:shadow-[0_16px_32px_rgba(0,0,0,0.45)]"
+          style={{ willChange: "transform" }}
+        >
+          {/* THUMBNAIL */}
+          <img
+            src={video?.thumbnail || "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop"}
+            alt={video?.title}
+            loading="lazy"
+            decoding="async"
+            className={`absolute inset-0 w-full h-full object-cover transition-[transform,filter,opacity] duration-500 ease-out ${
+              isHovering ? "scale-105 blur-[3px] opacity-40" : "scale-100 opacity-100"
+            }`}
+          />
+
+          {/* VIDEO PREVIEW — only mounted while hovering, never preloaded */}
+          {video?.videoUrl && isHovering && (
+            <video
+              ref={videoRef}
+              src={video.videoUrl}
+              muted
+              loop
+              playsInline
+              preload="none"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+
+          {/* AI STATUS BADGE */}
+          {(video?.verification?.finalVerdict === "TRUE" || video?.deepfakeScore > 0.5) && (
+            <div className="absolute top-4 left-4 z-10">
+              {video?.verification?.finalVerdict === "TRUE" ? (
+                <div className="bg-black/80 border border-brand-green/30 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                  <ShieldCheck className="w-3.5 h-3.5 text-brand-green" />
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white">AI Verified</span>
+                </div>
+              ) : (
+                <div className="bg-brand-red/90 border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                  <ShieldAlert className="w-3.5 h-3.5 text-white" />
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white">Manipulated</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* DURATION */}
+          <div className="absolute bottom-4 right-4 z-10 bg-black/80 border border-white/10 px-2.5 py-1 rounded-xl text-[9px] font-black text-white tracking-widest uppercase">
+            {video?.duration ? `${Math.floor(video.duration / 60)}:${Math.floor(video.duration % 60).toString().padStart(2, '0')}` : "0:00"}
+          </div>
+
+          {/* PLAY ICON OVERLAY — CSS-only, no mount/unmount animation cost */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center bg-brand-orange/10 pointer-events-none transition-opacity duration-200 ease-out ${
+              isHovering ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <div
+              className={`w-16 h-16 bg-black/70 border border-white/10 rounded-full flex items-center justify-center text-brand-orange shadow-2xl transition-transform duration-200 ease-out ${
+                isHovering ? "scale-100" : "scale-75"
+              }`}
+            >
+              <Play fill="currentColor" size={32} className="ml-1" />
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      <div className="flex gap-4 px-1">
+        {/* CHANNEL AVATAR */}
+        <Link to={`/channel/${channel?.handle || ""}`} className="shrink-0 mt-0.5" onClick={(e) => e.stopPropagation()}>
+          <div className="w-9 h-9 rounded-full bg-surface-low border border-white/10 overflow-hidden flex items-center justify-center shadow-sm transition-colors duration-200 group-hover:border-brand-orange/40">
+            {channel?.avatar ? (
+              <img src={channel.avatar} alt={channel.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+            ) : (
+              <span className="font-black text-[10px] text-text-muted">{channel?.name?.charAt(0) || "C"}</span>
+            )}
+          </div>
+        </Link>
+
+        {/* INFO */}
+        <div className="flex flex-col flex-1 min-w-0">
+          <Link to={`/video/${video?._id}`}>
+            <h3 className="font-display font-black text-[14px] leading-snug text-text-main line-clamp-2 transition-colors duration-200 group-hover:text-brand-orange">
+              {video?.title || "Untitled Transmission"}
+            </h3>
+          </Link>
+
+          <div className="mt-1 flex flex-col gap-0.5">
+            <Link to={`/channel/${channel?.handle || ""}`} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[12px] font-bold text-text-muted hover:text-text-main transition-colors duration-200">
+                  {channel?.name || "The Curator"}
+                </span>
+                {channel?.verified && <ShieldCheck size={10} className="text-brand-green/70" />}
+              </div>
+            </Link>
+            <div className="flex items-center gap-3 text-[10px] text-text-muted font-bold uppercase tracking-tighter">
+              <span className="flex items-center gap-1.5"><Eye size={12} className="text-brand-orange/70" /> {formatViews(video?.views)}</span>
+              <span className="w-1 h-1 rounded-full bg-white/10" />
+              <span className="flex items-center gap-1.5"><Clock size={12} className="text-brand-orange/70" /> {formatTimeAgo(video?.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default memo(VideoCard);

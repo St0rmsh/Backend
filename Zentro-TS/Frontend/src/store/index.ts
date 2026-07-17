@@ -7,6 +7,7 @@ import uiReducer from "./slices/uiSlice";
 import socketReducer from "./slices/socketSlice";
 import loadingReducer from "./slices/loadingSlice";
 import feedReducer from "@/features/feed/state/feedSlice";
+import postReducer from "@/features/post/state/postSlice";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     socket: socketReducer,
     loading: loadingReducer,
     feed: feedReducer,
+    post: postReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
 });

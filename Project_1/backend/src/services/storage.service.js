@@ -1,23 +1,18 @@
-import ImageKit from "@imagekit/nodejs";
+import ImageKit, { toFile } from "@imagekit/nodejs";
 import config from "../config/config.js";
-import { Readable } from "stream";
 
 const imagekit = new ImageKit({
-  publicKey: config.IMAGEKIT_PUBLIC_KEY,
-  privateKey: config.IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: config.IMAGEKIT_URL_ENDPOINT,
+  publicKey: config.IMAGEKIT_PUBLIC_KEY
 });
 
-/**
- * Uploads a file to ImageKit
- * @param {Object} params - { buffer, filename, folder }
- */
 export const uploadFile = async ({ buffer, filename, folder = "/general" }) => {
   try {
+    const imageFile = await toFile(buffer, filename);
+
     const result = await imagekit.files.upload({
-      file: buffer,
-      fileName: `${Date.now()}-${filename}`,
-      folder: folder,
+    file: imageFile,
+    fileName: `${Date.now()}-${filename}`,
+    folder,
     });
 
     if (!result || !result.url) {
@@ -40,10 +35,6 @@ export const uploadFile = async ({ buffer, filename, folder = "/general" }) => {
   }
 };
 
-/**
- * Uploads large video files directly via HTTP (bypasses SDK timeout)
- * Uses a 30-minute timeout to handle very large files.
- */
 export const uploadFromPath = async (filePath, { folder = "/videos", filename } = {}) => {
   try {
     const fs = await import("fs");
@@ -60,7 +51,18 @@ export const uploadFromPath = async (filePath, { folder = "/videos", filename } 
     form.append("fileName", finalFileName);
     form.append("folder", folder);
 
-    // Build Basic Auth header from private key
+    // -------------------------------------
+
+  const stats = fs.statSync(filePath);
+
+console.log(`📦 Upload file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+
+if (stats.size > 100 * 1024 * 1024) {
+  throw new Error(
+    `Video size is ${(stats.size / 1024 / 1024).toFixed(2)} MB. ImageKit limit is 100 MB.`
+  );
+}
+// ---------------------------------
     const authString = Buffer.from(`${config.IMAGEKIT_PRIVATE_KEY}:`).toString("base64");
 
     console.log(`📡 DIRECT_UPLOAD: Sending ${finalFileName} to ImageKit (no timeout limit)...`);
@@ -73,7 +75,7 @@ export const uploadFromPath = async (filePath, { folder = "/videos", filename } 
           ...form.getHeaders(),
           Authorization: `Basic ${authString}`,
         },
-        timeout: 30 * 60 * 1000, // 30 minutes — enough for any large video
+        timeout: 30 * 60 * 1000,
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
       }
@@ -89,13 +91,13 @@ export const uploadFromPath = async (filePath, { folder = "/videos", filename } 
 
   } catch (error) {
     console.error("Large upload failed:", error.message || error);
+    console.error("STATUS:", error.response?.status);
+    console.error("DATA:", error.response?.data);
+    console.error("MESSAGE:", error.message);
     throw error;
   }
 };
 
-/**
- * Legacy compatibility name
- */
 export const uploadToImageKit = async (file) => {
   return (await uploadFile({
     buffer: file.buffer,
@@ -104,13 +106,10 @@ export const uploadToImageKit = async (file) => {
   })).url;
 };
 
-/**
- * Deletes a file from ImageKit
- */
 export const deleteFile = async (fileId) => {
   try {
     if (!fileId) return null;
-    return await imagekit.deleteFile(fileId);
+    return await imagekit.files.delete(fileId);
   } catch (error) {
     console.error("Delete error:", error);
     return null;
@@ -118,22 +117,14 @@ export const deleteFile = async (fileId) => {
 };
 
 /**
- * Generates a signed URL for private assets
+ * Returns the asset URL as-is.
+ *
+ * Note: @imagekit/nodejs does not expose a URL-signing helper the way the
+ * legacy `imagekit` npm package's `.url()` did. ImageKit URLs are public by
+ * default unless "Restrict unsigned image URLs" is enabled in your ImageKit
+ * dashboard — if that's on, tell me and I'll implement manual HMAC signing
+ * per ImageKit's spec instead of this passthrough.
  */
 export const getSignedUrl = (url) => {
-  try {
-    if (!url || !url.includes(config.IMAGEKIT_URL_ENDPOINT)) return url;
-    
-    // Extract path from full URL
-    const path = url.split(config.IMAGEKIT_URL_ENDPOINT)[1];
-    
-    return imagekit.url({
-      path: path,
-      signed: true,
-      expireSeconds: 3600 // 1 hour
-    });
-  } catch (e) {
-    console.error("Signing error:", e);
-    return url;
-  }
+  return url || "";
 };

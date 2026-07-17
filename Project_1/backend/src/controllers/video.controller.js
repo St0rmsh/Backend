@@ -39,7 +39,7 @@ async function processVideoAsync({ videoId, tempVideoPath, title, description, f
     // 1. Convert to MP4
     console.log("🔄 [PROCESS] Converting to MP4...");
     convertedPath = await convertToMp4(tempVideoPath);
-    safeDelete(tempVideoPath); // free original immediately
+    safeDelete(tempVideoPath);
 
     // 2. Get duration
     const duration = await new Promise((resolve) => {
@@ -48,17 +48,29 @@ async function processVideoAsync({ videoId, tempVideoPath, title, description, f
       );
     });
 
-    // 3. Upload video (stream-based — no readFileSync, no buffer)
+    // 3. Deepfake analysis + transcription — BOTH run on the LOCAL
+    //    converted file, in parallel, BEFORE upload/delete. This avoids
+    //    re-downloading from ImageKit for either step, which was burning
+    //    ImageKit's video transformation quota on every upload.
+    console.log("🕵️ [PROCESS] Running deepfake analysis + transcription on local file...");
+    const [deepfakeScore, transcript] = await Promise.all([
+      analyzeVideoForDeepFake(convertedPath)
+        .catch(e => { console.warn("⚠️ Deepfake:", e.message); return 0; }),
+      transcribeVideo(convertedPath)
+        .catch(e => { console.warn("⚠️ Transcription:", e.message); return ""; })
+    ]);
+
+    // 4. Upload video (now safe to delete local file after this)
     console.log("📡 [PROCESS] Uploading video to ImageKit...");
     const uploadedVideo = await uploadFromPath(convertedPath, {
       filename: fileName.replace(/\.[^/.]+$/, ".mp4"),
       folder: "/videos"
     });
-    safeDelete(convertedPath); // free converted file immediately after upload
+    safeDelete(convertedPath);
     convertedPath = null;
     console.log(`✅ [PROCESS] Video uploaded → ${uploadedVideo.url}`);
 
-    // 4. Thumbnail
+    // 5. Thumbnail
     let uploadedThumbnail;
     if (thumbFileBuffer) {
       uploadedThumbnail = await uploadFile({
@@ -67,28 +79,16 @@ async function processVideoAsync({ videoId, tempVideoPath, title, description, f
         folder: "/thumbnails"
       });
     } else {
-      const thumbName = `thumb-${Date.now()}.png`;
-      const tempDir = path.join(process.cwd(), "temp");
-      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-      tempThumbPath = path.join(tempDir, thumbName);
-      // Can't screenshot from deleted convertedPath — use placeholder
       uploadedThumbnail = { url: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop" };
     }
 
-    // 5. AI pipeline (runs against the URL, not the local file)
+    // 6. AI verification pipeline (text-based, no ImageKit dependency)
     console.log("🤖 [PROCESS] Running AI pipeline...");
-    const cleanUrl = uploadedVideo.url.split("?")[0];
-
-    const [transcript, deepfakeScore] = await Promise.all([
-      transcribeVideo(cleanUrl).catch(e => { console.warn("⚠️ Transcription:", e.message); return ""; }),
-      analyzeVideoForDeepFake(cleanUrl).catch(e => { console.warn("⚠️ Deepfake:", e.message); return 0; })
-    ]);
-
     const ai = await SearchAndAskAI({ title, description, transcript, deepfakeScore })
       .catch(e => { console.warn("⚠️ AI:", e.message); return { data: {} }; });
     const aiData = ai?.data || {};
 
-    // 6. Mark ready
+    // 7. Mark ready
     await videoModel.findByIdAndUpdate(videoId, {
       videoUrl: uploadedVideo.url,
       thumbnail: uploadedThumbnail?.url,
@@ -122,27 +122,29 @@ async function processVideoAsync({ videoId, tempVideoPath, title, description, f
 
 /**
  * ⚡️ UPLOAD VIDEO
- * Saves file to disk, creates DB record, kicks off background processing.
- * Returns to client in < 1 second.
  */
 export const videoUpload = async (req, res) => {
   let tempVideoPath;
 
   try {
-    const { title, description } = req.body;
+    const { title, description, isAiGenerated } = req.body;
     const file = req.files?.video?.[0];
     const thumbFile = req.files?.thumbnail?.[0];
 
     if (!req.user?._id) return res.status(401).json({ message: "Unauthorized" });
     if (!req.user?.channel) return res.status(400).json({ message: "Create a channel first" });
     if (!file) return res.status(400).json({ message: "Video file is required" });
+    if (!title || !title.trim()) return res.status(400).json({ message: "Title is required" });
 
     const fileName = `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`;
     tempVideoPath = await saveTempFile(file.buffer, fileName);
 
+    console.log(`📥 [UPLOAD] Video size: ${req.files.video[0].size} bytes`);
+
     const video = await videoModel.create({
-      title,
+      title: title.trim(),
       description: description || "",
+      isAiGenerated: isAiGenerated === "true" || isAiGenerated === true,
       videoUrl: "",
       thumbnail: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop",
       duration: 0,
@@ -154,11 +156,10 @@ export const videoUpload = async (req, res) => {
 
     await channelModel.findByIdAndUpdate(req.user.channel, { $inc: { videosCount: 1 } });
 
-    // Fire and forget — does NOT block the HTTP response
     processVideoAsync({
       videoId: video._id,
       tempVideoPath,
-      title,
+      title: title.trim(),
       description: description || "",
       fileName,
       thumbFileBuffer: thumbFile ? thumbFile.buffer : null
@@ -192,7 +193,6 @@ export const getVideo = async (req, res) => {
       return res.status(404).json({ message: "Video not found" });
     }
 
-    // 🔐 PRIVACY CHECK
     if (video.visibility === "private") {
       const isOwner = userId && video.uploader.toString() === userId.toString();
       if (!isOwner) {
@@ -202,10 +202,6 @@ export const getVideo = async (req, res) => {
       }
     }
 
-    console.log(`🔍 [GET_VIDEO] Req: ${req.params.id} | User: ${userId || "GUEST"} | Owner: ${video.uploader}`);
-
-    // 🔥 NO SECURITY CHECK FOR PUBLIC PAGES
-    // We sign the URL to ensure it's accessible (Fixes 403)
     video.videoUrl = getSignedUrl(video.videoUrl);
     video.thumbnail = getSignedUrl(video.thumbnail);
     if (video.hlsUrl) video.hlsUrl = getSignedUrl(video.hlsUrl);
@@ -213,6 +209,7 @@ export const getVideo = async (req, res) => {
     return res.status(200).json({ success: true, video });
 
   } catch (err) {
+    console.error("Get video error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -243,11 +240,8 @@ export const getAllVideos = async (req, res) => {
       .limit(limit)
       .populate("channel", "name handle avatar");
 
-    console.log(`📺 [GET_ALL_VIDEOS] Found ${videos.length} videos for query:`, JSON.stringify(query));
-
     const total = await videoModel.countDocuments(query);
 
-    // 🔒 SIGN ALL URLS FOR HOME PAGE (Fixes 403)
     const signedVideos = videos.map(v => {
       const doc = v.toObject();
       doc.videoUrl = getSignedUrl(doc.videoUrl);
@@ -258,10 +252,14 @@ export const getAllVideos = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      videos: signedVideos
+      videos: signedVideos,
+      page,
+      total,
+      hasMore: skip + videos.length < total
     });
 
   } catch (err) {
+    console.error("Get all videos error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -277,7 +275,8 @@ export const getMyVideos = async (req, res) => {
       return doc;
     });
     return res.json({ success: true, videos: signedVideos });
-  } catch {
+  } catch (err) {
+    console.error("Get my videos error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -285,18 +284,23 @@ export const getMyVideos = async (req, res) => {
 export const searchVideos = async (req, res) => {
   try {
     const q = req.query.q;
-    if (!q) return res.json({ success: true, videos: [] });
+    if (!q || !q.trim()) return res.json({ success: true, videos: [] });
 
     const userId = req.user?._id;
+    const searchRegex = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+
     const query = {
       status: { $in: ["ready", null] },
-      title: { $regex: q, $options: "i" }
+      $or: [
+        { title: searchRegex },
+        { description: searchRegex },
+        { tags: searchRegex }
+      ]
     };
 
     if (userId) {
-      query.$or = [
-        { visibility: "public" },
-        { uploader: userId }
+      query.$and = [
+        { $or: [{ visibility: "public" }, { uploader: userId }] }
       ];
     } else {
       query.visibility = "public";
@@ -316,9 +320,11 @@ export const searchVideos = async (req, res) => {
     return res.status(200).json({ success: true, videos: signedVideos });
 
   } catch (err) {
+    console.error("Search error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 export const deleteVideo = async (req, res) => {
   try {
@@ -330,8 +336,14 @@ export const deleteVideo = async (req, res) => {
     }
 
     await videoModel.findByIdAndDelete(req.params.id);
+
+    if (video.channel) {
+      await channelModel.findByIdAndUpdate(video.channel, { $inc: { videosCount: -1 } });
+    }
+
     return res.json({ success: true, message: "Video deleted" });
-  } catch {
+  } catch (err) {
+    console.error("Delete video error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -342,15 +354,26 @@ export const getTrendingVideos = async (req, res) => {
       { $match: { status: { $in: ["ready", null] }, visibility: "public" } },
       { $addFields: { score: { $add: ["$views", { $multiply: ["$likesCount", 2] }] } } },
       { $sort: { score: -1 } },
-      { $limit: 20 }
+      { $limit: 20 },
+      {
+        $lookup: {
+          from: "channels",
+          localField: "channel",
+          foreignField: "_id",
+          as: "channel"
+        }
+      },
+      { $unwind: { path: "$channel", preserveNullAndEmptyArrays: true } }
     ]);
+
     const signedVideos = videos.map(v => {
       v.videoUrl = getSignedUrl(v.videoUrl);
       v.thumbnail = getSignedUrl(v.thumbnail);
       return v;
     });
     return res.json({ success: true, videos: signedVideos });
-  } catch {
+  } catch (err) {
+    console.error("Trending error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -367,7 +390,6 @@ export const updateVideo = async (req, res) => {
     const video = await videoModel.findById(id);
     if (!video) return res.status(404).json({ message: "Video not found" });
 
-    // 🔐 OWNER CHECK
     if (video.uploader.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Unauthorized edit attempt" });
     }
@@ -382,14 +404,13 @@ export const updateVideo = async (req, res) => {
       const uploaded = await uploadFile({
         buffer: thumbFile.buffer,
         filename: `update-${Date.now()}-${thumbFile.originalname}`,
-        folder: "thumbnails"
+        folder: "/thumbnails"
       });
       updates.thumbnail = uploaded.url;
     }
 
-    const updatedVideo = await videoModel.findByIdAndUpdate(id, updates, { returnDocument: "after" });
+    const updatedVideo = await videoModel.findByIdAndUpdate(id, updates, { new: true });
 
-    // Sign URLs for response
     const doc = updatedVideo.toObject();
     doc.videoUrl = getSignedUrl(doc.videoUrl);
     doc.thumbnail = getSignedUrl(doc.thumbnail);

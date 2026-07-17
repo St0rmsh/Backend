@@ -13,7 +13,7 @@ const subscriberSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// ✅ PREVENT DUPLICATES (IMPORTANT)
+// ✅ PREVENT DUPLICATES
 subscriberSchema.index({ user: 1, channel: 1 }, { unique: true });
 
 const subscriberModel = mongoose.model("Subscriber", subscriberSchema);

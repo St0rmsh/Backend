@@ -1,3 +1,5 @@
+import { runDeepVerification } from "./deepVerification.service.js";
+
 export function calculateFraudScore({ claims, aiDetection }) {
     let score = 0;
 
@@ -39,7 +41,6 @@ export function calculateFraudScore({ claims, aiDetection }) {
 }
 
 
-
 export function classifyRisk(score) {
     if (score >= 80) return "CRITICAL_DISINFORMATION";
     if (score >= 60) return "HIGH_RISK";
@@ -49,11 +50,9 @@ export function classifyRisk(score) {
 }
 
 
-
-
 export function generateRiskReport({ video, claims, aiDetection, fraudScore, riskLevel }) {
     return {
-        videoId: video.id,
+        videoId: video.id || video._id,
         title: video.title,
         fraudScore,
         riskLevel,
@@ -62,7 +61,8 @@ export function generateRiskReport({ video, claims, aiDetection, fraudScore, ris
             text: c.text,
             verdict: c.verdict,
             confidence: c.confidence,
-            explanation: c.explanation
+            explanation: c.explanation,
+            sources: c.sources || []
         })),
         aiDetection,
         timestamp: new Date().toISOString()
@@ -70,12 +70,11 @@ export function generateRiskReport({ video, claims, aiDetection, fraudScore, ris
 }
 
 
-
-
 export async function analyzeVideoRisk({ video }) {
     try {
-        // 1. Get AI analysis
-        const aiResult = await SearchAndAskAI({ query: `${video.title} ${video.description}` });
+        // 1. Get deep AI analysis (multi-step, claim-by-claim, real sources)
+        const query = `${video.title}\n\n${video.description || ""}\n\n${video.transcript || ""}`.trim();
+        const aiResult = await runDeepVerification({ query });
 
         if (!aiResult.success || !aiResult.data) {
             return {
@@ -103,7 +102,11 @@ export async function analyzeVideoRisk({ video }) {
 
         return {
             success: true,
-            data: report
+            data: {
+                ...report,
+                summary: aiResult.data.summary || report.summary,
+                finalVerdict: aiResult.data.finalVerdict
+            }
         };
 
     } catch (err) {
@@ -114,4 +117,3 @@ export async function analyzeVideoRisk({ video }) {
         };
     }
 }
-

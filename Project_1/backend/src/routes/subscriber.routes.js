@@ -5,33 +5,34 @@ import {
     getSubscribersCount,
     getUserSubscriptions,
     getChannelSubscribers,
-    isSubscribed
+    isSubscribed,
+    getSubscriptionsFeed
 } from "../controllers/subscriber.controller.js";
 
 const router = Router();
-
-// /api/subscription/:channelId/toggle
-// POST
-router.post("/:channelId/toggle", authMiddleware, toggleSubscribe);
-
-
-// /api/subscription/:channelId/count
-// GET
-router.get("/:channelId/count", getSubscribersCount);
-
 
 // /api/subscription/me
 // GET
 router.get("/me", authMiddleware, getUserSubscriptions);
 
+// /api/subscription/:channelId/toggle
+// POST
+router.post("/:channelId/toggle", authMiddleware, toggleSubscribe);
+
+// /api/subscription/:channelId/count
+// GET
+router.get("/:channelId/count", getSubscribersCount);
 
 // /api/subscription/:channelId/list
 // GET
 router.get("/:channelId/list", getChannelSubscribers);
 
-
 // /api/subscription/:channelId/is-subscribed
 // GET
 router.get("/:channelId/is-subscribed", authMiddleware, isSubscribed);
+
+// ✅ NEW: SUBSCRIPTIONS FEED
+// GET /api/subscription/feed?page=1
+router.get("/feed", authMiddleware, getSubscriptionsFeed);
 
 export default router;

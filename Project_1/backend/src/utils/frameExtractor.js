@@ -9,8 +9,8 @@ export async function extractFrames(videoPath, outputDir) {
     ffmpeg(videoPath)
       .output(path.join(outputDir, "frame-%03d.png"))
       .outputOptions([
-        "-vf fps=0.5", 
-        "-s 224x224"  
+        "-vf fps=0.5",
+        "-s 224x224"
       ])
       .on("end", async () => {
         const files = await fs.promises.readdir(outputDir);
@@ -24,7 +24,7 @@ export async function extractFrames(videoPath, outputDir) {
           } catch (err) {
             console.error("Delete error:", err);
           }
-        }, 20 * 60 * 1000); 
+        }, 20 * 60 * 1000);
 
         resolve(fullPaths);
       })

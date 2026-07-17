@@ -7,12 +7,13 @@ import config from "../config/config.js";
 
 
 
-
-
 export const sendOtp = async (req, res) => {
   try {
     const email = req.body.email?.toLowerCase().trim();
 
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
 
     let record = await otpModel.findOne({ email });
     const now = Date.now();
@@ -43,7 +44,7 @@ export const sendOtp = async (req, res) => {
     const otp = generateOTP();
 
     record.otp = otp;
-    record.expiresAt = new Date(now + 5 * 60 * 1000); 
+    record.expiresAt = new Date(now + 5 * 60 * 1000);
     record.attempts = 0;
     record.isVerified = false;
 
@@ -53,8 +54,7 @@ export const sendOtp = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "OTP sent",
-      otp
+      message: "OTP sent"
     });
 
   } catch (err) {
@@ -72,7 +72,7 @@ export const verifyOtp = async (req, res) => {
     const { email: rawEmail, otp: rawOtp } = req.body;
 
     if (!rawEmail || !rawOtp) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Email and OTP are required",
         received: { email: !!rawEmail, otp: !!rawOtp }
       });
@@ -81,29 +81,21 @@ export const verifyOtp = async (req, res) => {
     const email = rawEmail.toLowerCase().trim();
     const otp = rawOtp.toString().trim();
 
-    console.log(`[OTP_DEBUG] Verifying: Email=${email}, OTP=${otp}`);
-
     const record = await otpModel.findOne({ email });
 
     if (!record) {
-      console.log(`[OTP_DEBUG] No record found for ${email}`);
       return res.status(400).json({ message: "No registration found for this email. Please register again." });
     }
 
-    console.log(`[OTP_DEBUG] Stored OTP: ${record.otp}, Input OTP: ${otp}`);
-
     if (record.expiresAt < new Date()) {
-      console.log(`[OTP_DEBUG] OTP expired for ${email}`);
       return res.status(400).json({ message: "OTP has expired. Please request a new one." });
     }
 
     if (record.otp.toString().trim() !== otp) {
-      console.log(`[OTP_DEBUG] Mismatch for ${email}: Expected ${record.otp}, got ${otp}`);
       return res.status(400).json({ message: "The OTP you entered is incorrect." });
     }
 
     if (!record.tempUser) {
-      console.log(`[OTP_DEBUG] tempUser missing for ${email}`);
       return res.status(400).json({ message: "Registration session lost. Please register again." });
     }
 
@@ -145,5 +137,3 @@ export const verifyOtp = async (req, res) => {
     });
   }
 };
-
-

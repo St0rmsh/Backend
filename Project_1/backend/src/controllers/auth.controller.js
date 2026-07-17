@@ -80,12 +80,6 @@ export async function loginController(req, res) {
 
         const email = req.body.email?.toLowerCase().trim();
 
-        const user = await userModel.findOne({
-            $or: [
-                { email },
-                { username }
-            ]
-        })
         if (!email && !username) {
             return res.status(400).json({
                 message: "Email or Username required"
@@ -98,6 +92,12 @@ export async function loginController(req, res) {
             })
         }
 
+        const user = await userModel.findOne({
+            $or: [
+                { email },
+                { username }
+            ]
+        })
 
         if (!user) {
             return res.status(404).json({
@@ -131,25 +131,23 @@ export async function loginController(req, res) {
             });
         }
 
-
-
-
         const token = jwt.sign({
             id: user._id
         }, config.JWT_SECRET, { expiresIn: "7d" })
 
         res.cookie("token", token, {
-            httpOnly: false,
+            httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
             maxAge: 7 * 24 * 60 * 60 * 1000
         })
-        
+
 
         return res.status(200).json({
             message: "User loggedIn Successfully",
             success: true,
             user: {
+                _id: user._id,
                 name: user.name,
                 username: user.username,
                 email: user.email,
@@ -163,6 +161,7 @@ export async function loginController(req, res) {
                 suspendReason: user.suspendReason,
                 subscribersPreview: user.subscribersPreview,
                 provider: user.provider,
+                channel: user.channel
             }
         })
 
@@ -211,7 +210,7 @@ export async function getMeController(req, res) {
         })
 
     } catch (error) {
-        console.error("Login Error:", error);
+        console.error("GetMe Error:", error);
         return res.status(500).json({
             message: "Internal Server Error",
             success: false,
@@ -233,29 +232,30 @@ export async function logoutController(req, res) {
             });
         }
 
-        // ✅ clear cookie
         res.clearCookie("token", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict"
         });
 
-        // ✅ check if already blacklisted (optional)
         const isBlacklisted = await redis.get(token);
 
         if (!isBlacklisted) {
-            const decoded = jwt.verify(token, config.JWT_SECRET);
+            try {
+                const decoded = jwt.verify(token, config.JWT_SECRET);
 
+                if (decoded?.exp) {
+                    const expiry = Math.max(
+                        decoded.exp - Math.floor(Date.now() / 1000),
+                        0
+                    );
 
-            if (decoded?.exp) {
-                const expiry = Math.max(
-                    decoded.exp - Math.floor(Date.now() / 1000),
-                    0
-                );
-
-                if (expiry > 0) {
-                    await redis.set(token, "blacklisted", "EX", expiry);
+                    if (expiry > 0) {
+                        await redis.set(token, "blacklisted", "EX", expiry);
+                    }
                 }
+            } catch (verifyErr) {
+                // Token already invalid/expired — nothing to blacklist, cookie is cleared, that's enough.
             }
         }
 

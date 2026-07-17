@@ -32,7 +32,6 @@ export const toggleReaction = async (req, res) => {
     let message = "";
     let userReaction = null;
 
-    // ❌ Remove reaction
     if (existing && existing.type === type) {
       await likeModel.deleteOne({ _id: existing._id });
 
@@ -42,7 +41,6 @@ export const toggleReaction = async (req, res) => {
       message = "Reaction removed";
     }
 
-    // 🔄 Switch reaction
     else if (existing && existing.type !== type) {
       existing.type = type;
       await existing.save();
@@ -59,7 +57,6 @@ export const toggleReaction = async (req, res) => {
       message = "Reaction switched";
     }
 
-    // ✅ New reaction
     else {
       await likeModel.create({
         user: userId,
@@ -74,16 +71,14 @@ export const toggleReaction = async (req, res) => {
       message = "Reaction added";
     }
 
-    // ✅ Atomic update
     const updatedVideo = await videoModel.findByIdAndUpdate(
       videoId,
       { $inc: inc },
-      { returnDocument: 'after' }
+      { new: true }
     );
 
-    // 🔌 Emit real-time update
     const io = getIO();
-    io.to(videoId).emit("reaction:update", {
+    io.to(`video_${videoId}`).emit("reaction:update", {
       videoId,
       likes: updatedVideo.likesCount,
       dislikes: updatedVideo.dislikesCount
@@ -98,7 +93,7 @@ export const toggleReaction = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Toggle reaction error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -126,7 +121,8 @@ export const getLikesCount = async (req, res) => {
             dislikes
         });
 
-    } catch {
+    } catch (err) {
+        console.error("Get likes count error:", err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -146,7 +142,8 @@ export const getUserReaction = async (req, res) => {
             reaction: reaction?.type || null
         });
 
-    } catch {
+    } catch (err) {
+        console.error("Get user reaction error:", err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -169,7 +166,8 @@ export const getVideoLikes = async (req, res) => {
             dislikes
         });
 
-    } catch {
+    } catch (err) {
+        console.error("Get video likes error:", err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -192,9 +190,8 @@ export const getUserLikes = async (req, res) => {
             dislikes
         });
 
-    } catch {
+    } catch (err) {
+        console.error("Get user likes error:", err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
-
-

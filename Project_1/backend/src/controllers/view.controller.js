@@ -13,10 +13,13 @@ export const addView = async (req, res) => {
 
     const lastView = await viewModel.findOne({
       video: videoId,
-      $or: [{ user: userId }, { ip }]
+      $or: [
+        ...(userId ? [{ user: userId }] : []),
+        { ip }
+      ]
     }).sort({ createdAt: -1 });
 
-    if (lastView && (Date.now() - lastView.createdAt) < cooldown) {
+    if (lastView && (Date.now() - new Date(lastView.createdAt).getTime()) < cooldown) {
       return res.json({ success: true, message: "Cooldown active" });
     }
 
@@ -29,15 +32,19 @@ export const addView = async (req, res) => {
     const updatedVideo = await videoModel.findByIdAndUpdate(
       videoId,
       { $inc: { views: 1 } },
-      { returnDocument: 'after' }
+      { new: true }
     );
+
+    if (!updatedVideo) {
+      return res.status(404).json({ message: "Video not found" });
+    }
 
     let updatedChannel = null;
     if (updatedVideo.channel) {
       updatedChannel = await channelModel.findByIdAndUpdate(
         updatedVideo.channel,
         { $inc: { totalViews: 1 } },
-        { returnDocument: 'after' }
+        { new: true }
       );
     }
 
@@ -56,8 +63,8 @@ export const addView = async (req, res) => {
       views: updatedVideo.views
     });
 
-  } catch {
+  } catch (err) {
+    console.error("Add view error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-

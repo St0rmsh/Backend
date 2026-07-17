@@ -61,12 +61,10 @@ const channelSchema = new mongoose.Schema({
         instagram: String,
         website: String
     },
-   
-
-
 
 }, { timestamps: true });
 
 
 const channelModel = mongoose.model("Channel", channelSchema);
+
 export default channelModel;

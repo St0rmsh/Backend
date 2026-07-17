@@ -1,12 +1,21 @@
 import subscriberModel from "../models/subscribe.model.js";
 import Channel from "../models/channel.model.js";
 import { getIO } from "../socket/connect.socket.js";
+import videoModel from "../models/video.model.js";
+import { getSignedUrl } from "../services/storage.service.js";
+
 
 // ✅ TOGGLE SUBSCRIBE
 export const toggleSubscribe = async (req, res) => {
   try {
     const userId = req.user._id;
     const { channelId } = req.params;
+
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({ message: "Channel not found" });
+    }
+
 
     const existing = await subscriberModel.findOne({
       user: userId,
@@ -26,17 +35,14 @@ export const toggleSubscribe = async (req, res) => {
       subscribed = true;
     }
 
-    // ✅ ALWAYS FETCH COUNT FROM DB
     const count = await subscriberModel.countDocuments({
       channel: channelId
     });
 
-    // ✅ UPDATE CHANNEL
     await Channel.findByIdAndUpdate(channelId, {
       subscribersCount: count
     });
 
-    // ✅ REALTIME
     const io = getIO();
     io.to(`channel_${channelId}`).emit("channel:subscribers:update", {
       channelId,
@@ -50,7 +56,7 @@ export const toggleSubscribe = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Toggle Error:", err);
+    console.error("Toggle subscribe error:", err);
     return res.status(500).json({ message: "Subscription failed" });
   }
 };
@@ -72,7 +78,7 @@ export const isSubscribed = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("isSubscribed Error:", err);
+    console.error("isSubscribed error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -88,10 +94,11 @@ export const getSubscribersCount = async (req, res) => {
 
     return res.json({
       success: true,
-       count
+      count
     });
 
-  } catch {
+  } catch (err) {
+    console.error("Get subscribers count error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -103,14 +110,15 @@ export const getUserSubscriptions = async (req, res) => {
 
         const subscriptions = await subscriberModel.find({
             user: userId
-        }).populate("channel", "name handle avatar");
+        }).populate("channel", "name handle avatar subscribersCount");
 
         return res.json({
             success: true,
             subscriptions
         });
 
-    } catch {
+    } catch (err) {
+        console.error("Get user subscriptions error:", err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -128,9 +136,90 @@ export const getChannelSubscribers = async (req, res) => {
             subscribers
         });
 
-    } catch {
+    } catch (err) {
+        console.error("Get channel subscribers error:", err);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
 
+
+
+
+// // ✅ SUBSCRIPTIONS FEED — recent videos from channels the user follows
+// export const getSubscriptionsFeed = async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = 20;
+//     const skip = (page - 1) * limit;
+
+//     const subs = await subscriberModel.find({ user: userId }).select("channel");
+//     const channelIds = subs.map((s) => s.channel);
+
+//     if (channelIds.length === 0) {
+//       return res.json({ success: true, videos: [], hasSubscriptions: false });
+//     }
+
+//     const videos = await videoModel
+//       .find({
+//         channel: { $in: channelIds },
+//         status: { $in: ["ready", null] },
+//         visibility: "public"
+//       })
+//       .sort({ createdAt: -1 })
+//       .skip(skip)
+//       .limit(limit)
+//       .populate("channel", "name handle avatar");
+
+//     return res.json({ success: true, videos, hasSubscriptions: true });
+
+//   } catch (err) {
+//     console.error("Get subscriptions feed error:", err);
+//     return res.status(500).json({ message: "Internal Server Error" });
+//   }
+// };
+
+
+
+
+// ✅ SUBSCRIPTIONS FEED — recent videos from channels the user follows
+export const getSubscriptionsFeed = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    const subs = await subscriberModel.find({ user: userId }).select("channel");
+    const channelIds = subs.map((s) => s.channel);
+
+    if (channelIds.length === 0) {
+      return res.json({ success: true, videos: [], hasSubscriptions: false });
+    }
+
+    const videos = await videoModel
+      .find({
+        channel: { $in: channelIds },
+        status: { $in: ["ready", null] },
+        visibility: "public"
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("channel", "name handle avatar");
+
+    const signedVideos = videos.map((v) => {
+      const doc = v.toObject();
+      doc.videoUrl = getSignedUrl(doc.videoUrl);
+      doc.thumbnail = getSignedUrl(doc.thumbnail);
+      return doc;
+    });
+
+    return res.json({ success: true, videos: signedVideos, hasSubscriptions: true });
+
+  } catch (err) {
+    console.error("Get subscriptions feed error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};

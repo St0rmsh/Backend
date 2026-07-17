@@ -15,7 +15,6 @@ const viewSchema = new mongoose.Schema({
     ip: String
 }, { timestamps: true });
 
-// ❗ prevent duplicate views (short time)
 viewSchema.index({ user: 1, video: 1 });
 viewSchema.index({ ip: 1, video: 1 });
 

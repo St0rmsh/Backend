@@ -1,23 +1,23 @@
-import {tavily as Tavily} from "@tavily/core"
+import { tavily as Tavily } from "@tavily/core"
 import config from "../config/config.js"
 
 const tavily = Tavily({
-    apiKey:config.TAVILY_API_KEY
+    apiKey: config.TAVILY_API_KEY
 })
 
 
 export async function searchInternet({ query }) {
     try {
         const result = await tavily.search(query, {
-            max_results: 8,              
-            search_depth: "advanced",   
-            include_answer: true        
+            max_results: 8,
+            search_depth: "advanced",
+            include_answer: true
         });
 
         console.log("Search results:", result.results.length);
 
         const cleaned = result.results
-            .filter(item => item.url) 
+            .filter(item => item.url)
             .map(item => {
                 let domain = "unknown";
 
@@ -28,7 +28,7 @@ export async function searchInternet({ query }) {
                 return {
                     title: item.title,
                     snippet: item.content
-                        ? item.content.slice(0, 400) 
+                        ? item.content.slice(0, 400)
                         : "",
                     url: item.url,
                     source: domain,
@@ -45,7 +45,7 @@ export async function searchInternet({ query }) {
             });
 
         return {
-            answer: result.answer || "",  
+            answer: result.answer || "",
             results: cleaned
         };
 

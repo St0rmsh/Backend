@@ -5,17 +5,14 @@ import mongoose from "mongoose";
 
 /**
  * 📊 GET STUDIO DASHBOARD STATS
- * Aggregates views, watch time, and retention for the current user's channel.
  */
 export const getStudioStats = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        // 1. Get User's Channel
         const channel = await channelModel.findOne({ owner: userId });
         if (!channel) return res.status(404).json({ message: "Channel not found" });
 
-        // 2. Aggregate Video Stats
         const videoStats = await videoModel.aggregate([
             { $match: { uploader: new mongoose.Types.ObjectId(userId) } },
             {
@@ -30,7 +27,6 @@ export const getStudioStats = async (req, res) => {
 
         const stats = videoStats[0] || { totalViews: 0, totalVideos: 0, avgTrustScore: 0 };
 
-        // 3. Aggregate Watch Time from WatchHistory
         const watchStats = await WatchHistory.aggregate([
             {
                 $lookup: {
@@ -53,8 +49,6 @@ export const getStudioStats = async (req, res) => {
         const totalWatchTimeSeconds = watchStats[0]?.totalProgress || 0;
         const totalWatchTimeHours = (totalWatchTimeSeconds / 3600).toFixed(1);
 
-        // 4. Get Retention Data (Average across top 5 videos or total)
-        // For simplicity, we'll return the raw retention buckets aggregated
         const retentionStats = await WatchHistory.aggregate([
              {
                 $lookup: {
@@ -92,7 +86,7 @@ export const getStudioStats = async (req, res) => {
                 totalViews: stats.totalViews,
                 totalVideos: stats.totalVideos,
                 watchTimeHours: totalWatchTimeHours,
-                avgTrustScore: Math.round(stats.avgTrustScore),
+                avgTrustScore: Math.round(stats.avgTrustScore || 0),
                 subscribers: channel.subscribersCount || 0,
                 retentionCurve: avgRetention
             }

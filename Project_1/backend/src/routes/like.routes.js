@@ -11,7 +11,6 @@ const router = Router();
 // POST
 router.post("/:videoId/react", authMiddleware, toggleReaction);
 
-
 // /api/like/:videoId/me
 // GET
 router.get("/:videoId/me", authMiddleware, getUserReaction);

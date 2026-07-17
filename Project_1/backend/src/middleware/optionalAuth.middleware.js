@@ -29,7 +29,6 @@ export async function optionalAuth(req, res, next) {
 
         next();
     } catch (error) {
-        // Log error but proceed as guest (token might be invalid/expired)
         console.log("Optional Auth error (proceeding as guest):", error.message);
         next();
     }

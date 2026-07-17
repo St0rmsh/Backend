@@ -91,6 +91,13 @@ const videoSchema = new mongoose.Schema({
         default: "uploading"
     },
 
+    // 🧾 Creator-disclosed AI usage (distinct from the system-detected aiGenerated below)
+    isAiGenerated: {
+        type: Boolean,
+        default: false
+    },
+
+    // ⚡ Fast, automatic upload-time verification (agent-based pipeline)
     verification: {
         summary: String,
 
@@ -121,6 +128,40 @@ const videoSchema = new mongoose.Schema({
         checkedAt: Date
     },
 
+    // 🔬 On-demand, multi-step deep re-check (claim-by-claim, with real sources)
+    deepVerification: {
+        status: {
+            type: String,
+            enum: ["idle", "running", "done", "failed"],
+            default: "idle"
+        },
+        summary: String,
+        claims: [
+            {
+                text: String,
+                verdict: String,
+                confidence: Number,
+                explanation: String,
+                sources: [String]
+            }
+        ],
+        finalVerdict: String,
+        confidence: Number,
+        fraudScore: Number,
+        riskLevel: String,
+        aiDetection: {
+            isAi: Boolean,
+            modelUsed: String,
+            confidence: Number,
+            reasoning: String
+        },
+        requestedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        checkedAt: Date,
+        error: String
+    },
 
     isFlagged: {
         type: Boolean,
@@ -143,7 +184,9 @@ const videoSchema = new mongoose.Schema({
     transcript: {
         type: String,
         default: ""
-    }, totalWatchTime: {
+    },
+
+    totalWatchTime: {
         type: Number,
         default: 0
     },

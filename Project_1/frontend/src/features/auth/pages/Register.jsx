@@ -18,16 +18,36 @@ const Register = () => {
   });
 
   const [focused, setFocused] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleChange = (e) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value
     });
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors((prev) => ({ ...prev, [e.target.name]: null }));
+    }
+  };
+
+  const validate = () => {
+    const errors = {};
+    if (form.name.trim().length < 2) errors.name = "Name must be at least 2 characters";
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(form.username)) errors.username = "3-30 chars, letters/numbers/underscore only";
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) errors.email = "Enter a valid email";
+    if (form.password.length < 6) errors.password = "At least 6 characters";
+    return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     try {
       await handleRegister({
         name: form.name,
@@ -58,7 +78,7 @@ const Register = () => {
       </div>
 
       <main className="flex-1 flex items-center justify-center p-6 md:p-12 z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -71,11 +91,11 @@ const Register = () => {
                 <div className="w-8 h-1 bg-[#00C853]"></div>
                 <span className="text-sm font-black tracking-[0.3em] text-white uppercase">Registration</span>
               </div>
-              
+
               <h2 className="text-5xl font-black text-white leading-[0.9] tracking-tighter mb-8 uppercase">
                 Create <br /> <span className="text-[#00C853]">Your</span> <br /> Account
               </h2>
-              
+
               <div className="space-y-6 text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">
                 <p className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-[#00C853] rounded-full animate-pulse"></span>
@@ -103,11 +123,11 @@ const Register = () => {
               <h3 className="text-2xl font-black text-white uppercase tracking-tight">Create Account</h3>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8">
                 {inputFields.map((field) => (
                   <div key={field.name} className="relative group">
-                    <label className={`text-[10px] font-black uppercase tracking-[0.3em] mb-3 block transition-all duration-300 ${focused === field.name ? 'text-[#00C853]' : 'text-gray-500'}`}>
+                    <label className={`text-[10px] font-black uppercase tracking-[0.3em] mb-3 block transition-all duration-300 ${focused === field.name ? 'text-[#00C853]' : fieldErrors[field.name] ? 'text-[#FF4D00]' : 'text-gray-500'}`}>
                       {field.label}
                     </label>
                     <input
@@ -118,9 +138,11 @@ const Register = () => {
                       onFocus={() => setFocused(field.name)}
                       onBlur={() => setFocused(null)}
                       placeholder={field.placeholder}
-                      className="w-full bg-transparent border-b border-white/10 py-4 text-white font-bold placeholder:text-white/5 outline-none transition-all duration-500 focus:border-[#00C853] text-sm tracking-widest"
-                      required
+                      className={`w-full bg-transparent border-b py-4 text-white font-bold placeholder:text-white/5 outline-none transition-all duration-500 text-sm tracking-widest ${fieldErrors[field.name] ? 'border-[#FF4D00]' : 'border-white/10 focus:border-[#00C853]'}`}
                     />
+                    {fieldErrors[field.name] && (
+                      <p className="text-[9px] font-bold text-[#FF4D00] mt-2 uppercase tracking-widest">{fieldErrors[field.name]}</p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -130,7 +152,7 @@ const Register = () => {
                   whileHover={{ backgroundColor: "#00C853", color: "#000000" }}
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-white text-black py-6 px-8 flex items-center justify-between transition-colors duration-500"
+                  className="w-full bg-white text-black py-6 px-8 flex items-center justify-between transition-colors duration-500 disabled:opacity-60"
                 >
                   <span className="text-sm font-black uppercase tracking-[0.3em]">
                     {loading ? "Creating Account..." : "Create Account"}

@@ -1,7 +1,7 @@
 import channelModel from "../models/channel.model.js";
 import userModel from "../models/user.model.js";
 import videoModel from "../models/video.model.js";
-import { uploadToImageKit, getSignedUrl } from "../services/storage.service.js";
+import { uploadFile, getSignedUrl } from "../services/storage.service.js";
 
 /**
  * ✅ Create Channel
@@ -36,10 +36,36 @@ export const createChannel = async (req, res) => {
             return res.status(409).json({ message: "Handle already taken" });
         }
 
+        let avatarUrl = "";
+        let bannerUrl = "";
+
+        console.log("BODY:", req.body);
+        console.log("FILES:", req.files);
+
+        if (req.files?.avatar) {
+            const uploaded = await uploadFile({
+                buffer: req.files.avatar[0].buffer,
+                filename: req.files.avatar[0].originalname,
+                folder: "/channels/avatars"
+            });
+            avatarUrl = uploaded.url;
+        }
+
+        if (req.files?.banner) {
+            const uploaded = await uploadFile({
+                buffer: req.files.banner[0].buffer,
+                filename: req.files.banner[0].originalname,
+                folder: "/channels/banners"
+            });
+            bannerUrl = uploaded.url;
+        }
+
         const channel = await channelModel.create({
             name,
             handle,
             description,
+            avatar: avatarUrl,
+            banner: bannerUrl,
             owner: userId
         });
 
@@ -75,6 +101,7 @@ export const getMyChannel = async (req, res) => {
         return res.status(200).json({ success: true, channel: doc });
 
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -100,7 +127,8 @@ export const getChannelByHandle = async (req, res) => {
 
         return res.status(200).json({ success: true, channel: doc });
 
-    } catch {
+    } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -108,8 +136,6 @@ export const getChannelByHandle = async (req, res) => {
 /**
  * ✅ Update Channel
  */
-
-
 export const updateChannel = async (req, res) => {
   try {
     const userId = req.user?._id;
@@ -124,13 +150,22 @@ export const updateChannel = async (req, res) => {
     let avatarUrl = channel.avatar;
     let bannerUrl = channel.banner;
 
-    // ✅ HANDLE FILES
     if (req.files?.avatar) {
-      avatarUrl = await uploadToImageKit(req.files.avatar[0]);
+      const uploaded = await uploadFile({
+        buffer: req.files.avatar[0].buffer,
+        filename: req.files.avatar[0].originalname,
+        folder: "/channels/avatars"
+      });
+      avatarUrl = uploaded.url;
     }
 
     if (req.files?.banner) {
-      bannerUrl = await uploadToImageKit(req.files.banner[0]);
+      const uploaded = await uploadFile({
+        buffer: req.files.banner[0].buffer,
+        filename: req.files.banner[0].originalname,
+        folder: "/channels/banners"
+      });
+      bannerUrl = uploaded.url;
     }
 
     const updated = await channelModel.findByIdAndUpdate(
@@ -141,7 +176,7 @@ export const updateChannel = async (req, res) => {
         avatar: avatarUrl,
         banner: bannerUrl
       },
-      { returnDocument: 'after' }
+      { new: true }
     );
 
     // ✅ SYNC WITH USER MODEL
@@ -160,11 +195,10 @@ export const updateChannel = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("IMAGEKIT ERROR:", err);
+    console.error("Channel update error:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 
 /**
@@ -180,7 +214,6 @@ export const getChannelVideos = async (req, res) => {
             return res.status(404).json({ message: "Channel not found" });
         }
 
-       
         const userId = req.user?._id;
         const isOwner = userId && channel.owner.toString() === userId.toString();
 
@@ -200,7 +233,8 @@ export const getChannelVideos = async (req, res) => {
 
         return res.status(200).json({ success: true, videos: signedVideos });
 
-    } catch {
+    } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };

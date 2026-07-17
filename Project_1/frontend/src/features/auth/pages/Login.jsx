@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hook/useAuth.js";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -7,6 +7,7 @@ import { Mail, Lock, LogIn, ShieldCheck, ArrowRight } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { handleLogin } = useAuth();
   const { loading } = useSelector((state) => state.auth);
 
@@ -33,7 +34,8 @@ const Login = () => {
         email: form.email,
         password: form.password
       });
-      navigate("/");
+      const redirectTo = location.state?.from?.pathname || "/";
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       console.error(error);
     }
@@ -49,7 +51,7 @@ const Login = () => {
       </div>
 
       <main className="flex-1 flex items-center justify-center p-6 md:p-12 z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -62,11 +64,11 @@ const Login = () => {
                 <div className="w-1 h-8 bg-[#FF4D00]"></div>
                 <span className="text-sm font-black tracking-[0.3em] text-white uppercase">Identity.Protocol</span>
               </div>
-              
+
               <h2 className="text-5xl font-black text-white leading-[0.9] tracking-tighter mb-8 uppercase">
                 Access <br /> <span className="text-[#FF4D00]">Verified</span> <br /> Node
               </h2>
-              
+
               <div className="space-y-6 text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">
                 <p className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-[#00C853] rounded-full"></span>
@@ -102,7 +104,7 @@ const Login = () => {
                   </label>
                   <input
                     name="email"
-                    type="email"
+                    type="text"
                     value={form.email}
                     onChange={handleChange}
                     onFocus={() => setFocused('email')}
@@ -139,7 +141,7 @@ const Login = () => {
                   whileHover={{ backgroundColor: "#FFFFFF", color: "#000000" }}
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#FF4D00] text-white py-6 px-8 flex items-center justify-between transition-colors duration-500"
+                  className="w-full bg-[#FF4D00] text-white py-6 px-8 flex items-center justify-between transition-colors duration-500 disabled:opacity-60"
                 >
                   <span className="text-sm font-black uppercase tracking-[0.3em]">
                     {loading ? "Logging In..." : "Login"}
