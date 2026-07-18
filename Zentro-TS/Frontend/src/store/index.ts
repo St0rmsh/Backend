@@ -8,6 +8,7 @@ import socketReducer from "./slices/socketSlice";
 import loadingReducer from "./slices/loadingSlice";
 import feedReducer from "@/features/feed/state/feedSlice";
 import postReducer from "@/features/post/state/postSlice";
+import postEditorReducer from "@/features/post-editor/state/postEditorSlice";
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     loading: loadingReducer,
     feed: feedReducer,
     post: postReducer,
+    postEditor: postEditorReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
 });

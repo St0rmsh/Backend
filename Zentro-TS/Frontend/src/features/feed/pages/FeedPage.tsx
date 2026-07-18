@@ -12,7 +12,7 @@ import { AnimatePresence } from "framer-motion";
 
 export function FeedPage() {
   const dispatch = useAppDispatch();
-  const { posts, loading, refreshing, error, currentPage, hasNextPage, activeTab } =
+  const { posts, loading, error, currentPage, hasNextPage, activeTab } =
     useAppSelector((state) => state.feed);
 
   // Fetch feed on mount or when tab changes

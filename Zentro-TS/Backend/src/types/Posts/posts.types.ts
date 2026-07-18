@@ -25,6 +25,7 @@ export interface ICreatePostBody {
     coverImage?: string | undefined,
     tags?: string[] | undefined,
     category?: string | undefined,
+    isPublished?: boolean,
 }
 
 export interface IPostUpdateBody {

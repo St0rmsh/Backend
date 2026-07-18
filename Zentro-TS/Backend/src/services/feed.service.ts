@@ -2,149 +2,149 @@ import { Types } from "mongoose";
 import PostModel from "../model/post.model.js";
 import UserInterestModel from "../model/userInterest.model.js";
 import FollowerModel from "../model/Follower.model.js";
-import type{ PipelineStage } from "mongoose";
+import type { PipelineStage } from "mongoose";
 
 const buildFeedPipeline = (
   matchStage: Record<string, any>,
   skip: number,
   limit: number
 ): PipelineStage[] => [
-  {
-    $match: matchStage,
-  },
+    {
+      $match: matchStage,
+    },
 
-  {
-    $addFields: {
-      ageHours: {
-        $divide: [
-          {
-            $subtract: [new Date(), "$createdAt"],
-          },
-          1000 * 60 * 60,
-        ],
+    {
+      $addFields: {
+        ageHours: {
+          $divide: [
+            {
+              $subtract: [new Date(), "$createdAt"],
+            },
+            1000 * 60 * 60,
+          ],
+        },
       },
     },
-  },
 
-  {
-    $addFields: {
-      score: {
-        $subtract: [
-          {
-            $add: [
-              {
-                $multiply: [
-                  {
-                    $ifNull: ["$likesCount", 0],
-                  },
-                  5,
-                ],
-              },
+    {
+      $addFields: {
+        score: {
+          $subtract: [
+            {
+              $add: [
+                {
+                  $multiply: [
+                    {
+                      $ifNull: ["$likesCount", 0],
+                    },
+                    5,
+                  ],
+                },
 
-              {
-                $multiply: [
-                  {
-                    $ifNull: ["$commentsCount", 0],
-                  },
-                  10,
-                ],
-              },
+                {
+                  $multiply: [
+                    {
+                      $ifNull: ["$commentsCount", 0],
+                    },
+                    10,
+                  ],
+                },
 
-              {
-                $multiply: [
-                  {
-                    $ifNull: ["$viewsCount", 0],
-                  },
-                  0.1,
-                ],
-              },
-            ],
-          },
+                {
+                  $multiply: [
+                    {
+                      $ifNull: ["$viewsCount", 0],
+                    },
+                    0.1,
+                  ],
+                },
+              ],
+            },
 
-          {
-            $multiply: ["$ageHours", 0.1],
-          },
-        ],
+            {
+              $multiply: ["$ageHours", 0.1],
+            },
+          ],
+        },
       },
     },
-  },
 
-  {
-    $sort: {
-      score: -1,
-      createdAt: -1,
-    },
-  },
-
-  {
-    $skip: skip,
-  },
-
-  {
-    $limit: limit,
-  },
-
-  {
-    $lookup: {
-      from: "users",
-      let: {
-        userId: "$user",
+    {
+      $sort: {
+        score: -1,
+        createdAt: -1,
       },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $eq: ["$_id", "$$userId"],
+    },
+
+    {
+      $skip: skip,
+    },
+
+    {
+      $limit: limit,
+    },
+
+    {
+      $lookup: {
+        from: "users",
+        let: {
+          userId: "$user",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$_id", "$$userId"],
+              },
             },
           },
-        },
 
-        {
-          $project: {
-            username: 1,
-            fullname: 1,
-            avatar: 1,
+          {
+            $project: {
+              username: 1,
+              fullname: 1,
+              avatar: 1,
+            },
           },
-        },
-      ],
-      as: "user",
+        ],
+        as: "user",
+      },
     },
-  },
 
-  {
-    $unwind: {
-      path: "$user",
-      preserveNullAndEmptyArrays: true,
+    {
+      $unwind: {
+        path: "$user",
+        preserveNullAndEmptyArrays: true,
+      },
     },
-  },
 
-  {
-    $project: {
-      _id: 1,
-      title: 1,
-      content: 1,
-      coverImage: 1,
-      category: 1,
-      tags: 1,
-      likesCount: 1,
-      commentsCount: 1,
-      viewsCount: 1,
-      createdAt: 1,
-      updatedAt: 1,
-      score: 1,
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        content: 1,
+        coverImage: 1,
+        category: 1,
+        tags: 1,
+        likesCount: 1,
+        commentsCount: 1,
+        viewsCount: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        score: 1,
 
-      "user._id": 1,
-      "user.username": 1,
-      "user.fullname": 1,
-      "user.avatar": 1,
+        "user._id": 1,
+        "user.username": 1,
+        "user.fullname": 1,
+        "user.avatar": 1,
+      },
     },
-  },
-];
+  ];
 
 
-export const getFeedService = async (userId:string, page: number, limit: number) => {
+export const getFeedService = async (userId: string, page: number, limit: number) => {
 
-    try {
+  try {
 
     const safePage = Math.max(1, page);
     const safeLimit = Math.min(50, Math.max(1, limit));
@@ -155,15 +155,15 @@ export const getFeedService = async (userId:string, page: number, limit: number)
       user: userId
     }).lean();
 
-    
 
-    
+
+
 
     const topCategories = userInterest?.categories
-    ?.sort((a, b) => b.score - a.score)
-    ?.slice(0, 5)
-    ?.map((c) => c.name)
-    ?.filter(Boolean) || [];
+      ?.sort((a, b) => b.score - a.score)
+      ?.slice(0, 5)
+      ?.map((c) => c.name)
+      ?.filter(Boolean) || [];
 
     const topTags =
       userInterest?.tags
@@ -173,13 +173,13 @@ export const getFeedService = async (userId:string, page: number, limit: number)
         ?.filter(Boolean) || [];
 
 
-    const following = await FollowerModel.find({followerId: userId})
-    .select("followingId")
-    .lean();
+    const following = await FollowerModel.find({ followerId: userId })
+      .select("followingId")
+      .lean();
 
     const followingIds = following.map(
       (f) => new Types.ObjectId(f.followingId.toString())
-    );  
+    );
 
     const hasPersonalization =
       followingIds.length > 0 ||
@@ -187,53 +187,53 @@ export const getFeedService = async (userId:string, page: number, limit: number)
       topTags.length > 0;
 
 
-      
+
 
     const matchStage = hasPersonalization
       ? {
-          isPublished: true,
-          user: {
-            $ne: new Types.ObjectId(userId)
-      },
-         createdAt: {
-        $gte: new Date(
-          Date.now() - 30 * 24 * 60 * 60 * 1000
-    )
-  },
-          $or: [
-            {
-              category: {
-                $in: topCategories
-              }
-            },
-            {
-              tags: {
-                $in: topTags
-              }
-            },
-            ...(followingIds.length
+        isPublished: true,
+        user: {
+          $ne: new Types.ObjectId(userId)
+        },
+        createdAt: {
+          $gte: new Date(
+            Date.now() - 30 * 24 * 60 * 60 * 1000
+          )
+        },
+        $or: [
+          {
+            category: {
+              $in: topCategories
+            }
+          },
+          {
+            tags: {
+              $in: topTags
+            }
+          },
+          ...(followingIds.length
             ? [
               {
                 user: {
                   $in: followingIds
                 }
               }
+            ]
+            : [])
         ]
-      : [])
-          ]
-        }
+      }
       : {
-          isPublished: true,
-           user: {
-           $ne: new Types.ObjectId(userId)
-          },
-          createdAt: {
-            $gte: new Date(
-              Date.now() -
-                30 * 24 * 60 * 60 * 1000
-            )
-          }
-        };
+        isPublished: true,
+        user: {
+          $ne: new Types.ObjectId(userId)
+        },
+        createdAt: {
+          $gte: new Date(
+            Date.now() -
+            30 * 24 * 60 * 60 * 1000
+          )
+        }
+      };
 
 
     const [posts, totalPosts] =
@@ -244,51 +244,51 @@ export const getFeedService = async (userId:string, page: number, limit: number)
         PostModel.countDocuments(matchStage)
       ]);
 
-  
+
 
 
     let finalPosts = posts;
-let finalTotalPosts = totalPosts;
+    let finalTotalPosts = totalPosts;
 
-if (hasPersonalization && posts.length === 0) {
-  const fallbackMatch = {
-    isPublished: true,
-    user: {
-      $ne: new Types.ObjectId(userId)
-    },
-    createdAt: {
-      $gte: new Date(
-        Date.now() - 30 * 24 * 60 * 60 * 1000
-      )
+    if (hasPersonalization && posts.length === 0) {
+      const fallbackMatch = {
+        isPublished: true,
+        user: {
+          $ne: new Types.ObjectId(userId)
+        },
+        createdAt: {
+          $gte: new Date(
+            Date.now() - 30 * 24 * 60 * 60 * 1000
+          )
+        }
+      };
+
+      const [fallbackPosts, fallbackTotal] =
+        await Promise.all([
+          PostModel.aggregate(buildFeedPipeline(fallbackMatch, skip, safeLimit)),
+
+          PostModel.countDocuments(
+            fallbackMatch
+          )
+        ]);
+
+      finalPosts = fallbackPosts;
+      finalTotalPosts = fallbackTotal;
     }
-  };
 
-  const [fallbackPosts, fallbackTotal] =
-    await Promise.all([
-      PostModel.aggregate( buildFeedPipeline(fallbackMatch, skip, safeLimit)),
-
-      PostModel.countDocuments(
-        fallbackMatch
-      )
-    ]);
-
-  finalPosts = fallbackPosts;
-  finalTotalPosts = fallbackTotal;
-}
-
-const totalPages = Math.max(1,Math.ceil(finalTotalPosts / safeLimit));
+    const totalPages = Math.max(1, Math.ceil(finalTotalPosts / safeLimit));
     return {
-   posts: finalPosts,
-  totalPosts: finalTotalPosts,
-  currentPage: safePage,
-  totalPages,
-  limit: safeLimit,
-  hasNextPage: safePage < totalPages,
-  hasPrevPage: safePage > 1
+      posts: finalPosts,
+      totalPosts: finalTotalPosts,
+      currentPage: safePage,
+      totalPages,
+      limit: safeLimit,
+      hasNextPage: safePage < totalPages,
+      hasPrevPage: safePage > 1
     };
 
-    } catch (error) {
-         console.error(
+  } catch (error) {
+    console.error(
       "Error in feed service:",
       error
     );
@@ -299,6 +299,6 @@ const totalPages = Math.max(1,Math.ceil(finalTotalPosts / safeLimit));
         : "Unknown error"
     );
 
-    }
+  }
 }
 

@@ -117,9 +117,10 @@ export const fetchFeedThunk = createAsyncThunk(
 
       const response = await feedService.getFeed(page, 10);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to load feed"
+        err.response?.data?.message || err.message || "Failed to load feed"
       );
     }
   }
@@ -127,7 +128,7 @@ export const fetchFeedThunk = createAsyncThunk(
 
 export const refreshFeedThunk = createAsyncThunk(
   "feed/refreshFeed",
-  async (_, { rejectWithValue, dispatch, getState }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
       const state = getState() as { feed: FeedState };
       if (state.feed.activeTab !== "home") {
@@ -150,9 +151,10 @@ export const refreshFeedThunk = createAsyncThunk(
 
       const response = await feedService.getFeed(1, 10);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to refresh feed"
+        err.response?.data?.message || err.message || "Failed to refresh feed"
       );
     }
   }

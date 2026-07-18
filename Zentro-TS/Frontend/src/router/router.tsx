@@ -85,6 +85,16 @@ const FeedPage = lazy(() =>
 );
 
 // ============================================================================
+// LAZY LOADED POST PAGES
+// ============================================================================
+
+const PostDetailsPage = lazy(() =>
+  import("@/features/post/pages/PostDetailsPage").then((m) => ({
+    default: m.PostDetailsPage,
+  }))
+);
+
+// ============================================================================
 // ROUTE CONFIGURATION
 // ============================================================================
 
@@ -180,6 +190,26 @@ export const routes: RouteObject[] = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <FeedPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+
+      // Post Routes (Protected)
+      {
+        path: "posts",
+        element: (
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            path: ":id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <PostDetailsPage />
               </Suspense>
             ),
           },

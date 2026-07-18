@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Heart, 
@@ -27,6 +27,7 @@ interface FeedCardProps {
 
 export function FeedCard({ post, index }: FeedCardProps) {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const progress = useAppSelector((state) => state.feed.readingProgress[post._id] || 0);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -49,10 +50,8 @@ export function FeedCard({ post, index }: FeedCardProps) {
     if (progress < 100) {
       const nextProgress = progress === 0 ? 30 : progress === 30 ? 75 : 100;
       dispatch(updateReadingProgress({ postId: post._id, progress: nextProgress }));
-      if (nextProgress === 100) {
-        toast.success("Post marked as read!");
-      }
     }
+    navigate(`/posts/${post._id}`);
   };
 
   // Helper to get formatted elapsed time

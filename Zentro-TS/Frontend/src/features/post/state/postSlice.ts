@@ -88,9 +88,10 @@ export const fetchPostThunk = createAsyncThunk(
     try {
       const response = await postService.getPostById(postId);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to load post"
+        err.response?.data?.message || err.message || "Failed to load post"
       );
     }
   }

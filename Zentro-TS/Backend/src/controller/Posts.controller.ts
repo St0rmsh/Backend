@@ -10,7 +10,7 @@ export const createPostController = async (req:Request, res: Response) => {
     try {
 
         const userId = req.user?._id 
-        const {title,content,tags,category} = req.body as ICreatePostBody
+        const {title,content,tags,category,isPublished} = req.body as ICreatePostBody
 
         if (!userId) {
             return res.status(401).json({
@@ -41,6 +41,7 @@ export const createPostController = async (req:Request, res: Response) => {
             ...(tags && { tags }),
             ...(category && { category }),
             ...(coverImage && { coverImage }),
+            ...(isPublished !== undefined && { isPublished }),
         };
 
         const posts = await createPostService(userId,postData)

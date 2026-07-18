@@ -3,7 +3,7 @@ import type { ICreatePostBody, IPost, IPostUpdateBody } from "../types/Posts/pos
 import { escapeRegex } from "../utils/escapeRegex.js";
 
 
-export const createPostService = async (userId:string,{title,content,tags,category,coverImage}:ICreatePostBody)=>{
+export const createPostService = async (userId:string,{title,content,tags,category,coverImage,isPublished}:ICreatePostBody)=>{
     try {
         
 
@@ -14,6 +14,7 @@ export const createPostService = async (userId:string,{title,content,tags,catego
             ...(tags && { tags }),
             ...(category && { category }),
             ...(coverImage && { coverImage }),
+            ...(isPublished !== undefined && { isPublished }),
         });
 
 
