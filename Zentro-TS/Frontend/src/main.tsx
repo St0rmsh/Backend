@@ -6,11 +6,8 @@ import { store } from './store'
 import { AppRouter } from './App/AppRouter'
 import './styles/index.css'
 import LenisProvider from './styles/lenis/LenisProvider'
-import { registerSW } from "virtual:pwa-register";
 
-registerSW({
-    immediate:true,
-});
+
 
 
 createRoot(document.getElementById('root')!).render(
