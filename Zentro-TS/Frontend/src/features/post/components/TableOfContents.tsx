@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { TocHeading } from "../types/post.types";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "../../../shared/lib/utils";
 
 interface TableOfContentsProps {
   content: string;

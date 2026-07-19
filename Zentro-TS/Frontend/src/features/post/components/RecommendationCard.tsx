@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../../shared/ui/avatar";
 
 interface RecommendationCardProps {
   id: string;

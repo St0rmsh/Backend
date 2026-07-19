@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@/shared/hooks";
+import { useAppDispatch, useAppSelector } from "../../../shared/hooks";
 import { fetchPostThunk, clearPost } from "../state/postSlice";
 import { PostSkeleton } from "../components/PostSkeleton";
 import { PostError } from "../components/PostError";
@@ -68,13 +68,13 @@ export const PostDetailsPage = () => {
     settings.readingWidth === "narrow"
       ? "max-w-[600px]"
       : settings.readingWidth === "wide"
-      ? "max-w-[900px]"
-      : "max-w-[720px]";
+        ? "max-w-[900px]"
+        : "max-w-[720px]";
 
   return (
     <div className="relative min-h-screen bg-background">
       <ReadingProgress />
-      
+
       {/* Sticky Top Bar for Mobile */}
       <div className="md:hidden sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/40 p-3 flex justify-between items-center">
         <h1 className="text-sm font-semibold truncate">{currentPost.title}</h1>
@@ -94,12 +94,12 @@ export const PostDetailsPage = () => {
           className={`w-full px-4 sm:px-6 lg:px-8 mx-auto transition-all duration-300 ${maxWidthClass}`}
         >
           <PostHeader post={currentPost} />
-          
-          <div 
-            className={`mt-10 mb-16 transition-all duration-300`} 
+
+          <div
+            className={`mt-10 mb-16 transition-all duration-300`}
             style={{ fontSize: `${settings.fontSize}px` }}
           >
-            <PostContent content={currentPost.content} />
+            <PostContent content={currentPost.content} fontSize={settings.fontSize} />
           </div>
 
           {/* Author Card at Bottom */}

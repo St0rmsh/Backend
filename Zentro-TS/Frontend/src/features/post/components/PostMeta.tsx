@@ -1,5 +1,5 @@
 import { PostDetail } from "../types/post.types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../../shared/ui/avatar";
 import { Link } from "react-router-dom";
 import { Clock, Eye } from "lucide-react";
 

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAppDispatch } from "@/shared/hooks";
+import { useAppDispatch } from "../../../shared/hooks";
 import { setReadingProgress, setReadingPosition } from "../state/postSlice";
 import { motion, useScroll, useSpring } from "framer-motion";
 

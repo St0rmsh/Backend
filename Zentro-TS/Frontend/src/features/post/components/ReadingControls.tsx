@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { setFontSize, setReadingWidth, toggleFocusMode } from "../state/postSlice";
-import { Button } from "@/shared/components/ui/button";
+import { Button } from "../../../shared/ui/button";
 import { Maximize, Minimize, Type, LayoutTemplate, Focus } from "lucide-react";
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+} from "../../../shared/ui/dropdown-menu";
 import { motion } from "framer-motion";
 
 export const ReadingControls = () => {

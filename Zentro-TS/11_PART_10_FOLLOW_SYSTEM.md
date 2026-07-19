@@ -88,6 +88,8 @@ GET
 
 ---
 
+Search the follow.routes.ts file to get the correct url and app.ts file to get the final url.
+
 Support pagination where applicable.
 
 ---

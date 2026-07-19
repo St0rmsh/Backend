@@ -1,7 +1,7 @@
 import { PostAuthor } from "../types/post.types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../../shared/ui/avatar";
 import { Link } from "react-router-dom";
-import { Button } from "@/shared/components/ui/button";
+import { Button } from "../../../shared/ui/button";
 
 interface AuthorCardProps {
   author: PostAuthor;

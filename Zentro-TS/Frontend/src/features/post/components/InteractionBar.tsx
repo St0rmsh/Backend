@@ -1,6 +1,6 @@
-import { Button } from "@/shared/components/ui/button";
+import { Button } from "../../../shared/ui/button";
 import { Heart, MessageSquare, Bookmark, Share2, Link as LinkIcon, Flag } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "../../../shared/lib/utils";
 
 interface InteractionBarProps {
   orientation?: "vertical" | "horizontal";

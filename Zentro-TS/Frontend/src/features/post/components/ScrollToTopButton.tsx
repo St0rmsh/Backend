@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/shared/components/ui/button";
+import { Button } from "../../../shared/ui/button";
 import { ArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 

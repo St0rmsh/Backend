@@ -59,6 +59,36 @@ PATCH /comments/:commentId
 
 DELETE /comments/:commentId
 
+
+// @route: POST /api/comment/:postId
+// @desc: Create a new comment
+// @access: Private
+POST  /comments/post/:postId
+
+
+// @desc: Get all comments
+GET /comments/post/:postId
+
+
+// @desc: Get single comment
+// @desc: Get single comment
+// @access: Public
+GET /comments/:commentId
+
+
+// @route: PATCH /api/comment/:commentId
+// @desc: Update a comment
+// @access: Private
+PATCH /comments/:commentId
+
+
+// @route: DELETE /api/comment/:commentId
+// @desc: Delete a comment
+// @access: Private
+DELETE  /comments/:commentId
+
+Search the Comment.routes.ts file to get the correct url and app.ts file to get the final url.
+
 Support pagination.
 
 ---

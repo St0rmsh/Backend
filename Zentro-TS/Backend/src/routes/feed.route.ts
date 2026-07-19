@@ -9,4 +9,6 @@ const feedRouter = Router();
 // @access: Private
 feedRouter.get("/", authMiddleware, getFeedController);
 
+
+
 export default feedRouter;

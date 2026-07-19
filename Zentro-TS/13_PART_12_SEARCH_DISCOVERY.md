@@ -73,6 +73,8 @@ GET
 
 /search/tags
 
+Search the Search.routes.ts file to get the correct url and app.ts file to get the final url.
+
 If backend endpoints differ, adapt without changing architecture.
 
 ---

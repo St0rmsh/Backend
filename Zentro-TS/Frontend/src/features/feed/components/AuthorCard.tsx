@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../../shared/ui/avatar";
 import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { FeedAuthor } from "../types/feed.types";

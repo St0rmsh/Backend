@@ -51,11 +51,34 @@ Support:
 
 POST /posts
 
+POST /posts/create
+
 PATCH /posts/:id
 
 DELETE /posts/:id
 
 GET /posts/:id
+
+GET /posts/user/:userId
+GET /posts/:postId
+
+
+// @route: PATCH /api/posts/:postId
+// @desc: Update a post
+// @access: Private
+update /posts/:postId
+
+
+// @route: DELETE /api/post/:postId
+// @desc delete's a post
+// @access: Private
+delete /posts/:postId
+
+
+
+GET /posts/search/:query
+
+Search backend Post.routes.ts for the correct url. and app.ts for final url.
 
 Draft support if backend already exists.
 
