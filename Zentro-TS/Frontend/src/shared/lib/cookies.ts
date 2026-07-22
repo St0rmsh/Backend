@@ -1,7 +1,7 @@
 import Cookies from "js-cookie";
 import { AUTH_KEYS } from "../constants/cookies";
 
-const TOKEN_OPTIONS = {
+export const TOKEN_OPTIONS = {
   expires: 7, // 7 days
   secure: process.env.NODE_ENV === "production",
   sameSite: "strict" as const,

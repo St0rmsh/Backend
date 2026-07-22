@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { SettingsGroup, SettingsItem, SettingsCard, SectionHeader, DangerZone } from "../components";
-import { Lock, Smartphone, KeyRound, LogOut } from "lucide-react";
+import { Lock, Smartphone, KeyRound } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/router/routes.config";

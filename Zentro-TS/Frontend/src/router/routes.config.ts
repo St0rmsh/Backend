@@ -51,12 +51,14 @@ export type RouteKey = keyof typeof ROUTES;
 /**
  * Route access levels
  */
-export enum RouteAccessLevel {
-  PUBLIC = "public",
-  GUEST = "guest", // Only for non-authenticated users
-  PROTECTED = "protected", // Only for authenticated users
-  ADMIN = "admin", // Only for admin users
-}
+export const RouteAccessLevel = {
+  PUBLIC: "public",
+  GUEST: "guest", // Only for non-authenticated users
+  PROTECTED: "protected", // Only for authenticated users
+  ADMIN: "admin", // Only for admin users
+} as const;
+
+export type RouteAccessLevel = typeof RouteAccessLevel[keyof typeof RouteAccessLevel];
 
 /**
  * Route metadata for advanced routing logic

@@ -214,7 +214,7 @@ export function PostContent({
             const Tag = `h${Math.min(
               block.level || 2,
               6
-            )}` as keyof JSX.IntrinsicElements;
+            )}` as any;
             const headingSizes: Record<number, string> = {
               1: "text-3xl font-bold mt-10 mb-4",
               2: "text-2xl font-bold mt-8 mb-3",

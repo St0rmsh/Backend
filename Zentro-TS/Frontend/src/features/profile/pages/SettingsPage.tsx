@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+// Removed useNavigate
 import { User, Palette, Lock } from "lucide-react";
 import { ProfileTabs } from "../components";
 import { AccountSettingsPage } from "./AccountSettingsPage";
@@ -33,8 +33,7 @@ const SETTINGS_TABS: SettingsTab[] = [
 ];
 
 export const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(PROFILE_TABS.ACCOUNT);
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<string>(PROFILE_TABS.ACCOUNT);
 
   const renderContent = () => {
     switch (activeTab) {

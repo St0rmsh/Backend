@@ -13,6 +13,7 @@ import { InteractionBar } from "../components/InteractionBar";
 import { RecommendationList } from "../components/RecommendationList";
 import { ScrollToTopButton } from "../components/ScrollToTopButton";
 import { AuthorCard } from "../components/AuthorCard";
+import { CommentList } from "../../comments/components/CommentList";
 import { motion, AnimatePresence } from "framer-motion";
 
 export const PostDetailsPage = () => {
@@ -112,8 +113,13 @@ export const PostDetailsPage = () => {
             <InteractionBar orientation="horizontal" />
           </div>
 
+          {/* Comments Section */}
+          <div className="mt-16" id="comments">
+            <CommentList postId={currentPost._id} />
+          </div>
+
           {/* Recommended Reading */}
-          <div className="mt-16">
+          <div className="mt-16 border-t border-border/40 pt-16">
             <RecommendationList />
           </div>
         </motion.article>

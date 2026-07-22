@@ -50,10 +50,11 @@ export const commentController = async (req:Request<{postId:string}>,res:Respons
 }
 
 
-export const getCommentController = async (req:Request<{postId:string}>,res:Response)=>{
+export const getCommentController = async (req:Request<{postId:string}, {}, {}, { page?: string, limit?: string }>, res:Response)=>{
     try {
 
         const postId = req.params.postId
+        const { page, limit } = req.query;
 
         if(!postId){
             return res.status(400).json({
@@ -62,12 +63,15 @@ export const getCommentController = async (req:Request<{postId:string}>,res:Resp
             })
         }
 
-        const comment = await getCommentService(postId)
+        const pageNum = Math.max(1, parseInt(page as string) || 1);
+        const limitNum = Math.min(50, Math.max(1, parseInt(limit as string) || 10));
+
+        const comment = await getCommentService(postId, pageNum, limitNum)
 
         return res.status(200).json({
             message: "Comment fetched successfully",
             success: true,
-            comments: comment
+            ...comment // Spread since it returns { comments, totalComments, ... }
         })
 
     } catch (error) {

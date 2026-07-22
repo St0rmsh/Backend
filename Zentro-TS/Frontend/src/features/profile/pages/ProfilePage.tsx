@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -14,10 +14,11 @@ import {
   BioSection,
   ProfileCard,
 } from "../components";
+import { ProfileUser } from "../types/profile.types";
 
-interface ProfileParams {
+type ProfileParams = {
   username?: string;
-}
+} & Record<string, string | undefined>;
 
 interface ProfilePageProps {
   isOwnProfile?: boolean;
@@ -25,7 +26,6 @@ interface ProfilePageProps {
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnProfileProp = false }) => {
   const { username } = useParams<ProfileParams>();
-  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const { profile, loading } = useProfile();
   const [isFollowing, setIsFollowing] = useState(false);
@@ -66,9 +66,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
   }
 
   const stats = {
-    posts: user.postsCount || 0,
-    followers: user.followerCount || 0,
-    following: user.followingCount || 0,
+    posts: (user as any).postsCount || 0,
+    followers: (user as any).followerCount || 0,
+    following: (user as any).followingCount || 0,
     bookmarks: isOwnProfile ? 12 : undefined, // Placeholder for own profile
   };
 
@@ -83,7 +83,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
       <div className="max-w-4xl mx-auto px-4">
         <ProfileCard>
           {/* Banner */}
-          <ProfileBanner bannerUrl={user.banner} />
+          <ProfileBanner bannerUrl={(user as any).banner} />
 
           {/* Content */}
           <div className="px-6 md:px-10 pb-8">
@@ -99,7 +99,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
             </div>
 
             {/* Info */}
-            <ProfileInfo user={user} isOwnProfile={isOwnProfile} />
+            <ProfileInfo user={user as unknown as ProfileUser} />
 
             {/* Bio */}
             <BioSection bio={user.bio} />

@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useTheme } from "@/shared/hooks/useTheme";
+// removed useTheme
 import { SettingsGroup, SettingsItem, SettingsCard, SectionHeader, ThemeToggle } from "../components";
 import { useSettings } from "../hooks";
 import { Palette, Type, Wind } from "lucide-react";
@@ -8,7 +8,6 @@ import { Switch } from "@/shared/ui/switch";
 import { Label } from "@/shared/ui/label";
 
 export const AppearanceSettingsPage: React.FC = () => {
-  const { theme: systemTheme, setTheme: setSystemTheme } = useTheme();
   const { theme, settings, updateTheme, updateSettings } = useSettings();
 
   return (

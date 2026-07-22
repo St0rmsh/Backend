@@ -7,6 +7,7 @@ import uiReducer from "./slices/uiSlice";
 import socketReducer from "./slices/socketSlice";
 import loadingReducer from "./slices/loadingSlice";
 import feedReducer from "@/features/feed/state/feedSlice";
+import commentReducer from "../features/comments/state/commentSlice";
 import postReducer from "@/features/post/state/postSlice";
 import postEditorReducer from "@/features/post-editor/state/postEditorSlice";
 
@@ -20,6 +21,7 @@ export const store = configureStore({
     socket: socketReducer,
     loading: loadingReducer,
     feed: feedReducer,
+    comments: commentReducer,
     post: postReducer,
     postEditor: postEditorReducer,
   },

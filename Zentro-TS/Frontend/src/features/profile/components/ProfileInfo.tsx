@@ -1,15 +1,13 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Mail, Calendar, BadgeCheck } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
 import { ProfileUser } from "../types/profile.types";
 
 interface ProfileInfoProps {
   user: ProfileUser;
-  isOwnProfile?: boolean;
 }
 
-export const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, isOwnProfile = false }) => {
+export const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",

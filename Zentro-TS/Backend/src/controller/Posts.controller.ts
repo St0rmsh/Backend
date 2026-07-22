@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import type { ICreatePostBody, IPostUpdateBody, ISearchQuery } from "../types/Posts/posts.types.js";
 import { createPostService, deletePostService, getAllPostsService, getSinglePostService, getUserPostsService, searchPostService, updatePostService } from "../services/Posts.service.js";
 import { uploadBuffer } from "../config/storage.js";
+import mongoose from "mongoose";
 
 
 export const createPostController = async (req:Request, res: Response) => {
@@ -144,6 +145,13 @@ export const getSinglePostController = async (req:Request<{postId:string}>,res:R
             });
         }
 
+        if (!mongoose.Types.ObjectId.isValid(postId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid post ID format",
+            });
+        }
+
         const post = await getSinglePostService(postId)
 
         return res.status(200).json({
@@ -181,6 +189,13 @@ export const updatePostController = async (req:Request<{postId:string}>,res:Resp
             return res.status(404).json({
                 success: false,
                 message: "Post not found",
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(postId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid post ID format",
             });
         }
 
@@ -239,6 +254,13 @@ export const deletePostController = async(req:Request<{postId:string}>,res:Respo
             return res.status(404).json({
                 success: false,
                 message: "Post not found",
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(postId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid post ID format",
             });
         }
 

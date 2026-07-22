@@ -1,8 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { ImagePlus, X } from 'lucide-react';
+import { ImagePlus } from 'lucide-react';
 import { uploadService } from '../services/upload.service';
-import { postEditorService } from '../services/postEditor.service';
 
 interface CoverUploaderProps {
   coverImage?: string;

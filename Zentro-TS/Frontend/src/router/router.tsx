@@ -94,6 +94,18 @@ const PostDetailsPage = lazy(() =>
   }))
 );
 
+const CreatePostPage = lazy(() =>
+  import("@/features/post-editor/pages/CreatePostPage").then((m) => ({
+    default: m.CreatePostPage,
+  }))
+);
+
+const EditPostPage = lazy(() =>
+  import("@/features/post-editor/pages/EditPostPage").then((m) => ({
+    default: m.EditPostPage,
+  }))
+);
+
 // ============================================================================
 // ROUTE CONFIGURATION
 // ============================================================================
@@ -205,6 +217,26 @@ export const routes: RouteObject[] = [
           </ProtectedRoute>
         ),
         children: [
+          {
+            path: "create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CreatePostPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "new",
+            element: <Navigate to="../create" replace />,
+          },
+          {
+            path: "edit/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <EditPostPage />
+              </Suspense>
+            ),
+          },
           {
             path: ":id",
             element: (

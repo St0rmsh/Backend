@@ -17,6 +17,7 @@ export const axiosInstance = axios.create({
   timeout: 30000, // 30 second global timeout
 });
 
+
 /**
  * Request interceptor
  * Adds unique request ID to all requests

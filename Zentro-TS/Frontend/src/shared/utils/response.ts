@@ -129,7 +129,7 @@ export function isPaginatedResponse<T>(
     "total" in data &&
     "page" in data &&
     "limit" in data &&
-    Array.isArray((data as PaginatedResponse).items)
+    Array.isArray((data as PaginatedResponse<unknown>).items)
   );
 }
 
