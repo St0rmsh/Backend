@@ -45,11 +45,11 @@ router.get("/google/callback", passport.authenticate("google", {
 
 
         res.cookie("token", token , {
-            httpOnly: true,                                      // ✅ prevents XSS
-            secure: false,                                       // ✅ false for localhost
-            sameSite: "lax",                                     // ✅ allows redirects
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
             maxAge: 24 * 60 * 60 * 1000,
-            domain: "localhost"                          // ✅ 1 day
+            domain: "localhost"
         });
 
         res.redirect(`http://localhost:5173`)
@@ -60,6 +60,37 @@ router.get("/google/callback", passport.authenticate("google", {
         res.redirect("/")
     }
 
+})
+
+// New: returns the currently logged-in user's profile, based on the JWT cookie.
+// Used by the frontend to identify "you" for presence/collaboration features.
+router.get("/me", async (req, res) => {
+    try {
+        const token = req.cookies?.token;
+
+        if (!token) {
+            return res.status(401).json({ message: "Not authenticated" });
+        }
+
+        const decoded = jwt.verify(token, process.env.AUTH_JWT_SECRET);
+
+        const user = await userModel.findById(decoded.id).select("-googleId");
+
+        if (!user) {
+            return res.status(401).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            image: user.image
+        });
+
+    } catch (error) {
+        console.error("Error in /me:", error.message);
+        return res.status(401).json({ message: "Invalid or expired token" });
+    }
 })
 
 

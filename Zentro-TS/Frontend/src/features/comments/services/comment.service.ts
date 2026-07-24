@@ -1,37 +1,117 @@
-import { api } from "@/shared/lib/axios";
-import { ApiResponse } from "@/shared/utils/response";
+import { axiosInstance } from "@/shared/lib/axios";
 import { Comment, PaginatedComments } from "../types/comment.types";
 
+/**
+ * Comment API Service
+ * All comment-related API calls are centralised here.
+ * NO API logic should live inside components.
+ *
+ * Backend routes (mounted at /api/comment):
+ *   POST   /post/:postId   → create comment    → { message, success, data: comment }
+ *   GET    /post/:postId   → list comments      → { message, success, comments, totalComments, … }
+ *   GET    /:commentId     → single comment      → { message, success, comment }
+ *   PATCH  /:commentId     → update comment      → { message, success, comment }
+ *   DELETE /:commentId     → delete comment      → { message, success, comment }
+ */
+
+// ---------- Response shapes (match backend controller) ----------
+
+interface GetCommentsResponse {
+  message: string;
+  success: boolean;
+  comments: Comment[];
+  totalComments: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+interface CreateCommentResponse {
+  message: string;
+  success: boolean;
+  data: Comment;
+}
+
+interface SingleCommentResponse {
+  message: string;
+  success: boolean;
+  comment: Comment;
+}
+
+// ---------- Service ----------
+
 export const commentService = {
-  getComments: async (postId: string, page = 1, limit = 10) => {
-    // The backend endpoint returns `{ message, success, comments: { comments, totalComments, ... } }` 
-    // because we spread the getCommentService result in the controller.
-    const response = await api.get<ApiResponse<PaginatedComments>>(`/comment/post/${postId}`, {
-      params: { page, limit },
-    });
-    
-    // Actually the backend response structure is: 
-    // { message, success, comments, totalComments, totalPages, currentPage, limit, hasNextPage, hasPrevPage }
-    // Let's type it effectively by asserting the data format.
-    return response.data as unknown as PaginatedComments & ApiResponse<unknown>;
+  /**
+   * Fetch paginated comments for a post.
+   * GET /api/comment/post/:postId?page=&limit=
+   */
+  getComments: async (
+    postId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<PaginatedComments> => {
+    const response = await axiosInstance.get<GetCommentsResponse>(
+      `/comment/post/${postId}`,
+      { params: { page, limit } },
+    );
+
+    const d = response.data;
+    return {
+      comments: d.comments,
+      totalComments: d.totalComments,
+      totalPages: d.totalPages,
+      currentPage: d.currentPage,
+      limit: d.limit,
+      hasNextPage: d.hasNextPage,
+      hasPrevPage: d.hasPrevPage,
+    };
   },
 
-  createComment: async (postId: string, content: string) => {
-    const response = await api.post<ApiResponse<Comment>>(`/comment/post/${postId}`, {
-      content,
-    });
-    return response.data;
+  /**
+   * Create a new comment on a post.
+   * POST /api/comment/post/:postId  body: { content }
+   */
+  createComment: async (postId: string, content: string): Promise<Comment> => {
+    const response = await axiosInstance.post<CreateCommentResponse>(
+      `/comment/post/${postId}`,
+      { content },
+    );
+    return response.data.data;
   },
 
-  updateComment: async (commentId: string, content: string) => {
-    const response = await api.patch<ApiResponse<Comment>>(`/comment/${commentId}`, {
-      content,
-    });
-    return response.data;
+  /**
+   * Fetch a single comment by ID.
+   * GET /api/comment/:commentId
+   */
+  getComment: async (commentId: string): Promise<Comment> => {
+    const response = await axiosInstance.get<SingleCommentResponse>(
+      `/comment/${commentId}`,
+    );
+    return response.data.comment;
   },
 
-  deleteComment: async (commentId: string) => {
-    const response = await api.delete<ApiResponse<Comment>>(`/comment/${commentId}`);
-    return response.data;
+  /**
+   * Update a comment.
+   * PATCH /api/comment/:commentId  body: { content }
+   */
+  updateComment: async (
+    commentId: string,
+    content: string,
+  ): Promise<Comment> => {
+    const response = await axiosInstance.patch<SingleCommentResponse>(
+      `/comment/${commentId}`,
+      { content },
+    );
+    return response.data.comment;
+  },
+
+  /**
+   * Delete a comment.
+   * DELETE /api/comment/:commentId
+   */
+  deleteComment: async (commentId: string): Promise<void> => {
+    await axiosInstance.delete(`/comment/${commentId}`);
   },
 };

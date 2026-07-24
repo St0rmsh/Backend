@@ -8,10 +8,6 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
-    hmr: {
-      // Stabilise HMR — prevents reloads triggered by unrelated socket errors.
-      clientPort: 80,
-    },
     watch: {                 // ← added
       usePolling: true,
       interval: 1000,

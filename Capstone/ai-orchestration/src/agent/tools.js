@@ -13,6 +13,19 @@ function writeProgress(config, message) {
     }
 }
 
+// Sends structured diff data through the same writer channel, tagged
+// with a prefix so the route can tell it apart from plain progress strings.
+function writeDiff(config, diffs) {
+    const writer = config?.writer || config?.configurable?.writer;
+    if (writer && typeof writer.write === "function") {
+        try {
+            writer.write(`__DIFF__${JSON.stringify(diffs)}`);
+        } catch (e) {
+            console.error("Error writing diff:", e);
+        }
+    }
+}
+
 // -------------------------------------------------------------
 // 1. LIST FILES (Logic and Tool Definitions)
 // -------------------------------------------------------------
@@ -89,6 +102,16 @@ const updateFileFn = async ({ files }, config) => {
     const response = await axios.patch(`http://sandbox-service-${sandboxId}:3000/update-file`, {
         updates: files
     });
+
+    // response.data.results is now [{ filePath, message, oldContent, newContent }, ...]
+    // Forward this as structured diff data for the frontend to render.
+    if (Array.isArray(response.data.results)) {
+        writeDiff(config, response.data.results.map(r => ({
+            filePath: r.filePath,
+            oldContent: r.oldContent,
+            newContent: r.newContent
+        })));
+    }
 
     writeProgress(config, `Updated Files Successfully...\n`);
     return JSON.stringify(response.data.results);

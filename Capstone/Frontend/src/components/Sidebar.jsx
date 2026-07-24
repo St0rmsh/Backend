@@ -1,5 +1,45 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Copy, Check } from 'lucide-react';
+import { Send, Bot, User, Loader2, Copy, Check, ChevronDown, ChevronRight, FileSearch, FileEdit, FilePlus, FolderTree, Wrench } from 'lucide-react';
+import DiffViewer from './DiffViewer';
+
+function getStepIcon(text) {
+  const lower = text.toLowerCase();
+  if (lower.includes('listing')) return <FolderTree size={12} />;
+  if (lower.includes('reading')) return <FileSearch size={12} />;
+  if (lower.includes('updat')) return <FileEdit size={12} />;
+  if (lower.includes('creat')) return <FilePlus size={12} />;
+  return <Wrench size={12} />;
+}
+
+function AgentSteps({ steps }) {
+  const [expanded, setExpanded] = useState(true);
+  if (!steps || steps.length === 0) return null;
+
+  return (
+    <div className="mb-2 border border-white/5 rounded-lg overflow-hidden bg-surface-highest/30">
+      <button
+        onClick={() => setExpanded(e => !e)}
+        className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-on-surface-variant hover:bg-white/5 transition-colors"
+      >
+        <span className="flex items-center gap-1.5">
+          <Wrench size={11} />
+          Agent steps ({steps.length})
+        </span>
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+      </button>
+      {expanded && (
+        <div className="px-3 pb-2 space-y-1">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-center gap-2 text-[11px] text-on-surface-variant/80 font-mono">
+              <span className="text-primary/70">{getStepIcon(step)}</span>
+              <span className="truncate">{step}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Sidebar({ sandboxId, onInvokeAi }) {
   const [messages, setMessages] = useState([
@@ -7,7 +47,8 @@ export default function Sidebar({ sandboxId, onInvokeAi }) {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentProgress, setCurrentProgress] = useState('');
+  const [currentSteps, setCurrentSteps] = useState([]);
+  const [currentDiffs, setCurrentDiffs] = useState([]);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -16,7 +57,7 @@ export default function Sidebar({ sandboxId, onInvokeAi }) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, currentSteps, currentDiffs]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,12 +67,15 @@ export default function Sidebar({ sandboxId, onInvokeAi }) {
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
-    setCurrentProgress('');
+    setCurrentSteps([]);
+    setCurrentDiffs([]);
 
     try {
       await onInvokeAi(userMessage, (content, type) => {
         if (type === 'progress') {
-          setCurrentProgress(content);
+          setCurrentSteps(prev => [...prev, content]);
+        } else if (type === 'file-diff') {
+          setCurrentDiffs(prev => [...prev, ...content]);
         } else if (type === 'text-chunk') {
           setMessages((prev) => {
             const lastMessage = prev[prev.length - 1];
@@ -48,7 +92,6 @@ export default function Sidebar({ sandboxId, onInvokeAi }) {
           });
         }
       }, (finalMessage) => {
-        setCurrentProgress('');
         setMessages((prev) => {
           const withoutStream = prev.filter(m => m.role !== 'ai-stream');
           let content = finalMessage;
@@ -56,14 +99,13 @@ export default function Sidebar({ sandboxId, onInvokeAi }) {
             const streamMsg = prev.find(m => m.role === 'ai-stream');
             content = streamMsg ? streamMsg.content : '';
           }
-          return [...withoutStream, { role: 'ai', content: content }];
+          return [...withoutStream, { role: 'ai', content: content, steps: currentSteps, diffs: currentDiffs }];
         });
         setIsLoading(false);
       });
     } catch (error) {
       console.error("AI invocation error:", error);
-      setCurrentProgress('');
-      setMessages((prev) => [...prev, { role: 'ai', content: 'Sorry, I encountered an error. Please try again.' }]);
+      setMessages((prev) => [...prev, { role: 'ai', content: 'Sorry, I encountered an error. Please try again.', steps: currentSteps, diffs: currentDiffs }]);
       setIsLoading(false);
     }
   };
@@ -78,39 +120,46 @@ export default function Sidebar({ sandboxId, onInvokeAi }) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-            <div 
+            <div
               className={`flex items-start space-x-2 max-w-[90%] ${msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}
             >
               <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-primary/20 text-primary' : 'bg-surface-highest text-on-surface-variant'}`}>
                 {msg.role === 'user' ? <User size={12} /> : <Bot size={12} />}
               </div>
-              <div 
-                className={`p-3 rounded-xl text-sm leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-primary text-on-primary rounded-tr-sm' 
-                    : 'bg-surface-highest/50 border border-white/5 text-on-surface rounded-tl-sm w-full overflow-hidden'
-                }`}
-              >
-                {msg.role === 'user' ? msg.content : <Markdown text={msg.content} />}
+              <div className="w-full min-w-0">
+                {msg.role !== 'user' && msg.steps && msg.steps.length > 0 && (
+                  <AgentSteps steps={msg.steps} />
+                )}
+                {msg.role !== 'user' && msg.diffs && msg.diffs.length > 0 && (
+                  <DiffViewer diffs={msg.diffs} />
+                )}
+                <div
+                  className={`p-3 rounded-xl text-sm leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-primary text-on-primary rounded-tr-sm'
+                      : 'bg-surface-highest/50 border border-white/5 text-on-surface rounded-tl-sm w-full overflow-hidden'
+                  }`}
+                >
+                  {msg.role === 'user' ? msg.content : <Markdown text={msg.content} />}
+                </div>
               </div>
             </div>
           </div>
         ))}
-        {isLoading && !currentProgress && (
-          <div className="flex items-center space-x-2 text-on-surface-variant text-sm">
-            <Loader2 size={14} className="animate-spin" />
-            <span>Thinking...</span>
+        {isLoading && (
+          <div className="flex flex-col items-start space-y-2 max-w-[90%] w-full">
+            {currentSteps.length > 0 && <AgentSteps steps={currentSteps} />}
+            {currentDiffs.length > 0 && <DiffViewer diffs={currentDiffs} />}
+            {currentSteps.length === 0 && currentDiffs.length === 0 && (
+              <div className="flex items-center space-x-2 text-on-surface-variant text-sm">
+                <Loader2 size={14} className="animate-spin" />
+                <span>Thinking...</span>
+              </div>
+            )}
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
-
-      {currentProgress && (
-        <div className="px-4 py-2 border-t border-white/5 bg-surface/30 flex items-center space-x-2 text-xs text-primary animate-pulse">
-          <Loader2 size={12} className="animate-spin text-primary shrink-0" />
-          <span className="truncate">{currentProgress}</span>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="p-3 border-t border-white/5 bg-surface-lowest">
         <div className="relative flex items-center">
@@ -135,7 +184,7 @@ export default function Sidebar({ sandboxId, onInvokeAi }) {
   );
 }
 
-// Markdown Parser Helper Components
+// Markdown Parser Helper Components (unchanged)
 function Markdown({ text }) {
   if (!text) return null;
   const parts = text.split(/(```[\s\S]*?```)/g);

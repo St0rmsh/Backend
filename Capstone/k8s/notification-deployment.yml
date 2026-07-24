@@ -44,31 +44,31 @@ spec:
                 name:  amqlib
                 key: RABBITMQ_URL
 
-          - name:  EMAIL_USER
+          - name: EMAIL_USER
             valueFrom:
               secretKeyRef:
                 name:  amqlib
-                key:  EMAIL_USER
+                key: EMAIL_USER
 
-          - name:  GOOGLE_CLIENT_ID
+          - name: GOOGLE_CLIENT_ID
             valueFrom:
               secretKeyRef:
                 name:  google
-                key:  GOOGLE_CLIENT_ID
+                key: GOOGLE_CLIENT_ID
 
-          - name:  GOOGLE_CLIENT_SECRET
+          - name: GOOGLE_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
                 name:  google
-                key:  GOOGLE_CLIENT_SECRET
+                key: GOOGLE_CLIENT_SECRET
 
-          - name:  GOOGLE_REFRESH_TOKEN
+          - name: GOOGLE_REFRESH_TOKEN
             valueFrom:
               secretKeyRef:
                 name:  google
-                key:  GOOGLE_REFRESH_TOKEN  
+                key: GOOGLE_REFRESH_TOKEN  
 
-          - name:  EMAIL_APP_PASSWORD
+          - name: EMAIL_APP_PASSWORD
             valueFrom:
               secretKeyRef:
                 name:  google
@@ -77,4 +77,17 @@ spec:
         ports:
         - containerPort:  3000
           name:  notification
-       
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:  notification-service
+spec:
+  selector:
+    app:  notification
+  type:  ClusterIP
+  ports:
+  - name:  http
+    port:  80
+    targetPort:  3000      

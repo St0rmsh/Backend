@@ -2,11 +2,16 @@ import express from "express";
 import morgan from "morgan";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import {refreshTTL} from "./config/redis.js"
-
+import cors from "cors"
 
 const app = express()
 
 app.use(morgan("dev"))
+app.use(cors({
+   origin: "*",
+   credentials: true,
+}))
+
 
 
 app.get("/api/status/healthz", async (req, res) => {

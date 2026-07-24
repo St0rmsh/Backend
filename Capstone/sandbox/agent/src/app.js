@@ -35,7 +35,6 @@ app.get("/",(req,res)=>{
 
 const shell = process.env.SHELL || "bash"
 
-// node-pty for running terminal commands
 const ptyProcess = pty.spawn(shell, [], {
   name: 'xterm-color',
   cols: 80,
@@ -44,16 +43,48 @@ const ptyProcess = pty.spawn(shell, [], {
   env: process.env
 });
 
+const MAX_BUFFER_SIZE = 500_000;
+let terminalBuffer = "";
+
 ptyProcess.onData((data) => {
-  io.emit("terminal-output",data);
+  terminalBuffer += data;
+  if (terminalBuffer.length > MAX_BUFFER_SIZE) {
+    terminalBuffer = terminalBuffer.slice(terminalBuffer.length - MAX_BUFFER_SIZE);
+  }
+  io.emit("terminal-output", data);
 });
 
 ptyProcess.onExit(({exitCode, signal}) => {
     console.log(`Terminal exited with code ${exitCode} and signal ${signal}`);
 })
 
+// Presence tracking — one pod = one sandbox, so a simple in-memory map
+// of connected sockets to user identity is all we need (no rooms required).
+const connectedUsers = new Map(); // socket.id -> { id, name, image, socketId }
+
+function broadcastPresence() {
+    const users = Array.from(connectedUsers.values());
+    io.emit("presence-update", users);
+}
+
 io.on("connection",(socket)=>{
     console.log(`User connected: ${socket.id}`);
+
+    // Identity is passed explicitly in the handshake, since *.agent.localhost
+    // is a different origin than the auth cookie's domain and won't receive it.
+    const userAuth = socket.handshake.auth || {};
+    const user = {
+        socketId: socket.id,
+        id: userAuth.id || null,
+        name: userAuth.name || "Guest",
+        image: userAuth.image || null
+    };
+    connectedUsers.set(socket.id, user);
+    broadcastPresence();
+
+    if (terminalBuffer.length > 0) {
+        socket.emit("terminal-output", terminalBuffer);
+    }
 
     socket.on("terminal-input",(data)=>{
         ptyProcess.write(data)
@@ -61,18 +92,10 @@ io.on("connection",(socket)=>{
 
     socket.on("disconnect",()=>{
         console.log(`User disconnected: ${socket.id}`);
+        connectedUsers.delete(socket.id);
+        broadcastPresence();
     })
 })
-
-
-// @route GET /read-file read files 
-// @description Reads requested files in query parameters and returns as JSON  from the /workspace directory.
-// @param files - comma separated file paths
-// @returns {object} as JSON, with the file names as keys and file contents as values
-// Example: { 
-//   "file1.txt": "content1", 
-//   "file2.txt": "content2" 
-// }
 
 app.get("/read-file", async (req, res) => {
 
@@ -121,17 +144,6 @@ app.get("/read-file", async (req, res) => {
 
 });
 
-
-// @route PATCH update file
-// @description Updates the specified file in the request body. the request body should contain a property "updates" which is an array of objects with file and content
-// @param updates - Array of objects with file and content
-// @returns {object} as JSON, with the absolute path and success message
-// Example: {
-//    "updates": [
-//        { "file": "file1.txt", "content": "content1" },
-//        { "file": "file2.txt", "content": "content2" }
-//    ]
-// }
 app.patch("/update-file", async (req, res) => {
 
     try {
@@ -162,7 +174,6 @@ app.patch("/update-file", async (req, res) => {
                         safePath
                     );
 
-                // Security check
                 if (
                     !absolutePath.startsWith(
                         WORKING_DIR
@@ -171,6 +182,13 @@ app.patch("/update-file", async (req, res) => {
                     throw new Error(
                         "Access denied"
                     );
+                }
+
+                let oldContent = "";
+                try {
+                    oldContent = await fs.promises.readFile(absolutePath, "utf-8");
+                } catch (readErr) {
+                    oldContent = "";
                 }
 
                 await fs.promises.mkdir(
@@ -185,8 +203,10 @@ app.patch("/update-file", async (req, res) => {
                 );
 
                 return {
-                    [safePath]:
-                        "File updated successfully"
+                    filePath: safePath,
+                    message: "File updated successfully",
+                    oldContent,
+                    newContent: content
                 };
 
             })
@@ -210,17 +230,77 @@ app.patch("/update-file", async (req, res) => {
 
 });
 
+app.delete("/delete-file", async (req, res) => {
+    const { filePath } = req.body;
 
+    if (!filePath) {
+        return res.status(400).json({
+            message: "filePath is required",
+            status: 400,
+        });
+    }
 
-// @route   POST  /create-file
-// @description Creates a new folder or file and file in folders and files with content in the requested body. the requested body should contain a property "file" with a json Array of Object with "file" and "content" properties  , if folders are not present they are created recursively
-// @param filePath - The path to the file to create
-// @param content - The content to write to the file
-// @returns {object} as JSON, with the absolute path and success message
-// Example: {
-//    "filePath": "file1.txt",
-//    "content": "content1"
-// }
+    const safePath = filePath.replace(/^\/+/, "");
+    const absolutePath = path.resolve(WORKING_DIR, safePath);
+
+    if (!absolutePath.startsWith(WORKING_DIR)) {
+        return res.status(403).json({ message: "Access denied" });
+    }
+
+    try {
+        const stat = await fs.promises.stat(absolutePath);
+
+        if (stat.isDirectory()) {
+            await fs.promises.rm(absolutePath, { recursive: true, force: true });
+        } else {
+            await fs.promises.unlink(absolutePath);
+        }
+
+        return res.status(200).json({
+            message: "Deleted successfully",
+            data: { [safePath]: "deleted" }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: `Failed to delete: ${error.message}`
+        });
+    }
+});
+
+app.patch("/rename-file", async (req, res) => {
+    const { oldPath, newPath } = req.body;
+
+    if (!oldPath || !newPath) {
+        return res.status(400).json({
+            message: "oldPath and newPath are required",
+            status: 400,
+        });
+    }
+
+    const safeOldPath = oldPath.replace(/^\/+/, "");
+    const safeNewPath = newPath.replace(/^\/+/, "");
+
+    const absoluteOldPath = path.resolve(WORKING_DIR, safeOldPath);
+    const absoluteNewPath = path.resolve(WORKING_DIR, safeNewPath);
+
+    if (!absoluteOldPath.startsWith(WORKING_DIR) || !absoluteNewPath.startsWith(WORKING_DIR)) {
+        return res.status(403).json({ message: "Access denied" });
+    }
+
+    try {
+        await fs.promises.mkdir(path.dirname(absoluteNewPath), { recursive: true });
+        await fs.promises.rename(absoluteOldPath, absoluteNewPath);
+
+        return res.status(200).json({
+            message: "Renamed successfully",
+            data: { [safeOldPath]: safeNewPath }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: `Failed to rename: ${error.message}`
+        });
+    }
+});
 
 app.post("/create-file", async(req,res)=>{
     const files = req.body.files;
@@ -255,24 +335,8 @@ app.post("/create-file", async(req,res)=>{
         data: results
     })
 
-    
-    
-  
 })
 
-
-
-// @route   GET  /list-files
-// @description Lists all the files and folders in the working directory except node_modules and .env file or dist or .vercel or.git
-// @returns {object} as JSON, with the absolute path and success message
-// Example: {
-//    "message": "Elements in Working dir",
-//    "files": [
-// "file1.txt",
-//  "src/file2.text",
-// "src/nested-dir/file3.text",
-//    ]
-// }
 app.get("/list-files", async (req, res) => {
 
     const ignored = new Set([
@@ -292,7 +356,6 @@ app.get("/list-files", async (req, res) => {
 
         for (const entry of entries) {
 
-            // Ignore unwanted folders/files
             if (
                 ignored.has(entry.name) ||
                 entry.name === ".env"
@@ -303,7 +366,6 @@ app.get("/list-files", async (req, res) => {
             const absolutePath = path.join(dir, entry.name);
             const relativePath = path.relative(baseDir, absolutePath);
 
-            // Skip symbolic links
             if (entry.isSymbolicLink()) {
                 continue;
             }
@@ -329,7 +391,6 @@ app.get("/list-files", async (req, res) => {
 
     try {
 
-        // Check workspace exists
         await fs.promises.access(WORKING_DIR);
 
         const data = await listFiles(
@@ -354,6 +415,5 @@ app.get("/list-files", async (req, res) => {
     }
 
 });
-
 
 export default httpServer;

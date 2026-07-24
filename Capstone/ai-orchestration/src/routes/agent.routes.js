@@ -28,7 +28,23 @@ agentRouter.post("/invoke", async (req, res) => {
             "X-Accel-Buffering": "no"
         });
 
-        const result = await agent.stream(
+        // Central writer used by the agent's tools — detects diff payloads
+        // (tagged with __DIFF__) and emits them as a distinct SSE event type,
+        // separate from plain progress text.
+        const write = (msg) => {
+            if (typeof msg === "string" && msg.startsWith("__DIFF__")) {
+                try {
+                    const diffs = JSON.parse(msg.slice("__DIFF__".length));
+                    res.write(`data: ${JSON.stringify({ type: "file-diff", diffs })}\n\n`);
+                } catch (e) {
+                    console.error("Failed to parse diff payload:", e);
+                }
+            } else {
+                res.write(`data: ${JSON.stringify({ type: "progress", message: msg })}\n\n`);
+            }
+        };
+
+        const stream = await agent.stream(
             {
                 messages: [{
                     role: "user",
@@ -38,36 +54,22 @@ agentRouter.post("/invoke", async (req, res) => {
             {
                 configurable: {
                     sandboxId: sandboxId,
-                    writer: {
-                        write: (msg) => {
-                            res.write(`data: ${JSON.stringify({ type: "progress", message: msg })}\n\n`);
-                        }
-                    }
+                    writer: { write }
                 },
-                writer: {
-                    write: (msg) => {
-                        res.write(`data: ${JSON.stringify({ type: "progress", message: msg })}\n\n`);
-                    }
-                }
+                streamMode: "messages"
             }
         );
 
-        let finalMessages = [];
-        for await (const chunk of result) {
-            console.log(chunk);
-            if (chunk.messages) {
-                finalMessages = chunk.messages;
-                res.write(`data: ${JSON.stringify(chunk.messages)}\n\n`);
-            } else if (chunk.values?.messages) {
-                finalMessages = chunk.values.messages;
-                res.write(`data: ${JSON.stringify(chunk.values.messages)}\n\n`);
-            } else {
-                for (const key of Object.keys(chunk)) {
-                    if (chunk[key]?.messages) {
-                        finalMessages = chunk[key].messages;
-                        res.write(`data: ${JSON.stringify(chunk[key].messages)}\n\n`);
-                    }
-                }
+        let finalMessage = "";
+
+        for await (const [chunk, metadata] of stream) {
+            if (chunk.tool_call_chunks && chunk.tool_call_chunks.length > 0) {
+                continue;
+            }
+
+            if (chunk.content) {
+                res.write(`data: ${JSON.stringify({ type: "text-chunk", message: chunk.content })}\n\n`);
+                finalMessage += chunk.content;
             }
         }
 
@@ -75,7 +77,7 @@ agentRouter.post("/invoke", async (req, res) => {
             type: "done",
             message: "Agent invoked successfully",
             result: {
-                messages: finalMessages
+                content: finalMessage
             }
         })}\n\n`);
         res.end();
