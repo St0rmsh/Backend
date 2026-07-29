@@ -11,6 +11,9 @@ import commentReducer from "../features/comments/state/commentSlice";
 import postReducer from "@/features/post/state/postSlice";
 import postEditorReducer from "@/features/post-editor/state/postEditorSlice";
 
+import likeReducer from "@/features/likes/state/likeSlice";
+import bookmarkReducer from "@/features/bookmarks/state/bookmarkSlice";
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -24,6 +27,8 @@ export const store = configureStore({
     comments: commentReducer,
     post: postReducer,
     postEditor: postEditorReducer,
+    likes: likeReducer,
+    bookmarks: bookmarkReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
 });

@@ -41,7 +41,7 @@ export function FeedPage() {
       <FeedHeader />
 
       {/* Main Feed Content Area */}
-      <div className="flex-1 px-4 py-6 space-y-6">
+      <div className="flex-1 w-full max-w-3xl mx-auto px-4 py-6 space-y-6">
         {/* Floating/Header Refresh Status */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold tracking-tight text-foreground capitalize">

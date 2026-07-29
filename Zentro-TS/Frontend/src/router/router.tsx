@@ -84,6 +84,12 @@ const FeedPage = lazy(() =>
   }))
 );
 
+const BookmarksPage = lazy(() =>
+  import("@/features/bookmarks/pages/BookmarksPage").then((m) => ({
+    default: m.BookmarksPage,
+  }))
+);
+
 // ============================================================================
 // LAZY LOADED POST PAGES
 // ============================================================================
@@ -202,6 +208,26 @@ export const routes: RouteObject[] = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <FeedPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+
+      // Bookmarks Route (Protected)
+      {
+        path: "bookmarks",
+        element: (
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <BookmarksPage />
               </Suspense>
             ),
           },

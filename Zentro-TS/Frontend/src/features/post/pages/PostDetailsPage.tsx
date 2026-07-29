@@ -65,12 +65,12 @@ export const PostDetailsPage = () => {
     );
   }
 
-  const maxWidthClass =
+  const contentWidthClass =
     settings.readingWidth === "narrow"
       ? "max-w-[600px]"
       : settings.readingWidth === "wide"
-        ? "max-w-[900px]"
-        : "max-w-[720px]";
+        ? "max-w-[1000px]"
+        : "max-w-[768px]";
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -84,7 +84,7 @@ export const PostDetailsPage = () => {
       <div className="flex w-full items-start justify-center pt-8 pb-32">
         {/* Left Side: Interactions */}
         <div className="hidden xl:block w-[100px] sticky top-24 mr-8 shrink-0">
-          <InteractionBar />
+          <InteractionBar postId={currentPost._id} initialLikes={currentPost.likesCount || 0} />
         </div>
 
         {/* Main Content */}
@@ -92,15 +92,17 @@ export const PostDetailsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className={`w-full px-4 sm:px-6 lg:px-8 mx-auto transition-all duration-300 ${maxWidthClass}`}
+          className={`w-full max-w-5xl px-4 sm:px-6 lg:px-8 mx-auto transition-all duration-300 flex flex-col`}
         >
-          <PostHeader post={currentPost} />
+          <div className={`w-full mx-auto transition-all duration-300 ${contentWidthClass}`}>
+            <PostHeader post={currentPost} />
 
-          <div
-            className={`mt-10 mb-16 transition-all duration-300`}
-            style={{ fontSize: `${settings.fontSize}px` }}
-          >
-            <PostContent content={currentPost.content} fontSize={settings.fontSize} />
+            <div
+              className={`mt-10 mb-16 transition-all duration-300`}
+              style={{ fontSize: `${settings.fontSize}px` }}
+            >
+              <PostContent content={currentPost.content} fontSize={settings.fontSize} />
+            </div>
           </div>
 
           {/* Author Card at Bottom */}
@@ -110,7 +112,7 @@ export const PostDetailsPage = () => {
 
           {/* Interaction Bar on Mobile/Tablet */}
           <div className="xl:hidden mt-8 py-4 border-y border-border/40 flex justify-center">
-            <InteractionBar orientation="horizontal" />
+            <InteractionBar orientation="horizontal" postId={currentPost._id} initialLikes={currentPost.likesCount || 0} />
           </div>
 
           {/* Comments Section */}

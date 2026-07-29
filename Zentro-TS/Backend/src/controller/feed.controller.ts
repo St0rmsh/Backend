@@ -4,12 +4,7 @@ import type { IFeedQuery } from "../types/Feed/feed.types.js";
 
 
 
-export const getFeedController = async (req:Request<
-      {},
-      {},
-      {},
-      IFeedQuery
-    >,res:Response)=>{
+export const getFeedController = async (req: Request, res: Response) => {
 
     try {
 

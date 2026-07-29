@@ -68,14 +68,14 @@ export const CommentList: React.FC<CommentListProps> = ({ postId }) => {
   const isInitialLoad = loading && comments.length === 0;
 
   return (
-    <div className="w-full flex flex-col space-y-6">
+    <div className="w-full max-w-4xl mx-auto flex flex-col space-y-6 bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-sm">
       <div className="flex items-center justify-between border-b border-border/40 pb-4">
-        <h3 className="text-xl font-bold flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
+        <h3 className="text-2xl font-bold flex items-center gap-3">
+          <MessageSquare className="h-6 w-6 text-primary" />
           Comments 
           {postComments?.totalComments !== undefined && (
-            <span className="text-muted-foreground text-sm font-normal">
-              ({postComments.totalComments})
+            <span className="text-muted-foreground text-sm font-medium bg-muted px-2 py-0.5 rounded-full">
+              {postComments.totalComments}
             </span>
           )}
         </h3>

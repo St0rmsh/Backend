@@ -10,7 +10,7 @@ import { BottomNavigation } from "./components/BottomNavigation";
  */
 export const MainLayout = () => {
   return (
-    <div className="flex min-h-screen bg-background text-foreground w-full max-w-[1400px] mx-auto">
+    <div className="flex min-h-screen bg-background text-foreground w-full max-w-screen-2xl mx-auto xl:px-4">
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0 relative">
@@ -18,8 +18,10 @@ export const MainLayout = () => {
 
         {/* Main Content */}
         <main className="flex-1 w-full pb-16 md:pb-0">
-          <div className="max-w-2xl mx-auto w-full min-h-screen border-x border-border/40 bg-background relative">
-            <Outlet />
+          <div className="mx-auto w-full min-h-screen border-x border-border/40 bg-background relative flex justify-center">
+            <div className="w-full">
+              <Outlet />
+            </div>
           </div>
         </main>
         

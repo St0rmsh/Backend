@@ -78,24 +78,24 @@ export const CommentItem: React.FC<CommentItemProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className="flex gap-4 p-4 border-b border-border/40 hover:bg-muted/10 transition-colors group"
+      className="flex gap-4 p-5 sm:p-6 border-b border-border/40 hover:bg-muted/30 transition-colors group rounded-xl"
     >
-      <Avatar className="h-10 w-10 shrink-0">
+      <Avatar className="h-12 w-12 shrink-0 border border-border/50 shadow-sm">
         <AvatarImage src={comment.user.avatar} alt={comment.user.username} />
-        <AvatarFallback>{comment.user.fullname.charAt(0)}</AvatarFallback>
+        <AvatarFallback className="bg-primary/10 text-primary font-semibold">{comment.user.fullname.charAt(0)}</AvatarFallback>
       </Avatar>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
+      <div className="flex-1 min-w-0 pt-1">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm">{comment.user.fullname}</span>
-            <span className="text-muted-foreground text-sm">@{comment.user.username}</span>
+            <span className="font-bold text-sm text-foreground">{comment.user.fullname}</span>
+            <span className="text-muted-foreground text-sm font-medium">@{comment.user.username}</span>
             <span className="text-muted-foreground text-xs">•</span>
-            <span className="text-muted-foreground text-xs" title={new Date(comment.createdAt).toLocaleString()}>
+            <span className="text-muted-foreground text-xs hover:underline cursor-pointer" title={new Date(comment.createdAt).toLocaleString()}>
               {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
             </span>
             {comment.updatedAt !== comment.createdAt && (
-              <span className="text-muted-foreground text-xs italic">(edited)</span>
+              <span className="text-muted-foreground text-[10px] uppercase tracking-wider font-semibold ml-1 bg-muted px-1.5 py-0.5 rounded-sm">(edited)</span>
             )}
           </div>
 
@@ -104,22 +104,22 @@ export const CommentItem: React.FC<CommentItemProps> = ({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity rounded-full hover:bg-muted"
               >
                 <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                 <span className="sr-only">Comment actions</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-border/50">
               {isAuthor && (
                 <>
-                  <DropdownMenuItem onClick={() => setIsEditMode(true)}>
-                    <Edit2 className="h-4 w-4 mr-2" />
+                  <DropdownMenuItem onClick={() => setIsEditMode(true)} className="cursor-pointer">
+                    <Edit2 className="h-4 w-4 mr-2 text-muted-foreground" />
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => onDelete(comment._id)}
-                    className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
@@ -127,13 +127,13 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                   <DropdownMenuSeparator />
                 </>
               )}
-              <DropdownMenuItem onClick={handleCopyLink}>
-                <LinkIcon className="h-4 w-4 mr-2" />
+              <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
+                <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                 Copy Link
               </DropdownMenuItem>
               {!isAuthor && (
-                <DropdownMenuItem>
-                  <Flag className="h-4 w-4 mr-2" />
+                <DropdownMenuItem className="cursor-pointer">
+                  <Flag className="h-4 w-4 mr-2 text-muted-foreground" />
                   Report
                 </DropdownMenuItem>
               )}
@@ -141,7 +141,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
           </DropdownMenu>
         </div>
 
-        <div className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+        <div className="text-[15px] whitespace-pre-wrap break-words leading-relaxed text-foreground/90">
           {comment.content}
         </div>
         
