@@ -2,6 +2,8 @@ import { Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
 import { useAppSelector } from "@/shared/hooks";
 import { CommandPalette } from "@/shared/components/CommandPalette";
+import { OfflineBanner } from "@/shared/components/OfflineBanner";
+import { SEO } from "@/shared/components/SEO";
 
 /**
  * Root Layout Component
@@ -17,6 +19,8 @@ export const RootLayout = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEO />
+      <OfflineBanner />
       <Outlet />
       
       {/* Global Toast Notifications */}

@@ -31,7 +31,19 @@ interface GetCommentsResponse {
 interface CreateCommentResponse {
   message: string;
   success: boolean;
-  data: Comment;
+  data: {
+    comment: Comment;
+    commentsCount: number;
+  };
+}
+
+interface DeleteCommentResponse {
+  message: string;
+  success: boolean;
+  data: {
+    comment: Comment;
+    commentsCount: number;
+  };
 }
 
 interface SingleCommentResponse {
@@ -73,7 +85,7 @@ export const commentService = {
    * Create a new comment on a post.
    * POST /api/comment/post/:postId  body: { content }
    */
-  createComment: async (postId: string, content: string): Promise<Comment> => {
+  createComment: async (postId: string, content: string): Promise<{ comment: Comment; commentsCount: number }> => {
     const response = await axiosInstance.post<CreateCommentResponse>(
       `/comment/post/${postId}`,
       { content },
@@ -111,7 +123,8 @@ export const commentService = {
    * Delete a comment.
    * DELETE /api/comment/:commentId
    */
-  deleteComment: async (commentId: string): Promise<void> => {
-    await axiosInstance.delete(`/comment/${commentId}`);
+  deleteComment: async (commentId: string): Promise<{ comment: Comment; commentsCount: number }> => {
+    const response = await axiosInstance.delete<DeleteCommentResponse>(`/comment/${commentId}`);
+    return response.data.data;
   },
 };

@@ -9,6 +9,7 @@ import likeRouter from "./routes/like.route.js";
 import CommentRouter from "./routes/comment.route.js";
 import bookmarkRouter from "./routes/bookmark.route.js";
 import feedRouter from "./routes/feed.route.js";
+import notificationRouter from "./routes/notification.routes.js";
 import cors from "cors"
 const app = express()
 
@@ -26,24 +27,24 @@ app.use(cookieParser())
 
 app.use(morgan("dev"))
 
-app.get("/",(req,res)=>{
+app.get("/", (req, res) => {
     return res.status(200).json({
-        message:'Health Check route'
+        message: 'Health Check route'
     })
 })
 
 
 // Auth routes
-app.use("/api/auth",authRouter)
+app.use("/api/auth", authRouter)
 
 
 
 // Followers routes
-app.use("/api/follow",followersRouter)
+app.use("/api/follow", followersRouter)
 
 
 // User profile routes
-app.use("/api/profile",userProfileRouter)
+app.use("/api/profile", userProfileRouter)
 
 
 // Post routes
@@ -63,6 +64,9 @@ app.use("/api/comment", CommentRouter)
 
 
 // Bookmark route
-app.use("/api/bookmark",bookmarkRouter)
+app.use("/api/bookmark", bookmarkRouter)
+
+// Notification route
+app.use("/api/notification", notificationRouter)
 
 export default app

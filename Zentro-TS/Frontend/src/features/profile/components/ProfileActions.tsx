@@ -4,11 +4,12 @@ import { Button } from "@/shared/ui/button";
 import { MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/router/routes.config";
+import { FollowButton } from "@/features/follow/components/FollowButton";
 
 interface ProfileActionsProps {
   isOwnProfile: boolean;
   isFollowing?: boolean;
-  onFollowClick?: () => void;
+  targetUserId?: string;
   onMessageClick?: () => void;
   className?: string;
 }
@@ -16,7 +17,7 @@ interface ProfileActionsProps {
 export const ProfileActions: React.FC<ProfileActionsProps> = ({
   isOwnProfile,
   isFollowing = false,
-  onFollowClick,
+  targetUserId,
   onMessageClick,
   className,
 }) => {
@@ -46,12 +47,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
         </>
       ) : (
         <>
-          <Button
-            variant={isFollowing ? "outline" : "default"}
-            onClick={onFollowClick}
-          >
-            {isFollowing ? "Following" : "Follow"}
-          </Button>
+          <FollowButton userId={targetUserId || ""} initialFollowing={isFollowing} className="flex" />
           <Button variant="outline" onClick={onMessageClick}>
             Message
           </Button>

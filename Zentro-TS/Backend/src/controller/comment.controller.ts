@@ -30,12 +30,12 @@ export const commentController = async (req:Request<{postId:string}>,res:Respons
             });
         }
         
-        const comment = await createCommentService(postId,userId,content)
+        const result = await createCommentService(postId,userId,content)
 
         return res.status(201).json({
             message: "Comment created successfully",
             success: true,
-            data: comment
+            data: result
         })
 
     } catch (error) {
@@ -219,12 +219,12 @@ export const deleteCommentController = async (req:Request<{commentId:string}>,re
             })
         }
 
-        const comment = await deleteCommentService(commentId,userId)
+        const result = await deleteCommentService(commentId,userId)
 
         return res.status(200).json({
             message: "Comment deleted successfully",
             success: true,
-            comment: comment
+            data: result
         })
 
     } catch (error) {

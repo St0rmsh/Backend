@@ -1,24 +1,45 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { likeService } from "../services/like.service";
 
+const STORAGE_KEY = "zentro_liked_posts";
+
+function loadLikedPosts(): string[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLikedPosts(likedPosts: string[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(likedPosts));
+  } catch {
+    // Ignore storage failures
+  }
+}
+
 interface LikeState {
   likedPosts: string[]; // List of post IDs the user has liked
   loading: Record<string, boolean>; // Map of postId to loading state
 }
 
 const initialState: LikeState = {
-  likedPosts: [],
+  likedPosts: loadLikedPosts(),
   loading: {},
 };
 
 export const toggleLikeThunk = createAsyncThunk<
-  { postId: string; message: string; success: boolean },
+  { postId: string; liked: boolean; message: string; success: boolean },
   string,
   { rejectValue: string }
 >("likes/toggleLike", async (postId, { rejectWithValue }) => {
   try {
     const data = await likeService.toggleLike(postId);
-    return { postId, ...data };
+    return { postId, liked: data.data?.liked ?? false, message: data.message, success: data.success };
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to toggle like"
@@ -36,10 +57,12 @@ const likeSlice = createSlice({
     addLike(state, action) {
       if (!state.likedPosts.includes(action.payload)) {
         state.likedPosts.push(action.payload);
+        saveLikedPosts(state.likedPosts);
       }
     },
     removeLike(state, action) {
       state.likedPosts = state.likedPosts.filter((id) => id !== action.payload);
+      saveLikedPosts(state.likedPosts);
     },
   },
   extraReducers: (builder) => {
@@ -49,8 +72,16 @@ const likeSlice = createSlice({
       })
       .addCase(toggleLikeThunk.fulfilled, (state, action) => {
         state.loading[action.meta.arg] = false;
-        // Depending on backend logic, if it returns success we can sync.
-        // Usually, we prefer optimistic UI so we might not need to do anything here if we updated optimistically
+
+        if (action.payload.liked) {
+          if (!state.likedPosts.includes(action.payload.postId)) {
+            state.likedPosts.push(action.payload.postId);
+          }
+        } else {
+          state.likedPosts = state.likedPosts.filter((id) => id !== action.payload.postId);
+        }
+
+        saveLikedPosts(state.likedPosts);
       })
       .addCase(toggleLikeThunk.rejected, (state, action) => {
         state.loading[action.meta.arg] = false;

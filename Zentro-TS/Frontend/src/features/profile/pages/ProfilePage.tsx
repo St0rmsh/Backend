@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -15,6 +15,8 @@ import {
   ProfileCard,
 } from "../components";
 import { ProfileUser } from "../types/profile.types";
+import { useAppDispatch, useAppSelector } from "@/shared/hooks";
+import { fetchFollowStatusThunk } from "@/features/follow/state/followSlice";
 
 type ProfileParams = {
   username?: string;
@@ -26,12 +28,24 @@ interface ProfilePageProps {
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnProfileProp = false }) => {
   const { username } = useParams<ProfileParams>();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { user: currentUser } = useAuth();
   const { profile, loading } = useProfile();
-  const [isFollowing, setIsFollowing] = useState(false);
 
   // Determine if viewing own profile
   const isOwnProfile = isOwnProfileProp || !username || username === currentUser?.username;
+  const displayUser = isOwnProfile ? currentUser : profile;
+  const targetUser = displayUser || null;
+  const targetUserId = String((targetUser as any)?._id ?? (targetUser as any)?.id ?? "");
+  const relationship = useAppSelector((state) => state.follow.relationshipByUser[String(targetUserId)]);
+  const isFollowing = relationship?.isFollowing ?? false;
+
+  useEffect(() => {
+    if (!isOwnProfile && targetUserId) {
+      dispatch(fetchFollowStatusThunk(targetUserId));
+    }
+  }, [dispatch, isOwnProfile, targetUserId]);
 
   if (loading) {
     return (
@@ -41,10 +55,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
     );
   }
 
-  // Get the user to display
-  let displayUser = isOwnProfile ? currentUser : null;
-
-  if (!displayUser && !isOwnProfile) {
+  if (!targetUser && !isOwnProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -55,7 +66,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
     );
   }
 
-  const user = displayUser || profile;
+  const user = targetUser;
 
   if (!user) {
     return (
@@ -69,7 +80,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
     posts: (user as any).postsCount || 0,
     followers: (user as any).followerCount || 0,
     following: (user as any).followingCount || 0,
-    bookmarks: isOwnProfile ? 12 : undefined, // Placeholder for own profile
+    bookmarks: isOwnProfile ? 12 : undefined,
   };
 
   return (
@@ -93,7 +104,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
               <ProfileActions
                 isOwnProfile={isOwnProfile}
                 isFollowing={isFollowing}
-                onFollowClick={() => setIsFollowing(!isFollowing)}
+                targetUserId={targetUserId}
                 onMessageClick={() => console.log("Message clicked")}
               />
             </div>
@@ -106,7 +117,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
 
             {/* Stats */}
             <div className="mt-8 pt-6 border-t">
-              <ProfileStats stats={stats} />
+              <ProfileStats
+                stats={stats}
+                onFollowersClick={() => targetUserId && navigate(`/app/profile/${targetUserId}/followers`)}
+                onFollowingClick={() => targetUserId && navigate(`/app/profile/${targetUserId}/following`)}
+              />
             </div>
           </div>
         </ProfileCard>

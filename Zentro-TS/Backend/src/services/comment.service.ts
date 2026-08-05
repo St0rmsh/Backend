@@ -37,9 +37,13 @@ export const createCommentService = async (postId:string , userId:string , conte
         await updateUserInterestService(userId,postId,4);
 
        await comment.populate("user", "fullname username avatar")
+
+        const updatedPost = await PostModel.findById(postId).select("commentsCount")
         
-        return comment
-        
+        return {
+            comment,
+            commentsCount: updatedPost?.commentsCount ?? 0,
+        }
     } catch (error) {
        console.error("Error in Comment service:", error);
         throw new Error(
@@ -173,7 +177,13 @@ export const deleteCommentService = async (commentId:string , userId:string)=>{
                 }
             }
         );
-        return comment
+
+        const updatedPost = await PostModel.findById(comment.post).select("commentsCount")
+
+        return {
+            comment,
+            commentsCount: updatedPost?.commentsCount ?? 0,
+        }
         
     } catch (error) {
         console.error("Error in delete Comment service:", error);

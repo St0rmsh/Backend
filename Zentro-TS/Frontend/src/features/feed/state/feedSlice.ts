@@ -191,6 +191,24 @@ const feedSlice = createSlice({
       const { postId, progress } = action.payload;
       state.readingProgress[postId] = Math.min(100, Math.max(0, Math.round(progress)));
     },
+    updatePostLikesCount: (state, action: PayloadAction<{ postId: string; delta: number }>) => {
+      const post = state.posts.find((item) => item._id === action.payload.postId);
+      if (post) {
+        post.likesCount = Math.max(0, post.likesCount + action.payload.delta);
+      }
+    },
+    updatePostCommentsCount: (state, action: PayloadAction<{ postId: string; delta: number }>) => {
+      const post = state.posts.find((item) => item._id === action.payload.postId);
+      if (post) {
+        post.commentsCount = Math.max(0, post.commentsCount + action.payload.delta);
+      }
+    },
+    setPostCommentsCount: (state, action: PayloadAction<{ postId: string; count: number }>) => {
+      const post = state.posts.find((item) => item._id === action.payload.postId);
+      if (post) {
+        post.commentsCount = Math.max(0, action.payload.count);
+      }
+    },
     clearFeedError: (state) => {
       state.error = null;
     },
@@ -242,5 +260,5 @@ const feedSlice = createSlice({
   },
 });
 
-export const { setTab, updateReadingProgress, clearFeedError } = feedSlice.actions;
+export const { setTab, updateReadingProgress, updatePostLikesCount, updatePostCommentsCount, setPostCommentsCount, clearFeedError } = feedSlice.actions;
 export default feedSlice.reducer;

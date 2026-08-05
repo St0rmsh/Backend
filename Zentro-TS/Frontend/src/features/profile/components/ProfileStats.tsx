@@ -12,14 +12,16 @@ interface ProfileStats {
 interface ProfileStatsProps {
   stats: ProfileStats;
   className?: string;
+  onFollowersClick?: () => void;
+  onFollowingClick?: () => void;
 }
 
-export const ProfileStats: React.FC<ProfileStatsProps> = ({ stats, className }) => {
+export const ProfileStats: React.FC<ProfileStatsProps> = ({ stats, className, onFollowersClick, onFollowingClick }) => {
   const statItems = [
-    { label: "Posts", value: stats.posts },
-    { label: "Followers", value: stats.followers },
-    { label: "Following", value: stats.following },
-    ...(stats.bookmarks !== undefined ? [{ label: "Bookmarks", value: stats.bookmarks }] : []),
+    { label: "Posts", value: stats.posts, onClick: undefined },
+    { label: "Followers", value: stats.followers, onClick: onFollowersClick },
+    { label: "Following", value: stats.following, onClick: onFollowingClick },
+    ...(stats.bookmarks !== undefined ? [{ label: "Bookmarks", value: stats.bookmarks, onClick: undefined }] : []),
   ];
 
   const containerVariants = {
@@ -46,14 +48,16 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ stats, className }) 
       className={cn("grid grid-cols-3 md:grid-cols-4 gap-4", className)}
     >
       {statItems.map((stat) => (
-        <motion.div
+        <motion.button
           key={stat.label}
           variants={itemVariants}
-          className="flex flex-col items-center justify-center p-3 rounded-lg bg-card border"
+          type="button"
+          onClick={stat.onClick}
+          className="flex flex-col items-center justify-center p-3 rounded-lg bg-card border hover:border-primary/40 transition-colors"
         >
           <div className="text-lg md:text-2xl font-bold">{stat.value.toLocaleString()}</div>
           <div className="text-xs md:text-sm text-muted-foreground">{stat.label}</div>
-        </motion.div>
+        </motion.button>
       ))}
     </motion.div>
   );

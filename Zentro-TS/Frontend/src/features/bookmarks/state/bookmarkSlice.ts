@@ -1,5 +1,15 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { bookmarkService, Bookmark } from "../services/bookmark.service";
+
+interface ToggleBookmarkPayload {
+  postId: string;
+  message: string;
+  success: boolean;
+  bookmark?: {
+    message: string;
+    bookmarked: boolean;
+  };
+}
 
 interface BookmarkState {
   bookmarkedPosts: string[]; // List of post IDs the user has bookmarked
@@ -30,7 +40,7 @@ const initialState: BookmarkState = {
 };
 
 export const toggleBookmarkThunk = createAsyncThunk<
-  { postId: string; message: string; success: boolean },
+  ToggleBookmarkPayload,
   string,
   { rejectValue: string }
 >("bookmarks/toggleBookmark", async (postId, { rejectWithValue }) => {
@@ -74,6 +84,49 @@ const bookmarkSlice = createSlice({
     removeBookmark(state, action) {
       state.bookmarkedPosts = state.bookmarkedPosts.filter((id) => id !== action.payload);
     },
+    updateBookmarkCommentsCount(state, action: PayloadAction<{ postId: string; delta: number }>) {
+      const { postId, delta } = action.payload;
+
+      state.bookmarksList = state.bookmarksList.map((bookmark) => {
+        if (!bookmark.post || typeof bookmark.post !== "object") {
+          return bookmark;
+        }
+
+        const currentPostId = bookmark.post._id;
+        if (currentPostId !== postId) {
+          return bookmark;
+        }
+
+        return {
+          ...bookmark,
+          post: {
+            ...bookmark.post,
+            commentsCount: Math.max(0, (bookmark.post.commentsCount ?? 0) + delta),
+          },
+        };
+      });
+    },
+    setBookmarkCommentsCount(state, action: PayloadAction<{ postId: string; count: number }>) {
+      const { postId, count } = action.payload;
+
+      state.bookmarksList = state.bookmarksList.map((bookmark) => {
+        if (!bookmark.post || typeof bookmark.post !== "object") {
+          return bookmark;
+        }
+
+        if (bookmark.post._id !== postId) {
+          return bookmark;
+        }
+
+        return {
+          ...bookmark,
+          post: {
+            ...bookmark.post,
+            commentsCount: Math.max(0, count),
+          },
+        };
+      });
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -83,6 +136,15 @@ const bookmarkSlice = createSlice({
       })
       .addCase(toggleBookmarkThunk.fulfilled, (state, action) => {
         state.loading[action.meta.arg] = false;
+        const isBookmarked = action.payload.bookmark?.bookmarked ?? false;
+
+        if (isBookmarked) {
+          if (!state.bookmarkedPosts.includes(action.payload.postId)) {
+            state.bookmarkedPosts.push(action.payload.postId);
+          }
+        } else {
+          state.bookmarkedPosts = state.bookmarkedPosts.filter((id) => id !== action.payload.postId);
+        }
       })
       .addCase(toggleBookmarkThunk.rejected, (state, action) => {
         state.loading[action.meta.arg] = false;
@@ -96,17 +158,29 @@ const bookmarkSlice = createSlice({
         state.isFetchingBookmarks = false;
         const { data, append } = action.payload;
 
+        const pagination = data.pagination ?? {
+          currentPage: data.currentPage ?? 1,
+          totalPages: data.totalPages ?? 1,
+          totalBookmarks: data.totalBookmarks ?? 0,
+          hasNextPage: data.hasNextPage ?? false,
+          hasPrevPage: data.hasPrevPage ?? false,
+        };
+
         if (append) {
           state.bookmarksList = [...state.bookmarksList, ...data.bookmarks];
         } else {
           state.bookmarksList = data.bookmarks;
         }
 
-        state.currentPage = data.pagination.currentPage;
-        state.totalPages = data.pagination.totalPages;
-        state.totalBookmarks = data.pagination.totalBookmarks;
-        state.hasNextPage = data.pagination.hasNextPage;
-        state.hasPrevPage = data.pagination.hasPrevPage;
+        state.bookmarkedPosts = data.bookmarks
+          .map((bookmark: Bookmark) => bookmark.post?._id ?? bookmark.post)
+          .filter(Boolean);
+
+        state.currentPage = pagination.currentPage;
+        state.totalPages = pagination.totalPages;
+        state.totalBookmarks = pagination.totalBookmarks;
+        state.hasNextPage = pagination.hasNextPage;
+        state.hasPrevPage = pagination.hasPrevPage;
       })
       .addCase(fetchMyBookmarksThunk.rejected, (state, action) => {
         state.isFetchingBookmarks = false;
@@ -115,6 +189,6 @@ const bookmarkSlice = createSlice({
   },
 });
 
-export const { setBookmarkedPosts, addBookmark, removeBookmark } = bookmarkSlice.actions;
+export const { setBookmarkedPosts, addBookmark, removeBookmark, updateBookmarkCommentsCount, setBookmarkCommentsCount } = bookmarkSlice.actions;
 
 export default bookmarkSlice.reducer;

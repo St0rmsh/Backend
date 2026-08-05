@@ -159,6 +159,24 @@ const postSlice = createSlice({
     clearPostError: (state) => {
       state.error = null;
     },
+
+    updatePostDetailLikesCount: (state, action: PayloadAction<number>) => {
+      if (state.currentPost) {
+        state.currentPost.likesCount = Math.max(0, state.currentPost.likesCount + action.payload);
+      }
+    },
+
+    updatePostDetailCommentsCount: (state, action: PayloadAction<number>) => {
+      if (state.currentPost) {
+        state.currentPost.commentsCount = Math.max(0, state.currentPost.commentsCount + action.payload);
+      }
+    },
+
+    setPostDetailCommentsCount: (state, action: PayloadAction<number>) => {
+      if (state.currentPost) {
+        state.currentPost.commentsCount = Math.max(0, action.payload);
+      }
+    },
   },
 
   extraReducers: (builder) => {
@@ -192,6 +210,9 @@ export const {
   toggleFocusMode,
   clearPost,
   clearPostError,
+  updatePostDetailLikesCount,
+  updatePostDetailCommentsCount,
+  setPostDetailCommentsCount,
 } = postSlice.actions;
 
 export default postSlice.reducer;

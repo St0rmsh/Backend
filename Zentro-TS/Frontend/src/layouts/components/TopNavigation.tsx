@@ -1,10 +1,11 @@
-import { Search, Bell, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { useAppDispatch } from "@/shared/hooks";
 import { setGlobalSearchOpen, setMobileMenuOpen } from "@/store/slices/uiSlice";
 import { Logo } from "@/shared/components/Logo";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { UserMenu } from "@/shared/components/UserMenu";
 import { Button } from "@/shared/ui/button";
+import { NotificationBell } from "@/features/notification/components/NotificationBell";
 
 export const TopNavigation = () => {
   const dispatch = useAppDispatch();
@@ -36,11 +37,7 @@ export const TopNavigation = () => {
             <span className="sr-only">Search</span>
           </Button>
           
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
-            <span className="sr-only">Notifications</span>
-          </Button>
+          <NotificationBell />
           
           <ThemeToggle />
           <UserMenu />

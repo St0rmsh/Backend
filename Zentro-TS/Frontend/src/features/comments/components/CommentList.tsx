@@ -13,6 +13,9 @@ import { DeleteCommentDialog } from "./DeleteCommentDialog";
 import { Button } from "@/shared/ui/button";
 import { MessageSquare, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { setPostCommentsCount } from "../../feed/state/feedSlice";
+import { setPostDetailCommentsCount } from "../../post/state/postSlice";
+import { setBookmarkCommentsCount } from "../../bookmarks/state/bookmarkSlice";
 
 interface CommentListProps {
   postId: string;
@@ -35,7 +38,10 @@ export const CommentList: React.FC<CommentListProps> = ({ postId }) => {
   }, [dispatch, postId]);
 
   const handleCreateComment = async (content: string) => {
-    await dispatch(createCommentThunk({ postId, content })).unwrap();
+    const result = await dispatch(createCommentThunk({ postId, content })).unwrap();
+    dispatch(setPostCommentsCount({ postId, count: result.commentsCount }));
+    dispatch(setBookmarkCommentsCount({ postId, count: result.commentsCount }));
+    dispatch(setPostDetailCommentsCount(result.commentsCount));
   };
 
   const handleUpdateComment = async (commentId: string, content: string) => {
@@ -50,7 +56,10 @@ export const CommentList: React.FC<CommentListProps> = ({ postId }) => {
   const handleConfirmDelete = async () => {
     if (commentToDelete) {
       try {
-        await dispatch(deleteCommentThunk({ postId, commentId: commentToDelete })).unwrap();
+        const result = await dispatch(deleteCommentThunk({ postId, commentId: commentToDelete })).unwrap();
+        dispatch(setPostCommentsCount({ postId, count: result.commentsCount }));
+        dispatch(setBookmarkCommentsCount({ postId, count: result.commentsCount }));
+        dispatch(setPostDetailCommentsCount(result.commentsCount));
       } finally {
         setDeleteDialogOpen(false);
         setCommentToDelete(null);

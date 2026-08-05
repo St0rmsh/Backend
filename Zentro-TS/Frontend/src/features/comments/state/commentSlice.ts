@@ -42,13 +42,13 @@ export const fetchCommentsThunk = createAsyncThunk<
 });
 
 export const createCommentThunk = createAsyncThunk<
-  { postId: string; comment: Comment },
+  { postId: string; comment: Comment; commentsCount: number },
   { postId: string; content: string },
   { rejectValue: string }
 >("comments/createComment", async ({ postId, content }, { rejectWithValue }) => {
   try {
-    const comment = await commentService.createComment(postId, content);
-    return { postId, comment };
+    const result = await commentService.createComment(postId, content);
+    return { postId, comment: result.comment, commentsCount: result.commentsCount };
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to create comment",
@@ -75,13 +75,13 @@ export const updateCommentThunk = createAsyncThunk<
 );
 
 export const deleteCommentThunk = createAsyncThunk<
-  { postId: string; commentId: string },
+  { postId: string; commentId: string; commentsCount: number },
   { postId: string; commentId: string },
   { rejectValue: string }
 >("comments/deleteComment", async ({ postId, commentId }, { rejectWithValue }) => {
   try {
-    await commentService.deleteComment(commentId);
-    return { postId, commentId };
+    const result = await commentService.deleteComment(commentId);
+    return { postId, commentId, commentsCount: result.commentsCount };
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to delete comment",

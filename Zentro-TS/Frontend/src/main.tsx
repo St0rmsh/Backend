@@ -6,19 +6,24 @@ import { store } from './store'
 import { AppRouter } from './App/AppRouter'
 import './styles/index.css'
 import LenisProvider from './styles/lenis/LenisProvider'
+import { ErrorBoundary } from './shared/components/ErrorBoundary'
+import { analytics } from './shared/services/analytics.service'
+import { errorMonitor } from './shared/services/error.service'
 
-
-
+// Initialize services
+analytics.init();
+errorMonitor.init();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <LenisProvider>
-          <AppRouter />
-        </LenisProvider>
-      </BrowserRouter>
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <BrowserRouter>
+          <LenisProvider>
+            <AppRouter />
+          </LenisProvider>
+        </BrowserRouter>
+      </Provider>
+    </ErrorBoundary>
   </StrictMode>,
 )
-

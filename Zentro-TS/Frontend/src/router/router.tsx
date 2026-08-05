@@ -90,6 +90,24 @@ const BookmarksPage = lazy(() =>
   }))
 );
 
+const NotificationsPage = lazy(() =>
+  import("@/features/notification/pages/NotificationsPage").then((m) => ({
+    default: m.NotificationsPage,
+  }))
+);
+
+const FollowersPage = lazy(() =>
+  import("@/features/follow/pages/FollowersPage").then((m) => ({
+    default: m.FollowersPage,
+  }))
+);
+
+const FollowingPage = lazy(() =>
+  import("@/features/follow/pages/FollowingPage").then((m) => ({
+    default: m.FollowingPage,
+  }))
+);
+
 // ============================================================================
 // LAZY LOADED POST PAGES
 // ============================================================================
@@ -234,6 +252,26 @@ export const routes: RouteObject[] = [
         ],
       },
 
+      // Notifications Route (Protected)
+      {
+        path: "notifications",
+        element: (
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <NotificationsPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+
       // Post Routes (Protected)
       {
         path: "posts",
@@ -301,6 +339,22 @@ export const routes: RouteObject[] = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <ProfilePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "profile/:userId/followers",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <FollowersPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "profile/:userId/following",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <FollowingPage />
               </Suspense>
             ),
           },

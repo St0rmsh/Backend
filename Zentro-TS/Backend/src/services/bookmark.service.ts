@@ -71,7 +71,7 @@ const skip = (safePage - 1) * safeLimit;
                 .populate({
                     path: "post",
                     select:
-                        "title content coverImage category likesCount commentsCount createdAt",
+                        "title content coverImage category tags likesCount commentsCount viewsCount createdAt updatedAt isPublished",
                     populate: {
                         path: "user",
                         select: "fullname username avatar"

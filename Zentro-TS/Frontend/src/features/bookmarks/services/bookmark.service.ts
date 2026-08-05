@@ -11,13 +11,22 @@ export interface Bookmark {
 interface ToggleBookmarkResponse {
   message: string;
   success: boolean;
+  bookmark?: {
+    message: string;
+    bookmarked: boolean;
+  };
 }
 
 interface GetBookmarksResponse {
   success: boolean;
-  message: string;
+  message?: string;
   bookmarks: Bookmark[];
-  pagination: {
+  currentPage?: number;
+  totalPages?: number;
+  totalBookmarks?: number;
+  hasNextPage?: boolean;
+  hasPrevPage?: boolean;
+  pagination?: {
     currentPage: number;
     totalPages: number;
     totalBookmarks: number;

@@ -5,7 +5,7 @@ interface LikeResponse {
   success: boolean;
   data: {
     message: string;
-    // other fields if returned by like service
+    liked: boolean;
   };
 }
 

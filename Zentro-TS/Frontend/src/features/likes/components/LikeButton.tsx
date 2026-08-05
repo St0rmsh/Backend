@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/shared/ui/button";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
+import { updatePostLikesCount } from "../../feed/state/feedSlice";
+import { updatePostDetailLikesCount } from "../../post/state/postSlice";
 import { toggleLikeThunk, addLike, removeLike } from "../state/likeSlice";
 
 interface LikeButtonProps {
@@ -19,41 +21,52 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   const dispatch = useAppDispatch();
   const { likedPosts, loading } = useAppSelector((state) => state.likes);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
-
-  // Consider it liked if it's in our Redux list OR if it was initially liked and we haven't tracked it yet
-  // Wait, better to initialize redux state with the initially liked state on mount, or rely on Redux exclusively if we populated it.
-  // For simplicity, we'll assume the component manages its own optimistic count based on Redux.
+  const [displayCount, setDisplayCount] = useState(initialLikeCount);
 
   const isLiked = likedPosts.includes(postId) || isInitiallyLiked;
   const isLoading = loading[postId];
+  const visualIsLiked = isLiked;
 
-  // A simple optimistic count: if Redux thinks it's liked but it wasn't initially, +1.
-  // If it's not liked in Redux but was initially, -1.
-  const isReduxLiked = likedPosts.includes(postId);
-  const likeOffset = (isReduxLiked && !isInitiallyLiked) ? 1 : (!isReduxLiked && isInitiallyLiked ? -1 : 0);
-  const currentCount = Math.max(0, initialLikeCount + likeOffset);
+  useEffect(() => {
+    setDisplayCount(initialLikeCount);
+  }, [initialLikeCount]);
+
+  useEffect(() => {
+    if (isLiked) {
+      setDisplayCount((prev) => (prev < initialLikeCount ? initialLikeCount : prev));
+    } else {
+      setDisplayCount((prev) => (prev > initialLikeCount ? initialLikeCount : prev));
+    }
+  }, [isLiked, initialLikeCount]);
 
   const handleToggleLike = async () => {
     if (!isAuthenticated) {
-      // Could show a toast to login
       return;
     }
 
-    // Optimistic UI
-    if (isLiked) {
-      dispatch(removeLike(postId));
-    } else {
+    const willLike = !visualIsLiked;
+
+    setDisplayCount((prev) => Math.max(0, prev + (willLike ? 1 : -1)));
+    dispatch(updatePostLikesCount({ postId, delta: willLike ? 1 : -1 }));
+    dispatch(updatePostDetailLikesCount(willLike ? 1 : -1));
+
+    if (willLike) {
       dispatch(addLike(postId));
+    } else {
+      dispatch(removeLike(postId));
     }
 
     try {
       await dispatch(toggleLikeThunk(postId)).unwrap();
     } catch (err) {
-      // Revert on failure
-      if (isLiked) {
-        dispatch(addLike(postId));
-      } else {
+      setDisplayCount((prev) => Math.max(0, prev + (willLike ? -1 : 1)));
+      dispatch(updatePostLikesCount({ postId, delta: willLike ? -1 : 1 }));
+      dispatch(updatePostDetailLikesCount(willLike ? -1 : 1));
+
+      if (willLike) {
         dispatch(removeLike(postId));
+      } else {
+        dispatch(addLike(postId));
       }
     }
   };
@@ -65,25 +78,25 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
       className="gap-2 rounded-full hover:bg-muted group transition-all"
       onClick={handleToggleLike}
       disabled={isLoading}
-      aria-label={isLiked ? "Unlike post" : "Like post"}
+      aria-label={visualIsLiked ? "Unlike post" : "Like post"}
     >
       <motion.div
         whileTap={{ scale: 0.8 }}
-        animate={isLiked ? { scale: [1, 1.2, 1] } : {}}
+        animate={visualIsLiked ? { scale: [1, 1.2, 1] } : {}}
         transition={{ duration: 0.3 }}
       >
         <Heart
-          className={`h-5 w-5 transition-colors ${isLiked
+          className={`h-5 w-5 transition-colors ${visualIsLiked
               ? "fill-red-500 text-red-500"
               : "text-muted-foreground group-hover:text-red-500/80"
             }`}
         />
       </motion.div>
       <span
-        className={`text-sm font-medium transition-colors ${isLiked ? "text-red-500" : "text-muted-foreground"
+        className={`text-sm font-medium transition-colors ${visualIsLiked ? "text-red-500" : "text-muted-foreground"
           }`}
       >
-        {currentCount}
+        {displayCount}
       </span>
     </Button>
   );

@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { 
-  Heart, 
-  MessageCircle, 
-  Bookmark, 
-  Eye, 
-  Share2, 
+import {
+  MessageCircle,
+  Eye,
+  Share2,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
+import { LikeButton } from "../../likes/components/LikeButton";
+import { BookmarkButton } from "../../bookmarks/components/BookmarkButton";
 import { updateReadingProgress } from "../state/feedSlice";
 import { Post } from "../types/feed.types";
 import { AuthorCard } from "./AuthorCard";
@@ -25,11 +25,29 @@ interface FeedCardProps {
   index: number;
 }
 
-export function FeedCard({ post, index }: FeedCardProps) {
+export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const progress = useAppSelector((state) => state.feed.readingProgress[post._id] || 0);
+  const likedPosts = useAppSelector((state) => state.likes.likedPosts);
+  const feedPost = useAppSelector((state) => state.feed.posts.find((item) => item._id === post._id));
+  const bookmarkPost = useAppSelector((state) => state.bookmarks.bookmarksList.find((item) => (item.post?._id ?? item.post) === post._id)?.post);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [displayPost, setDisplayPost] = useState<Post>(post);
+
+  const resolvedPost = (feedPost ?? bookmarkPost ?? displayPost ?? post) as Post;
+
+  useEffect(() => {
+    setDisplayPost((current) => {
+      if (feedPost) {
+        return feedPost;
+      }
+      if (bookmarkPost) {
+        return bookmarkPost;
+      }
+      return current;
+    });
+  }, [feedPost, bookmarkPost]);
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -52,6 +70,11 @@ export function FeedCard({ post, index }: FeedCardProps) {
       dispatch(updateReadingProgress({ postId: post._id, progress: nextProgress }));
     }
     navigate(`/posts/${post._id}`);
+  };
+
+  const handleCommentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/posts/${post._id}#comments`);
   };
 
   // Helper to get formatted elapsed time
@@ -87,30 +110,30 @@ export function FeedCard({ post, index }: FeedCardProps) {
       <div className="p-5 flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
-          <AuthorCard author={post.user} />
+          <AuthorCard author={resolvedPost.user} />
           
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xs text-muted-foreground/80">{getElapsedTime(post.createdAt)}</span>
-            <CategoryChip category={post.category} />
+            <span className="text-xs text-muted-foreground/80">{getElapsedTime(resolvedPost.createdAt)}</span>
+            <CategoryChip category={resolvedPost.category} />
           </div>
         </div>
 
         {/* Title & Preview */}
         <div className="flex flex-col gap-2">
           <h2 className="text-lg md:text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
-            {post.title}
+            {resolvedPost.title}
           </h2>
           <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-            {post.content}
+            {resolvedPost.content}
           </p>
         </div>
 
         {/* Cover Image (if available) */}
-        {post.coverImage && (
+        {resolvedPost.coverImage && (
           <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-muted/20 border border-border/20">
             <motion.img
-              src={post.coverImage}
-              alt={post.title}
+              src={resolvedPost.coverImage}
+              alt={resolvedPost.title}
               loading="lazy"
               onLoad={() => setImageLoaded(true)}
               animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 1.03 }}
@@ -140,9 +163,9 @@ export function FeedCard({ post, index }: FeedCardProps) {
         )}
 
         {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
+        {resolvedPost.tags && resolvedPost.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-1">
-            {post.tags.map((tag) => (
+            {resolvedPost.tags.map((tag) => (
               <TagChip key={tag} tag={tag} />
             ))}
           </div>
@@ -153,50 +176,34 @@ export function FeedCard({ post, index }: FeedCardProps) {
       <div className="px-5 py-3.5 bg-muted/10 border-t border-border/30 flex items-center justify-between text-muted-foreground text-xs">
         <div className="flex items-center gap-4">
           {/* Views count */}
-          <span className="flex items-center gap-1.5 opacity-80" title={`${post.viewsCount} views`}>
+          <span className="flex items-center gap-1.5 opacity-80" title={`${resolvedPost.viewsCount} views`}>
             <Eye className="w-4 h-4" />
-            <span>{post.viewsCount >= 1000 ? `${(post.viewsCount / 1000).toFixed(1)}k` : post.viewsCount}</span>
+            <span>{resolvedPost.viewsCount >= 1000 ? `${(resolvedPost.viewsCount / 1000).toFixed(1)}k` : resolvedPost.viewsCount}</span>
           </span>
 
-          {/* Likes count (placeholder active) */}
-          <button 
-            className="flex items-center gap-1.5 hover:text-red-400 hover:scale-105 transition-all"
-            onClick={(e) => {
-              e.stopPropagation();
-              toast.info("Likes system is a placeholder for this phase.");
-            }}
-          >
-            <Heart className="w-4 h-4" />
-            <span>{post.likesCount}</span>
-          </button>
+          {/* Likes count */}
+          <div onClick={(e) => e.stopPropagation()}>
+            <LikeButton postId={post._id} initialLikeCount={resolvedPost.likesCount} isInitiallyLiked={likedPosts.includes(post._id)} />
+          </div>
 
-          {/* Comments count (placeholder active) */}
+          {/* Comments count */}
           <button 
             className="flex items-center gap-1.5 hover:text-primary hover:scale-105 transition-all"
-            onClick={(e) => {
-              e.stopPropagation();
-              toast.info("Comments system is a placeholder for this phase.");
-            }}
+            onClick={handleCommentClick}
           >
             <MessageCircle className="w-4 h-4" />
-            <span>{post.commentsCount}</span>
+            <span>{resolvedPost.commentsCount}</span>
           </button>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Reading Time */}
-          <ReadingTimeBadge content={post.content} />
+          <ReadingTimeBadge content={resolvedPost.content} />
 
-          {/* Bookmark (placeholder active) */}
-          <button 
-            className="p-1.5 rounded-full hover:bg-muted hover:text-foreground transition-all"
-            onClick={(e) => {
-              e.stopPropagation();
-              toast.info("Bookmarks system is a placeholder for this phase.");
-            }}
-          >
-            <Bookmark className="w-4 h-4" />
-          </button>
+          {/* Bookmark */}
+          <div className="rounded-full" onClick={(e) => e.stopPropagation()}>
+            <BookmarkButton postId={post._id} />
+          </div>
 
           {/* Share button */}
           <button 
@@ -218,4 +225,4 @@ export function FeedCard({ post, index }: FeedCardProps) {
       </div>
     </motion.article>
   );
-}
+});

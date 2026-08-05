@@ -27,6 +27,7 @@ export const bookmarkController = async (req:Request<{postId:string}>, res:Respo
 
     return res.status(200).json({
         success: true,
+        message: bookmark.message,
         bookmark
     });
   } catch (error) {

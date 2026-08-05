@@ -24,6 +24,8 @@ export const ROUTES = {
   POSTS: "/posts",
   POST_DETAIL: "/posts/:id",
   BOOKMARKS: "/bookmarks",
+  FOLLOWERS: "/app/profile/:userId/followers",
+  FOLLOWING: "/app/profile/:userId/following",
   NOTIFICATIONS: "/notifications",
   MESSAGES: "/messages",
 
