@@ -15,6 +15,7 @@ import { ScrollToTopButton } from "../components/ScrollToTopButton";
 import { AuthorCard } from "../components/AuthorCard";
 import { CommentList } from "../../comments/components/CommentList";
 import { motion, AnimatePresence } from "framer-motion";
+import { SEO } from "@/shared/components/SEO";
 
 export const PostDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -74,6 +75,12 @@ export const PostDetailsPage = () => {
 
   return (
     <div className="relative min-h-screen bg-background">
+      <SEO 
+        title={`${currentPost.title} — Zentro`}
+        description={currentPost.content.substring(0, 150)}
+        image={currentPost.coverImage}
+        type="article"
+      />
       <ReadingProgress />
 
       {/* Sticky Top Bar for Mobile */}

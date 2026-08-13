@@ -79,6 +79,48 @@ export const SEO = ({
     }
     ogUrl.setAttribute("content", url);
 
+    // Update Twitter Cards
+    let twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (!twitterCard) {
+      twitterCard = document.createElement("meta");
+      twitterCard.setAttribute("name", "twitter:card");
+      document.head.appendChild(twitterCard);
+    }
+    twitterCard.setAttribute("content", "summary_large_image");
+
+    let twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (!twitterTitle) {
+      twitterTitle = document.createElement("meta");
+      twitterTitle.setAttribute("name", "twitter:title");
+      document.head.appendChild(twitterTitle);
+    }
+    twitterTitle.setAttribute("content", title);
+
+    let twitterDesc = document.querySelector('meta[name="twitter:description"]');
+    if (!twitterDesc) {
+      twitterDesc = document.createElement("meta");
+      twitterDesc.setAttribute("name", "twitter:description");
+      document.head.appendChild(twitterDesc);
+    }
+    twitterDesc.setAttribute("content", description);
+
+    let twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (!twitterImage) {
+      twitterImage = document.createElement("meta");
+      twitterImage.setAttribute("name", "twitter:image");
+      document.head.appendChild(twitterImage);
+    }
+    twitterImage.setAttribute("content", image);
+
+    // Update Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", url);
+
   }, [title, description, image, type, url]);
 
   return null; // This component doesn't render any UI

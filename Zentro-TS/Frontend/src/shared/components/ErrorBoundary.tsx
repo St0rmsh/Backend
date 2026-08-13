@@ -1,10 +1,11 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { errorMonitor } from "../services/error.service";
+import { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/shared/ui/button";
+import { errorMonitor } from "../services/error.service";
 
 interface Props {
-  children?: ReactNode;
+  children: ReactNode;
   fallback?: ReactNode;
+  onReset?: () => void;
 }
 
 interface State {
@@ -25,7 +26,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Catch errors in any components below and re-render with error message
-    errorMonitor.captureException(error, { extra: errorInfo });
+    console.error("Uncaught error:", error, errorInfo);
+    errorMonitor.captureException(error, { reactErrorInfo: errorInfo });
   }
 
   private handleReset = () => {

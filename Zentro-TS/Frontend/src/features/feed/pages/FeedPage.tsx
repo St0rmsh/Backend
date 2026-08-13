@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { fetchFeedThunk, refreshFeedThunk, clearFeedError } from "../state/feedSlice";
 import { FeedHeader } from "../components/FeedHeader";
@@ -9,6 +9,8 @@ import { FeedError } from "../components/FeedError";
 import { InfiniteLoader } from "../components/InfiniteLoader";
 import { RefreshButton } from "../components/RefreshButton";
 import { AnimatePresence } from "framer-motion";
+
+import { SEO } from "@/shared/components/SEO";
 
 export function FeedPage() {
   const dispatch = useAppDispatch();
@@ -23,11 +25,11 @@ export function FeedPage() {
     };
   }, [dispatch, activeTab]);
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (!loading && hasNextPage) {
       dispatch(fetchFeedThunk(currentPage + 1));
     }
-  };
+  }, [loading, hasNextPage, currentPage, dispatch]);
 
   const handleRetry = () => {
     dispatch(fetchFeedThunk(1));
@@ -37,6 +39,7 @@ export function FeedPage() {
 
   return (
     <div className="flex flex-col min-h-screen pb-10">
+      <SEO title={`Zentro — ${activeTab === "home" ? "Home" : "Following"} Feed`} />
       {/* Top Feed Filter Tabs & Refresh Button */}
       <FeedHeader />
 

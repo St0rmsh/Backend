@@ -29,6 +29,38 @@ export default defineConfig({
             type: 'image/png'
           }
         ]
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/feed'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-feed-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 24 * 60 * 60 // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/posts'),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'api-posts-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       }
     })
   ],
@@ -53,8 +85,11 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', 'lucide-react', 'framer-motion'],
-          editor: ['@tiptap/react', '@tiptap/starter-kit']
+          core: ['@reduxjs/toolkit', 'react-redux', 'axios'],
+          form: ['react-hook-form', 'zod', '@hookform/resolvers'],
+          socket: ['socket.io-client'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-avatar', 'lucide-react', 'framer-motion'],
+          editor: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-image', '@tiptap/extension-link']
         }
       }
     }

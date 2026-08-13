@@ -73,8 +73,12 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Only handle 401 errors that haven't been retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Only handle 401 errors that haven't been retried yet and are not auth endpoints
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                          originalRequest.url?.includes('/auth/logout') || 
+                          originalRequest.url?.includes('/auth/refresh-access-token');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       // If refresh is already in progress, queue this request
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 
 interface InfiniteLoaderProps {
@@ -7,7 +7,7 @@ interface InfiniteLoaderProps {
   hasNextPage: boolean;
 }
 
-export function InfiniteLoader({ onLoadMore, loading, hasNextPage }: InfiniteLoaderProps) {
+export const InfiniteLoader = React.memo(function InfiniteLoader({ onLoadMore, loading, hasNextPage }: InfiniteLoaderProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,4 +43,4 @@ export function InfiniteLoader({ onLoadMore, loading, hasNextPage }: InfiniteLoa
       )}
     </div>
   );
-}
+});

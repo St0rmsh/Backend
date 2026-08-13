@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { SEO } from "@/shared/components/SEO";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -82,7 +83,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
     following: (user as any).followingCount || 0,
     bookmarks: isOwnProfile ? 12 : undefined,
   };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -90,6 +90,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
       transition={{ duration: 0.3 }}
       className="min-h-screen py-8"
     >
+      <SEO 
+        title={`Zentro — ${(user as any).fullname || (user as any).username}'s Profile`}
+        description={(user as any).bio || `Check out ${(user as any).username}'s profile on Zentro.`}
+        image={(user as any).avatar}
+        type="profile"
+      />
       {/* Profile Card */}
       <div className="max-w-4xl mx-auto px-4">
         <ProfileCard>
