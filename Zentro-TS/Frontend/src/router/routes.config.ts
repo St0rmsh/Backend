@@ -16,6 +16,8 @@ export const ROUTES = {
   HOME: "/",
   FEED: "/feed",
   EXPLORE: "/explore",
+  SEARCH: "/search",
+  DISCOVER: "/discover",
   OWN_PROFILE: "/app/profile",
   PROFILE: "/app/profile/:username",
   SETTINGS: "/settings",
@@ -30,10 +32,14 @@ export const ROUTES = {
   MESSAGES: "/messages",
 
   // Settings Routes
+  ACCOUNT_SETTINGS: "/settings/account",
   PROFILE_SETTINGS: "/settings/profile",
   SECURITY_SETTINGS: "/settings/security",
+  APPEARANCE_SETTINGS: "/settings/appearance",
   PRIVACY_SETTINGS: "/settings/privacy",
   PREFERENCES_SETTINGS: "/settings/preferences",
+  ABOUT_SETTINGS: "/settings/about",
+  HELP_SETTINGS: "/settings/help",
 
   // Admin Routes
   ADMIN_DASHBOARD: "/admin/dashboard",
@@ -112,6 +118,16 @@ export const ROUTE_METADATA: Record<
   },
   [ROUTES.EXPLORE]: {
     title: "Explore",
+    accessLevel: RouteAccessLevel.PROTECTED,
+    requiresAuth: true,
+  },
+  [ROUTES.SEARCH]: {
+    title: "Search",
+    accessLevel: RouteAccessLevel.PROTECTED,
+    requiresAuth: true,
+  },
+  [ROUTES.DISCOVER]: {
+    title: "Discover",
     accessLevel: RouteAccessLevel.PROTECTED,
     requiresAuth: true,
   },

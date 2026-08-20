@@ -1,15 +1,19 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { User, Shield, Eye, Settings as SettingsIcon } from "lucide-react";
+import { User, Shield, Eye, Settings as SettingsIcon, CreditCard, Palette, Info, HelpCircle } from "lucide-react";
 import { ROUTES } from "@/router/routes.config";
 import { Sidebar } from "./components/Sidebar";
 import { TopNavigation } from "./components/TopNavigation";
 import { BottomNavigation } from "./components/BottomNavigation";
 
 const SETTINGS_SECTIONS = [
+  { name: "Account", href: ROUTES.ACCOUNT_SETTINGS, icon: CreditCard },
   { name: "Profile", href: ROUTES.PROFILE_SETTINGS, icon: User },
   { name: "Security", href: ROUTES.SECURITY_SETTINGS, icon: Shield },
+  { name: "Appearance", href: ROUTES.APPEARANCE_SETTINGS, icon: Palette },
   { name: "Privacy", href: ROUTES.PRIVACY_SETTINGS, icon: Eye },
   { name: "Preferences", href: ROUTES.PREFERENCES_SETTINGS, icon: SettingsIcon },
+  { name: "About", href: ROUTES.ABOUT_SETTINGS, icon: Info },
+  { name: "Help", href: ROUTES.HELP_SETTINGS, icon: HelpCircle },
 ];
 
 /**

@@ -3,7 +3,7 @@ import type { IUser } from "../types/Auth/user.types.js";
 import bcrypt from "bcrypt"
 
 
-interface UserDocument extends Omit<IUser, "_id">,Document{
+export interface UserDocument extends Omit<IUser, "_id">,Document{
 comparePassword: (password: string) => Promise<boolean>}
 
 const USER_ROLES = [

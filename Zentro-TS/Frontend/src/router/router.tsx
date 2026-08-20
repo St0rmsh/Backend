@@ -11,6 +11,8 @@ import { AuthLayout } from "@/layouts/AuthLayout";
 import { MainLayout } from "@/layouts/MainLayout";
 import { SettingsLayout } from "@/layouts/SettingsLayout";
 import { ErrorLayout } from "@/layouts/ErrorLayout";
+import { AdminLayout } from "@/features/admin/components/AdminLayout";
+import { AdminRoute } from "./AdminRoute";
 
 // ============================================================================
 // LAZY LOADED AUTH PAGES
@@ -53,8 +55,72 @@ const ChangePasswordPage = lazy(() =>
 );
 
 const ProfileSettingsPage = lazy(() =>
-  import("@/features/auth/pages/ProfileSettingsPage").then((m) => ({
+  import("@/features/settings/pages/ProfileSettingsPage").then((m) => ({
     default: m.ProfileSettingsPage,
+  }))
+);
+
+const AccountSettingsPage = lazy(() =>
+  import("@/features/settings/pages/AccountSettingsPage").then((m) => ({
+    default: m.AccountSettingsPage,
+  }))
+);
+
+const SecuritySettingsPage = lazy(() =>
+  import("@/features/settings/pages/SecuritySettingsPage").then((m) => ({
+    default: m.SecuritySettingsPage,
+  }))
+);
+
+const AppearanceSettingsPage = lazy(() =>
+  import("@/features/settings/pages/AppearanceSettingsPage").then((m) => ({
+    default: m.AppearanceSettingsPage,
+  }))
+);
+
+const PreferencesSettingsPage = lazy(() =>
+  import("@/features/settings/pages/PreferencesSettingsPage").then((m) => ({
+    default: m.PreferencesSettingsPage,
+  }))
+);
+
+const PrivacySettingsPage = lazy(() =>
+  import("@/features/settings/pages/PrivacySettingsPage").then((m) => ({
+    default: m.PrivacySettingsPage,
+  }))
+);
+
+const AboutSettingsPage = lazy(() =>
+  import("@/features/settings/pages/AboutSettingsPage").then((m) => ({
+    default: m.AboutSettingsPage,
+  }))
+);
+
+const HelpSettingsPage = lazy(() =>
+  import("@/features/settings/pages/HelpSettingsPage").then((m) => ({
+    default: m.HelpSettingsPage,
+  }))
+);
+
+// ============================================================================
+// LAZY LOADED ADMIN PAGES
+// ============================================================================
+
+const AdminDashboardPage = lazy(() =>
+  import("@/features/admin/pages/AdminDashboardPage").then((m) => ({
+    default: m.AdminDashboardPage,
+  }))
+);
+
+const AdminUsersPage = lazy(() =>
+  import("@/features/admin/pages/AdminUsersPage").then((m) => ({
+    default: m.AdminUsersPage,
+  }))
+);
+
+const AdminReportsPage = lazy(() =>
+  import("@/features/admin/pages/AdminReportsPage").then((m) => ({
+    default: m.AdminReportsPage,
   }))
 );
 
@@ -68,11 +134,7 @@ const ProfilePage = lazy(() =>
   }))
 );
 
-const SettingsPage = lazy(() =>
-  import("@/features/profile/pages/SettingsPage").then((m) => ({
-    default: m.SettingsPage,
-  }))
-);
+// Removed old SettingsPage import
 
 // ============================================================================
 // LAZY LOADED FEED PAGES
@@ -127,6 +189,22 @@ const CreatePostPage = lazy(() =>
 const EditPostPage = lazy(() =>
   import("@/features/post-editor/pages/EditPostPage").then((m) => ({
     default: m.EditPostPage,
+  }))
+);
+
+// ============================================================================
+// LAZY LOADED SEARCH PAGES
+// ============================================================================
+
+const SearchPage = lazy(() =>
+  import("@/features/search/pages/SearchPage").then((m) => ({
+    default: m.SearchPage,
+  }))
+);
+
+const DiscoverPage = lazy(() =>
+  import("@/features/search/pages/DiscoverPage").then((m) => ({
+    default: m.DiscoverPage,
   }))
 );
 
@@ -226,6 +304,46 @@ export const routes: RouteObject[] = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <FeedPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+
+      // Search Route (Protected)
+      {
+        path: "search",
+        element: (
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <SearchPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+
+      // Discover Route (Protected)
+      {
+        path: "discover",
+        element: (
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <DiscoverPage />
               </Suspense>
             ),
           },
@@ -373,9 +491,13 @@ export const routes: RouteObject[] = [
         children: [
           {
             index: true,
+            element: <Navigate to="account" replace />,
+          },
+          {
+            path: "account",
             element: (
               <Suspense fallback={<PageLoader />}>
-                <SettingsPage />
+                <AccountSettingsPage />
               </Suspense>
             ),
           },
@@ -384,6 +506,94 @@ export const routes: RouteObject[] = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <ProfileSettingsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "security",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <SecuritySettingsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "appearance",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AppearanceSettingsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "privacy",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <PrivacySettingsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "preferences",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <PreferencesSettingsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "about",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AboutSettingsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "help",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <HelpSettingsPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+
+      // Admin Routes
+      {
+        path: "admin",
+        element: (
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: <Navigate to="dashboard" replace />,
+          },
+          {
+            path: "dashboard",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminDashboardPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "users",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminUsersPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "reports",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminReportsPage />
               </Suspense>
             ),
           },

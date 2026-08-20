@@ -10,6 +10,8 @@ import CommentRouter from "./routes/comment.route.js";
 import bookmarkRouter from "./routes/bookmark.route.js";
 import feedRouter from "./routes/feed.route.js";
 import notificationRouter from "./routes/notification.routes.js";
+import searchRouter from "./routes/search.route.js";
+import adminRouter from "./routes/admin.routes.js";
 import cors from "cors"
 const app = express()
 
@@ -68,5 +70,11 @@ app.use("/api/bookmark", bookmarkRouter)
 
 // Notification route
 app.use("/api/notification", notificationRouter)
+
+// Search route
+app.use("/api/search", searchRouter)
+
+// Admin route
+app.use("/api/admin", adminRouter)
 
 export default app

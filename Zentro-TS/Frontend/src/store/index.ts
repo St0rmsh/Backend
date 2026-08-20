@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "@/features/auth/state/authSlice";
 import userReducer from "./slices/userSlice";
 import notificationReducer from "@/features/notification/state/notificationSlice";
+import searchReducer from "@/features/search/state/searchSlice";
 import themeReducer from "./slices/themeSlice";
 import uiReducer from "./slices/uiSlice";
 import socketReducer from "./slices/socketSlice";
@@ -14,12 +15,14 @@ import postEditorReducer from "@/features/post-editor/state/postEditorSlice";
 import likeReducer from "@/features/likes/state/likeSlice";
 import bookmarkReducer from "@/features/bookmarks/state/bookmarkSlice";
 import followReducer from "@/features/follow/state/followSlice";
+import settingsReducer from "@/features/settings/state/settingsSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     user: userReducer,
     notification: notificationReducer,
+    search: searchReducer,
     theme: themeReducer,
     ui: uiReducer,
     socket: socketReducer,
@@ -31,6 +34,7 @@ export const store = configureStore({
     likes: likeReducer,
     bookmarks: bookmarkReducer,
     follow: followReducer,
+    settings: settingsReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
 });
