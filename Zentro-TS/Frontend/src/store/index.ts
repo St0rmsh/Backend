@@ -16,6 +16,15 @@ import likeReducer from "@/features/likes/state/likeSlice";
 import bookmarkReducer from "@/features/bookmarks/state/bookmarkSlice";
 import followReducer from "@/features/follow/state/followSlice";
 import settingsReducer from "@/features/settings/state/settingsSlice";
+import adminUsersReducer from "@/features/admin/state/adminUsersSlice";
+import adminPostsReducer from "@/features/admin/state/adminPostsSlice";
+import adminCommentsReducer from "@/features/admin/state/adminCommentsSlice";
+import adminReportsReducer from "@/features/admin/state/adminReportsSlice";
+import adminCategoriesReducer from "@/features/admin/state/adminCategoriesSlice";
+import adminTagsReducer from "@/features/admin/state/adminTagsSlice";
+import adminAnalyticsReducer from "@/features/admin/state/adminAnalyticsSlice";
+import recommendationReducer from "@/features/recommendation/state/recommendationSlice";
+import readingReducer from "@/features/reading/state/readingSlice";
 
 export const store = configureStore({
   reducer: {
@@ -35,6 +44,15 @@ export const store = configureStore({
     bookmarks: bookmarkReducer,
     follow: followReducer,
     settings: settingsReducer,
+    adminUsers: adminUsersReducer,
+    adminPosts: adminPostsReducer,
+    adminComments: adminCommentsReducer,
+    adminReports: adminReportsReducer,
+    adminCategories: adminCategoriesReducer,
+    adminTags: adminTagsReducer,
+    adminAnalytics: adminAnalyticsReducer,
+    recommendation: recommendationReducer,
+    reading: readingReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
 });

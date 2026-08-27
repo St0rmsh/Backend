@@ -1,6 +1,8 @@
 import { useEffect, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { fetchFeedThunk, refreshFeedThunk, clearFeedError } from "../state/feedSlice";
+import { fetchRecommendationsStart, fetchTrendingSuccess, fetchUsersSuccess } from "@/features/recommendation/state/recommendationSlice";
+import { recommendationService } from "@/features/recommendation/services/recommendation.service";
 import { FeedHeader } from "../components/FeedHeader";
 import { FeedCard } from "../components/FeedCard";
 import { FeedSkeleton } from "../components/FeedSkeleton";
@@ -9,17 +11,41 @@ import { FeedError } from "../components/FeedError";
 import { InfiniteLoader } from "../components/InfiniteLoader";
 import { RefreshButton } from "../components/RefreshButton";
 import { AnimatePresence } from "framer-motion";
-
 import { SEO } from "@/shared/components/SEO";
+
+import { RecommendationSection, RecommendationGrid } from "@/features/recommendation/components/RecommendationSection";
+import { RecommendationCard } from "@/features/recommendation/components/RecommendationCard";
+import { TrendingTags, TrendingCategories } from "@/features/recommendation/components/TrendingSidebar";
+import { RecommendedAuthor } from "@/features/recommendation/components/RecommendedAuthor";
+import { RecommendationSkeleton } from "@/features/recommendation/components/RecommendationSkeleton";
 
 export function FeedPage() {
   const dispatch = useAppDispatch();
   const { posts, loading, error, currentPage, hasNextPage, activeTab } =
     useAppSelector((state) => state.feed);
+    
+  const { trendingPosts, trendingTags, trendingCategories, recommendedUsers, isLoading: isRecLoading } = 
+    useAppSelector((state) => state.recommendation);
 
-  // Fetch feed on mount or when tab changes
+  // Fetch feed and recommendations on mount or when tab changes
   useEffect(() => {
     dispatch(fetchFeedThunk(1));
+    
+    // Load recommendations (Mock API calls)
+    const loadRecommendations = async () => {
+      dispatch(fetchRecommendationsStart());
+      try {
+        const trending = await recommendationService.getTrending();
+        dispatch(fetchTrendingSuccess(trending));
+        
+        const users = await recommendationService.getRecommendedUsers();
+        dispatch(fetchUsersSuccess(users));
+      } catch (err) {
+        console.error("Failed to load recommendations", err);
+      }
+    };
+    loadRecommendations();
+    
     return () => {
       dispatch(clearFeedError());
     };
@@ -39,56 +65,87 @@ export function FeedPage() {
 
   return (
     <div className="flex flex-col min-h-screen pb-10">
-      <SEO title={`Zentro — ${activeTab === "home" ? "Home" : "Following"} Feed`} />
-      {/* Top Feed Filter Tabs & Refresh Button */}
+      <SEO title={`Zentro — ${activeTab === "home" ? "Smart Home" : "Following"} Feed`} />
       <FeedHeader />
 
-      {/* Main Feed Content Area */}
-      <div className="flex-1 w-full max-w-3xl mx-auto px-4 py-6 space-y-6">
-        {/* Floating/Header Refresh Status */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold tracking-tight text-foreground capitalize">
-            {activeTab === "home" ? "Home Feed" : `${activeTab} Feed`}
-          </h1>
-          <RefreshButton />
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-6">
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Main Feed Content Area */}
+          <div className="flex-1 max-w-3xl space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground capitalize">
+                {activeTab === "home" ? "For You" : `${activeTab} Feed`}
+              </h1>
+              <RefreshButton />
+            </div>
+
+            {/* Smart Feed Injection: Trending Posts (only on home tab) */}
+            {activeTab === "home" && !isRecLoading && trendingPosts.length > 0 && (
+              <RecommendationSection title="Trending Today">
+                <RecommendationGrid>
+                  {trendingPosts.map(post => (
+                    <RecommendationCard key={post.id} post={post} />
+                  ))}
+                </RecommendationGrid>
+              </RecommendationSection>
+            )}
+            
+            {activeTab === "home" && isRecLoading && <RecommendationSkeleton />}
+
+            {/* Initial Loading Skeletons */}
+            {isInitialLoad && (
+              <div className="space-y-6">
+                <FeedSkeleton />
+                <FeedSkeleton />
+              </div>
+            )}
+
+            {/* Error State */}
+            {!isInitialLoad && error && (
+              <FeedError message={error} onRetry={handleRetry} />
+            )}
+
+            {/* Empty State */}
+            {!isInitialLoad && !error && posts.length === 0 && (
+              <FeedEmpty onRefresh={() => dispatch(refreshFeedThunk())} />
+            )}
+
+            {/* Standard Feed List */}
+            {!isInitialLoad && posts.length > 0 && (
+              <div className="space-y-6">
+                <AnimatePresence mode="popLayout">
+                  {posts.map((post, index) => (
+                    <FeedCard key={post._id} post={post} index={index} />
+                  ))}
+                </AnimatePresence>
+
+                <InfiniteLoader
+                  onLoadMore={handleLoadMore}
+                  loading={loading}
+                  hasNextPage={hasNextPage}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Right Sidebar for Recommendations */}
+          <aside className="hidden lg:block w-80 space-y-8 sticky top-24 h-fit">
+            <TrendingTags tags={trendingTags} />
+            
+            <div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
+              <h3 className="font-bold text-lg mb-4">Who to follow</h3>
+              <div className="space-y-1 divide-y divide-border/30">
+                {recommendedUsers.map(user => (
+                  <RecommendedAuthor key={user.id} user={user} />
+                ))}
+              </div>
+            </div>
+
+            <TrendingCategories categories={trendingCategories} />
+          </aside>
+          
         </div>
-
-        {/* Initial Loading Skeletons */}
-        {isInitialLoad && (
-          <div className="space-y-6">
-            <FeedSkeleton />
-            <FeedSkeleton />
-            <FeedSkeleton />
-          </div>
-        )}
-
-        {/* Error State */}
-        {!isInitialLoad && error && (
-          <FeedError message={error} onRetry={handleRetry} />
-        )}
-
-        {/* Empty State */}
-        {!isInitialLoad && !error && posts.length === 0 && (
-          <FeedEmpty onRefresh={() => dispatch(refreshFeedThunk())} />
-        )}
-
-        {/* Feed List */}
-        {!isInitialLoad && posts.length > 0 && (
-          <div className="space-y-6">
-            <AnimatePresence mode="popLayout">
-              {posts.map((post, index) => (
-                <FeedCard key={post._id} post={post} index={index} />
-              ))}
-            </AnimatePresence>
-
-            {/* Infinite Scroll trigger / Pagination Loader */}
-            <InfiniteLoader
-              onLoadMore={handleLoadMore}
-              loading={loading}
-              hasNextPage={hasNextPage}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

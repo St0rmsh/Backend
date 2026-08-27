@@ -1,63 +1,152 @@
-import { Search } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Search, TrendingUp, Hash, Loader2, Sparkles } from "lucide-react";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { setGlobalSearchOpen } from "@/store/slices/uiSlice";
-import { TrendingSidebar } from "@/features/feed/components/TrendingSidebar";
+import { fetchDiscoverData, addRecentSearch, setSearchQuery } from "@/features/search/state/searchSlice";
+import type { Tag } from "@/features/search/types";
 
 export const RightSidebar = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const location = useLocation();
   const { rightSidebarOpen } = useAppSelector((state) => state.ui);
+  const { trendingTags, topUsers, discoverLoading } = useAppSelector((state) => state.search);
+  const [hasFetched, setHasFetched] = useState(false);
 
-  const isFeedPage = location.pathname === "/feed" || location.pathname === "/";
+  // Fetch discover data once for trending tags and top users
+  useEffect(() => {
+    if (!hasFetched && rightSidebarOpen) {
+      dispatch(fetchDiscoverData());
+      setHasFetched(true);
+    }
+  }, [dispatch, hasFetched, rightSidebarOpen]);
+
+  const handleTagClick = (tagName: string) => {
+    dispatch(setSearchQuery(tagName));
+    dispatch(addRecentSearch(tagName));
+    navigate(`/search?q=${encodeURIComponent(tagName)}`);
+  };
 
   if (!rightSidebarOpen) return null;
 
   return (
-    <aside className="hidden lg:block w-[320px] sticky top-0 h-screen border-l border-border bg-background p-6 overflow-y-auto z-30">
-      {/* Search Trigger */}
-      <div className="mb-8">
+    <aside className="hidden lg:block w-[320px] sticky top-0 h-screen border-l border-border bg-background overflow-y-auto z-30">
+      <div className="p-5 space-y-6">
+        {/* Search Trigger — Full-width search bar style */}
         <button
           onClick={() => dispatch(setGlobalSearchOpen(true))}
-          className="flex w-full items-center gap-2 rounded-full border border-border bg-muted/50 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted transition-colors shadow-sm"
+          className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shadow-sm group"
         >
-          <Search className="h-4 w-4" />
-          <span>Search Zentro...</span>
-          <div className="ml-auto flex items-center gap-1 opacity-60">
-            <kbd className="inline-flex h-5 items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <Search className="h-4 w-4 group-hover:text-primary transition-colors" />
+          <span className="flex-1 text-left">Search Zentro...</span>
+          <div className="flex items-center gap-0.5 opacity-50 group-hover:opacity-80 transition-opacity">
+            <kbd className="inline-flex h-5 items-center gap-0.5 rounded-md border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
               <span className="text-xs">⌘</span>K
             </kbd>
           </div>
         </button>
-      </div>
 
-      {isFeedPage ? (
-        <TrendingSidebar />
-      ) : (
-        /* Default/Fallback Topics/Trends Placeholder */
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-semibold mb-4 text-sm tracking-tight text-foreground/80">Trending Topics</h3>
+        {/* Trending Tags — Real data from backend */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <h3 className="font-semibold text-sm text-foreground">Trending</h3>
+          </div>
+          {discoverLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="group cursor-pointer">
-                  <p className="text-xs text-muted-foreground mb-1">Technology • Trending</p>
-                  <p className="font-medium text-sm group-hover:text-primary transition-colors">Future of AI</p>
-                  <p className="text-xs text-muted-foreground mt-1">10.5k posts</p>
+                <div key={i} className="flex items-center gap-3 px-2 py-2">
+                  <div className="h-8 w-8 rounded-lg bg-muted animate-pulse" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+                    <div className="h-2 w-16 rounded bg-muted/60 animate-pulse" />
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
+          ) : trendingTags.length > 0 ? (
+            <div className="space-y-0.5">
+              {trendingTags.slice(0, 6).map((tag: Tag, index: number) => (
+                <button
+                  key={tag.name}
+                  onClick={() => handleTagClick(tag.name)}
+                  className="w-full group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/5 transition-all text-left"
+                >
+                  <div className="h-8 w-8 rounded-lg bg-primary/8 group-hover:bg-primary/15 flex items-center justify-center transition-colors flex-shrink-0">
+                    <Hash className="h-3.5 w-3.5 text-primary/70 group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                      {tag.name}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">{tag.count} posts</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+                    {index + 1}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground/60 px-2 py-4">No trending tags yet</p>
+          )}
         </div>
-      )}
-      
-      {/* Footer Links */}
-      <div className="mt-8 pt-6 border-t border-border/40 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-muted-foreground/70">
-        <a href="#" className="hover:underline">About</a>
-        <a href="#" className="hover:underline">Help Center</a>
-        <a href="#" className="hover:underline">Terms of Service</a>
-        <a href="#" className="hover:underline">Privacy Policy</a>
-        <p className="w-full mt-2">© 2026 Zentro</p>
+
+        {/* Who to Follow — Real data from backend */}
+        {topUsers.length > 0 && (
+          <div className="pt-4 border-t border-border/40">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-7 w-7 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+              </div>
+              <h3 className="font-semibold text-sm text-foreground">Suggested for you</h3>
+            </div>
+            <div className="space-y-0.5">
+              {topUsers.slice(0, 4).map((user: any) => {
+                const username = user.username || user.name || "";
+                const displayName = user.name || username;
+                const avatar = user.profileImage || user.avatar;
+                return (
+                  <Link
+                    key={user._id}
+                    to={`/app/profile/${username}`}
+                    className="group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/50 transition-all"
+                  >
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt={displayName}
+                        className="h-9 w-9 rounded-full object-cover border border-border/30 group-hover:border-primary/30 transition-colors flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center flex-shrink-0 text-sm font-semibold text-primary">
+                        {displayName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                        {displayName}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">@{username}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Footer Links */}
+        <div className="pt-4 border-t border-border/40 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-muted-foreground/60">
+          <a href="#" className="hover:underline hover:text-muted-foreground transition-colors">About</a>
+          <a href="#" className="hover:underline hover:text-muted-foreground transition-colors">Help Center</a>
+          <a href="#" className="hover:underline hover:text-muted-foreground transition-colors">Terms of Service</a>
+          <a href="#" className="hover:underline hover:text-muted-foreground transition-colors">Privacy Policy</a>
+          <p className="w-full mt-2">© 2026 Zentro</p>
+        </div>
       </div>
     </aside>
   );

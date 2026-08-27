@@ -41,3 +41,25 @@ export const authMiddleware = async (req:Request,res:Response,next:NextFunction)
         });
     }
 }
+
+// Alias used by admin routes
+export const protect = authMiddleware;
+
+// Role-based access control middleware
+export const restrictTo = (...allowedRoles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        const userRoles = req.user?.roles ?? [];
+        const hasRole = userRoles.some((role: string) =>
+            allowedRoles.map(r => r.toLowerCase()).includes(role.toLowerCase())
+        );
+
+        if (!hasRole) {
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden: insufficient permissions"
+            });
+        }
+
+        next();
+    };
+};

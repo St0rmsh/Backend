@@ -1,30 +1,36 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Users, FileText, MessageSquare, Flag } from "lucide-react";
 import { StatsCard } from "../components/StatsCard";
 import { AnalyticsChart } from "../components/AnalyticsChart";
-
-// Dummy data for charts
-const userGrowthData = [
-  { name: "Jan", users: 400 },
-  { name: "Feb", users: 600 },
-  { name: "Mar", users: 800 },
-  { name: "Apr", users: 1200 },
-  { name: "May", users: 1500 },
-  { name: "Jun", users: 2100 },
-  { name: "Jul", users: 2800 },
-];
-
-const postActivityData = [
-  { name: "Mon", posts: 24 },
-  { name: "Tue", posts: 35 },
-  { name: "Wed", posts: 42 },
-  { name: "Thu", posts: 38 },
-  { name: "Fri", posts: 55 },
-  { name: "Sat", posts: 65 },
-  { name: "Sun", posts: 48 },
-];
+import { useAppDispatch, useAppSelector } from "@/shared/hooks";
+import { fetchAnalyticsStart, fetchAnalyticsSuccess, fetchAnalyticsFailure } from "../state/adminAnalyticsSlice";
+import { analyticsService } from "../services/analytics.service";
+import { AdminLoader } from "../components/AdminLoader";
 
 export const AdminDashboardPage = () => {
+  const dispatch = useAppDispatch();
+  const { data, isLoading } = useAppSelector((state) => state.adminAnalytics);
+
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      dispatch(fetchAnalyticsStart());
+      try {
+        const stats = await analyticsService.getAnalytics();
+        dispatch(fetchAnalyticsSuccess(stats));
+      } catch (err: any) {
+        dispatch(fetchAnalyticsFailure(err.message));
+      }
+    };
+    if (!data) {
+      loadAnalytics();
+    }
+  }, [dispatch, data]);
+
+  if (isLoading || !data) {
+    return <AdminLoader />;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -41,28 +47,28 @@ export const AdminDashboardPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard 
           title="Total Users" 
-          value="12,482" 
+          value={data.totalUsers.toLocaleString()} 
           icon={<Users className="w-6 h-6" />} 
           trend={12.5} 
           trendLabel="vs last month" 
         />
         <StatsCard 
           title="Total Posts" 
-          value="48,291" 
+          value={data.totalPosts.toLocaleString()} 
           icon={<FileText className="w-6 h-6" />} 
           trend={8.2} 
           trendLabel="vs last month" 
         />
         <StatsCard 
           title="Total Comments" 
-          value="142,884" 
+          value={data.totalComments.toLocaleString()} 
           icon={<MessageSquare className="w-6 h-6" />} 
           trend={15.3} 
           trendLabel="vs last month" 
         />
         <StatsCard 
           title="Pending Reports" 
-          value="34" 
+          value={data.totalReports.toLocaleString()} 
           icon={<Flag className="w-6 h-6" />} 
           trend={-5.1} 
           trendLabel="vs last month" 
@@ -74,14 +80,14 @@ export const AdminDashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnalyticsChart 
           title="User Growth" 
-          data={userGrowthData} 
+          data={data.userGrowth} 
           xKey="name" 
           yKey="users" 
           color="#8b5cf6" 
         />
         <AnalyticsChart 
           title="Weekly Post Activity" 
-          data={postActivityData} 
+          data={data.postActivity} 
           xKey="name" 
           yKey="posts" 
           type="bar" 
@@ -89,7 +95,7 @@ export const AdminDashboardPage = () => {
         />
       </div>
 
-      {/* Recent Activity or Quick Actions could go here */}
+      {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
           <h3 className="font-semibold text-lg mb-4">Recent Reports</h3>
@@ -106,14 +112,6 @@ export const AdminDashboardPage = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">Database</span>
-              <span className="text-xs font-medium px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded-full">Operational</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Storage (Cloudinary)</span>
-              <span className="text-xs font-medium px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded-full">Operational</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">WebSocket</span>
               <span className="text-xs font-medium px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded-full">Operational</span>
             </div>
           </div>

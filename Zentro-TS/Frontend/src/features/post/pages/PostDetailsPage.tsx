@@ -6,7 +6,6 @@ import { PostSkeleton } from "../components/PostSkeleton";
 import { PostError } from "../components/PostError";
 import { PostHeader } from "../components/PostHeader";
 import { PostContent } from "../components/PostContent";
-import { ReadingProgress } from "../components/ReadingProgress";
 import { TableOfContents } from "../components/TableOfContents";
 import { ReadingControls } from "../components/ReadingControls";
 import { InteractionBar } from "../components/InteractionBar";
@@ -16,6 +15,11 @@ import { AuthorCard } from "../components/AuthorCard";
 import { CommentList } from "../../comments/components/CommentList";
 import { motion, AnimatePresence } from "framer-motion";
 import { SEO } from "@/shared/components/SEO";
+
+import { useScrollProgress } from "@/features/reading/hooks/useScrollProgress";
+import { ReadingProgressBar } from "@/features/reading/components/ReadingProgressBar";
+import { EstimatedReadingTime } from "@/features/reading/components/EstimatedReadingTime";
+import { FocusModeButton } from "@/features/reading/components/FocusModeButton";
 
 export const PostDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +36,8 @@ export const PostDetailsPage = () => {
       dispatch(clearPost());
     };
   }, [dispatch, id]);
+
+  useScrollProgress(currentPost?._id);
 
   // Restore reading position when post is loaded
   useEffect(() => {
@@ -81,11 +87,12 @@ export const PostDetailsPage = () => {
         image={currentPost.coverImage}
         type="article"
       />
-      <ReadingProgress />
+      <ReadingProgressBar />
 
       {/* Sticky Top Bar for Mobile */}
       <div className="md:hidden sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/40 p-3 flex justify-between items-center">
         <h1 className="text-sm font-semibold truncate">{currentPost.title}</h1>
+        <FocusModeButton />
       </div>
 
       <div className="flex w-full items-start justify-center pt-8 pb-32">
@@ -102,7 +109,17 @@ export const PostDetailsPage = () => {
           className={`w-full max-w-5xl px-4 sm:px-6 lg:px-8 mx-auto transition-all duration-300 flex flex-col`}
         >
           <div className={`w-full mx-auto transition-all duration-300 ${contentWidthClass}`}>
-            <PostHeader post={currentPost} />
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex-1">
+                <PostHeader post={currentPost} />
+                <div className="mt-4">
+                  <EstimatedReadingTime words={currentPost.content.split(/\s+/).length} />
+                </div>
+              </div>
+              <div className="hidden md:block ml-4">
+                <FocusModeButton />
+              </div>
+            </div>
 
             <div
               className={`mt-10 mb-16 transition-all duration-300`}

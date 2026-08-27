@@ -124,6 +124,42 @@ const AdminReportsPage = lazy(() =>
   }))
 );
 
+const AdminPostsPage = lazy(() =>
+  import("@/features/admin/pages/AdminPostsPage").then((m) => ({
+    default: m.AdminPostsPage,
+  }))
+);
+
+const AdminCommentsPage = lazy(() =>
+  import("@/features/admin/pages/AdminCommentsPage").then((m) => ({
+    default: m.AdminCommentsPage,
+  }))
+);
+
+const AdminCategoriesPage = lazy(() =>
+  import("@/features/admin/pages/AdminCategoriesPage").then((m) => ({
+    default: m.AdminCategoriesPage,
+  }))
+);
+
+const AdminTagsPage = lazy(() =>
+  import("@/features/admin/pages/AdminTagsPage").then((m) => ({
+    default: m.AdminTagsPage,
+  }))
+);
+
+const AdminAnalyticsPage = lazy(() =>
+  import("@/features/admin/pages/AdminAnalyticsPage").then((m) => ({
+    default: m.AdminAnalyticsPage,
+  }))
+);
+
+const AdminSettingsPage = lazy(() =>
+  import("@/features/admin/pages/AdminSettingsPage").then((m) => ({
+    default: m.AdminSettingsPage,
+  }))
+);
+
 // ============================================================================
 // LAZY LOADED PROFILE PAGES
 // ============================================================================
@@ -594,6 +630,54 @@ export const routes: RouteObject[] = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <AdminReportsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "posts",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminPostsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "comments",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminCommentsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "categories",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminCategoriesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "tags",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminTagsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "analytics",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminAnalyticsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "settings",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AdminSettingsPage />
               </Suspense>
             ),
           },

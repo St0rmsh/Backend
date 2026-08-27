@@ -18,6 +18,8 @@ import {
 import { ProfileUser } from "../types/profile.types";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { fetchFollowStatusThunk } from "@/features/follow/state/followSlice";
+import { ReadingStatsTab } from "@/features/reading/components/ReadingStatsTab";
+import { useState } from "react";
 
 type ProfileParams = {
   username?: string;
@@ -33,6 +35,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
   const dispatch = useAppDispatch();
   const { user: currentUser } = useAuth();
   const { profile, loading } = useProfile();
+  
+  const [activeTab, setActiveTab] = useState<'posts' | 'stats'>('posts');
 
   // Determine if viewing own profile
   const isOwnProfile = isOwnProfileProp || !username || username === currentUser?.username;
@@ -132,15 +136,57 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
           </div>
         </ProfileCard>
 
-        {/* Posts Section Placeholder */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="mt-8 p-8 text-center text-muted-foreground"
-        >
-          <p>Posts feature coming soon...</p>
-        </motion.div>
+        {/* Tabs for Own Profile */}
+        {isOwnProfile && (
+          <div className="mt-8 flex items-center justify-center gap-8 border-b border-border/50 pb-px">
+            <button
+              onClick={() => setActiveTab('posts')}
+              className={`pb-4 text-sm font-semibold transition-colors relative ${
+                activeTab === 'posts' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Posts
+              {activeTab === 'posts' && (
+                <motion.div layoutId="profile-tab-indicator" className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`pb-4 text-sm font-semibold transition-colors relative ${
+                activeTab === 'stats' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Reading Stats
+              {activeTab === 'stats' && (
+                <motion.div layoutId="profile-tab-indicator" className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full" />
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Content Section */}
+        <div className="mt-8">
+          {(!isOwnProfile || activeTab === 'posts') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="p-8 text-center text-muted-foreground bg-card border border-border/50 rounded-2xl"
+            >
+              <p>Posts feature coming soon...</p>
+            </motion.div>
+          )}
+
+          {isOwnProfile && activeTab === 'stats' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ReadingStatsTab />
+            </motion.div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

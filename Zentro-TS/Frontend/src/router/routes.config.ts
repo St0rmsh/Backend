@@ -45,7 +45,13 @@ export const ROUTES = {
   ADMIN_DASHBOARD: "/admin/dashboard",
   ADMIN_USERS: "/admin/users",
   ADMIN_POSTS: "/admin/posts",
+  ADMIN_COMMENTS: "/admin/comments",
   ADMIN_REPORTS: "/admin/reports",
+  ADMIN_CATEGORIES: "/admin/categories",
+  ADMIN_TAGS: "/admin/tags",
+  ADMIN_ANALYTICS: "/admin/analytics",
+  ADMIN_SETTINGS: "/admin/settings",
+  ADMIN_LOGS: "/admin/logs",
 
   // System Routes
   NOT_FOUND: "*",
