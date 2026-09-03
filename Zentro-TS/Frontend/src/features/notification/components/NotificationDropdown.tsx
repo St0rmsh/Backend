@@ -23,6 +23,15 @@ const timeAgo = (value: string) => {
 
 export const NotificationDropdown = ({ notifications, unreadCount, onNotificationClick, onClose }: NotificationDropdownProps) => {
   const dispatch = useAppDispatch();
+  const groupedNotifications = notifications.reduce<Notification[][]>((groups, item) => {
+    const previous = groups[groups.length - 1];
+    if (previous && previous[0]?.type === item.type && item.createdAt.slice(0, 10) === previous[0].createdAt.slice(0, 10)) {
+      previous.push(item);
+    } else {
+      groups.push([item]);
+    }
+    return groups;
+  }, []);
 
   return (
     <div className="max-h-105 overflow-hidden rounded-xl">
@@ -46,7 +55,10 @@ export const NotificationDropdown = ({ notifications, unreadCount, onNotificatio
         {notifications.length === 0 ? (
           <div className="px-4 py-10 text-center text-sm text-muted-foreground">No notifications yet.</div>
         ) : (
-          notifications.map((item) => (
+          groupedNotifications.map((group) => {
+            const item = group[0];
+            if (!item) return null;
+            return (
             <motion.div
               key={item.id}
               layout
@@ -60,7 +72,7 @@ export const NotificationDropdown = ({ notifications, unreadCount, onNotificatio
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-medium">{item.title}</p>
-                      <p className="text-sm text-muted-foreground">{item.message}</p>
+                      <p className="text-sm text-muted-foreground">{group.length > 1 ? `${item.message} and ${group.length - 1} more` : item.message}</p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => dispatch(deleteNotificationThunk(item.id))}>
                       <Trash2 className="h-4 w-4" />
@@ -77,7 +89,8 @@ export const NotificationDropdown = ({ notifications, unreadCount, onNotificatio
                 </div>
               </div>
             </motion.div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

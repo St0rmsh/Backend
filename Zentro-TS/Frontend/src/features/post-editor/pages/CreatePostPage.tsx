@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -17,6 +17,8 @@ import { EditorContent } from '../components/EditorContent';
 import { PublishPanel } from '../components/PublishPanel';
 import { DraftStatus } from '../components/DraftStatus';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { handleApiError } from '@/shared/utils/errorHandler';
 
 export const CreatePostPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,9 +27,13 @@ export const CreatePostPage: React.FC = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<{ url: string; type: "image" | "video" } | null>(null);
+  const previewUrls = useRef<string[]>([]);
 
   useEffect(() => {
     dispatch(resetEditor());
+    return () => {
+      previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    };
   }, [dispatch]);
 
   const handlePublish = async (isPublished: boolean = true) => {
@@ -64,26 +70,27 @@ export const CreatePostPage: React.FC = () => {
       
       // Navigate to edit page to avoid creating new posts on subsequent saves
       if (response.data && response.data._id) {
-        navigate(`/editor/${response.data._id}`, { replace: true });
+        navigate(`/posts/edit/${response.data._id}`, { replace: true });
       } else {
         navigate('/');
       }
     } catch (error) {
       console.error('Failed to create post', error);
+      toast.error(handleApiError(error, 'Unable to create post. Check your media and try again.'));
     } finally {
       dispatch(setSavingStatus(false));
     }
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-20 pb-12">
+    <div className="min-h-screen bg-background/80 pt-20 pb-12 text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-8">
           <button 
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="w-5 h-5" /> Back
           </button>
@@ -98,9 +105,11 @@ export const CreatePostPage: React.FC = () => {
               onUpload={(file) => {
                 setCoverFile(file);
                 const objectUrl = URL.createObjectURL(file);
+                previewUrls.current.push(objectUrl);
                 dispatch(setEditorState({ coverImage: objectUrl }));
               }}
               onRemove={() => {
+                if (editorState.coverImage?.startsWith('blob:')) URL.revokeObjectURL(editorState.coverImage);
                 setCoverFile(null);
                 dispatch(setEditorState({ coverImage: undefined }));
               }}
@@ -110,10 +119,17 @@ export const CreatePostPage: React.FC = () => {
               mediaUrl={mediaPreview?.url}
               mediaType={mediaPreview?.type}
               onUpload={(file) => {
+                if (mediaPreview?.url) URL.revokeObjectURL(mediaPreview.url);
                 setMediaFile(file);
-                setMediaPreview({ url: URL.createObjectURL(file), type: file.type.startsWith('video/') ? 'video' : 'image' });
+                const objectUrl = URL.createObjectURL(file);
+                previewUrls.current.push(objectUrl);
+                setMediaPreview({ url: objectUrl, type: file.type.startsWith('video/') ? 'video' : 'image' });
               }}
-              onRemove={() => { setMediaFile(null); setMediaPreview(null); }}
+              onRemove={() => {
+                if (mediaPreview?.url) URL.revokeObjectURL(mediaPreview.url);
+                setMediaFile(null);
+                setMediaPreview(null);
+              }}
             />
 
             <TitleInput 
@@ -131,7 +147,7 @@ export const CreatePostPage: React.FC = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="w-full lg:w-80 flex-shrink-0">
+          <div className="w-full lg:w-80 shrink-0">
             <PublishPanel 
               onPublish={() => handlePublish(true)}
               onSaveDraft={() => handlePublish(false)}

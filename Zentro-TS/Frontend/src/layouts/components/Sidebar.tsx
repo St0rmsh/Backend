@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Compass, Edit3, Bell, User, Settings, LogOut, ChevronLeft, ChevronRight, Bookmark } from "lucide-react";
+import { Home, Compass, Edit3, Bell, User, Settings, LogOut, ChevronLeft, ChevronRight, Bookmark, MessageCircle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { ROUTES } from "@/router/routes.config";
 import { toggleSidebar } from "@/store/slices/uiSlice";
@@ -21,6 +21,7 @@ export const Sidebar = () => {
     { icon: Compass, label: "Explore", href: ROUTES.EXPLORE },
     { icon: Bookmark, label: "Bookmarks", href: ROUTES.BOOKMARKS },
     { icon: Bell, label: "Notifications", href: ROUTES.NOTIFICATIONS },
+    { icon: MessageCircle, label: "Messages", href: ROUTES.MESSAGES },
     { icon: Edit3, label: "Write", href: ROUTES.POSTS + "/new" },
     { icon: User, label: "Profile", href: ROUTES.PROFILE.replace(":username", user.username) },
     { icon: Settings, label: "Settings", href: ROUTES.SETTINGS },

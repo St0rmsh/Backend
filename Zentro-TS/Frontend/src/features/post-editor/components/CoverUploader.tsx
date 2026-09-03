@@ -29,16 +29,14 @@ export const CoverUploader: React.FC<CoverUploaderProps> = ({ coverImage, onUplo
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/jpeg': [],
-      'image/png': [],
-      'image/webp': []
+      'image/*': []
     },
     maxFiles: 1,
   });
 
   if (coverImage) {
     return (
-      <div className="relative w-full h-[250px] md:h-[400px] mb-8 group rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+      <div className="relative mb-8 group h-62.5 w-full overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 md:h-100">
         <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
           <div {...getRootProps()} className="cursor-pointer bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white px-4 py-2 rounded-md font-medium text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">

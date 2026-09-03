@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/shared/ui/button";
-import { MoreVertical } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/router/routes.config";
 import { FollowButton } from "@/features/follow/components/FollowButton";
@@ -10,6 +10,7 @@ interface ProfileActionsProps {
   isOwnProfile: boolean;
   isFollowing?: boolean;
   targetUserId?: string;
+  targetUsername?: string;
   onMessageClick?: () => void;
   className?: string;
 }
@@ -18,6 +19,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
   isOwnProfile,
   isFollowing = false,
   targetUserId,
+  targetUsername,
   onMessageClick,
   className,
 }) => {
@@ -51,8 +53,18 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
           <Button variant="outline" onClick={onMessageClick}>
             Message
           </Button>
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Share profile"
+            title="Share profile"
+            onClick={() => {
+              if (targetUserId) {
+                void navigator.clipboard?.writeText(`${window.location.origin}/app/profile/${targetUsername || targetUserId}`);
+              }
+            }}
+          >
+            <Share2 className="h-4 w-4" />
           </Button>
         </>
       )}

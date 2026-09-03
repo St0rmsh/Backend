@@ -62,7 +62,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
       return sendError(res, 400, 'Invalid role');
     }
 
-    const user = await User.findByIdAndUpdate(userId, { role }, { new: true }).select('-password');
+    const user = await User.findByIdAndUpdate(userId, { roles: [role] }, { new: true, runValidators: true }).select('-password');
     if (!user) {
       return sendError(res, 404, 'User not found');
     }

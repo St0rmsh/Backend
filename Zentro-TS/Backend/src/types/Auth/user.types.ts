@@ -32,6 +32,13 @@ export interface IUser {
         compactMode: boolean,
         autoPlayMedia: boolean,
     },
+    notificationPreferences: {
+        likes: boolean,
+        comments: boolean,
+        follows: boolean,
+        mentions: boolean,
+        bookmarks: boolean,
+    },
     lastLogin?: Date,
     createdAt?: Date,
     updatedAt?: Date
@@ -69,4 +76,4 @@ export interface EmailOptions {
     html?: string;
 }
 
-export type UserSettingsUpdate = Partial<IUser["privacy"]> & Partial<IUser["settings"]>;
+export type UserSettingsUpdate = Partial<IUser["privacy"]> & Partial<IUser["settings"]> & Partial<IUser["notificationPreferences"]>;

@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import type { RegisterBody } from "../types/Auth/user.types.js";
+import UserModel from "../model/auth.model.js";
+import jwt from "jsonwebtoken";
 import config from "../config/config.js";
 import { changePasswordService, deleteAccountService, forgotPasswordService, generateAccessTokenService, getMyProfileService, getPrivacyListsService, getUserSettingsService, loginUserService, logoutService, registerUserService, resetPasswordService, sendOtpService, updateAccountStatusService, updatePrivacyListService, updateUserDetailsService, updateUserSettingsService, verifyOtpService } from "../services/user.service.js";
 
@@ -10,30 +12,14 @@ export const registrationController = async (req: Request<{}, {}, RegisterBody>,
 
     try {
 
-        const { user, accessToken, refreshToken } = await registerUserService(req.body)
+        const { user } = await registerUserService(req.body)
 
         console.log("user", user)
-
-        res.cookie("accessToken", accessToken, {
-            httpOnly: true,
-            secure: config.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 15 * 60 * 1000
-        });
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: config.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
 
         res.status(201).json({
             success: true,
             message: "User registered successfully",
-            data: {user,
-                accessToken,
-                refreshToken
-            }
+            data: { user, email: req.body.email }
             
         })
 
@@ -97,6 +83,18 @@ export const loginController = async (req: Request<{}, {}, RegisterBody>,
 
     }
 }
+
+export const oauthCallbackController = (req: Request, res: Response) => {
+    const user = req.user as { _id: string; email: string; roles: string[] } | undefined;
+    if (!user) return res.redirect(`${config.FRONTEND_ORIGIN}/auth/login?oauth=failed`);
+
+    const accessToken = jwt.sign({ _id: user._id, email: user.email, roles: user.roles }, config.ACCESS_TOKEN, { expiresIn: "15m" });
+    const refreshToken = jwt.sign({ _id: user._id, email: user.email, roles: user.roles }, config.REFRESH_TOKEN, { expiresIn: "7d" });
+    const cookieOptions = { httpOnly: true, secure: config.NODE_ENV === "production", sameSite: "strict" as const };
+    res.cookie("accessToken", accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie("refreshToken", refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    return res.redirect(config.FRONTEND_ORIGIN);
+};
 
 export const getUser = async (req: Request, res: Response) => {
     try {
@@ -244,7 +242,7 @@ export const sendOtpController = async (req: Request, res: Response) => {
         console.log("req.user =>", req.user);
 
 
-        const email = req.user?.email;
+        const email = req.body.email || req.user?.email;
 
         if (!email) {
             throw new Error("Unauthorized");
@@ -275,20 +273,28 @@ export const verifyOtpController = async (
 
     try {
 
-        const email = req.user?.email;
+        const email = req.body.email || req.user?.email;
 
         const { otp } = req.body;
 
-        if (!email) {
-            throw new Error("Unauthorized");
-        }
+        if (!email) throw new Error("Email is required");
 
         const result = await verifyOtpService(
             email,
             otp
         );
 
-        return res.status(200).json(result);
+        const user = await UserModel.findOne({ email });
+        if (!user) throw new Error("User not found");
+
+        const accessToken = jwt.sign({ _id: user._id, email: user.email, roles: user.roles }, config.ACCESS_TOKEN, { expiresIn: "15m" });
+        const refreshToken = jwt.sign({ _id: user._id, email: user.email, roles: user.roles }, config.REFRESH_TOKEN, { expiresIn: "7d" });
+        res.cookie("accessToken", accessToken, { httpOnly: true, secure: config.NODE_ENV === "production", sameSite: "strict", maxAge: 15 * 60 * 1000 });
+        res.cookie("refreshToken", refreshToken, { httpOnly: true, secure: config.NODE_ENV === "production", sameSite: "strict", maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+        const safeUser = user.toObject();
+        delete safeUser.password;
+        return res.status(200).json({ ...result, data: { user: safeUser, accessToken, refreshToken } });
 
     } catch (error) {
 

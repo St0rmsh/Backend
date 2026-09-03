@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { setLanguage, updatePreferences } from "../state/settingsSlice";
@@ -11,6 +11,7 @@ import { authService } from "@/features/auth/services/auth.service";
 export const PreferencesSettingsPage = () => {
   const dispatch = useAppDispatch();
   const { language, preferences } = useAppSelector((state) => state.settings);
+  const [notificationPreferences, setNotificationPreferences] = useState({ likes: true, comments: true, follows: true, mentions: true, bookmarks: true });
 
   useEffect(() => {
     authService.getSettings().then((data) => {
@@ -20,8 +21,14 @@ export const PreferencesSettingsPage = () => {
         compactMode: data.settings.compactMode,
         autoPlayMedia: data.settings.autoPlayMedia,
       }));
+      if (data?.notificationPreferences) setNotificationPreferences(data.notificationPreferences);
     }).catch(() => undefined);
   }, [dispatch]);
+
+  const updateNotificationPreference = (key: keyof typeof notificationPreferences, checked: boolean) => {
+    setNotificationPreferences((current) => ({ ...current, [key]: checked }));
+    void authService.updateSettings({ [key]: checked });
+  };
 
   return (
     <motion.div
@@ -73,6 +80,14 @@ export const PreferencesSettingsPage = () => {
             checked={preferences.autoPlayMedia}
             onCheckedChange={(checked) => { dispatch(updatePreferences({ autoPlayMedia: checked })); void authService.updateSettings({ autoPlayMedia: checked }); }}
           />
+        </div>
+      </SettingsCard>
+
+      <SettingsCard title="Notifications" description="Choose which activity updates you receive.">
+        <div className="space-y-2 divide-y divide-border/50">
+          {(["likes", "comments", "follows", "mentions", "bookmarks"] as const).map((key) => (
+            <PreferenceToggle key={key} id={`notification-${key}`} title={`Notify me about ${key}`} description={`Receive notifications when someone ${key === "follows" ? "follows you" : key === "mentions" ? "mentions you" : `interacts with your ${key}`}.`} checked={notificationPreferences[key]} onCheckedChange={(checked) => updateNotificationPreference(key, checked)} />
+          ))}
         </div>
       </SettingsCard>
     </motion.div>

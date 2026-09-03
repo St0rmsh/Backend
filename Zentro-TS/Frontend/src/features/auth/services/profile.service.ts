@@ -3,7 +3,24 @@ import { ProfileFormData } from "../schemas/profile.schema";
 import { ApiResponse } from "@/shared/types/api.types";
 import { User } from "@/shared/types/user.types";
 
+export interface ProfileResponse {
+  user: User;
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+}
+
 export const profileService = {
+  getProfile: async (userId: string) => {
+    const response = await axiosInstance.get<ApiResponse<ProfileResponse>>(`/profile/${userId}`);
+    return response.data.data;
+  },
+
+  getProfileByUsername: async (username: string) => {
+    const response = await axiosInstance.get<ApiResponse<ProfileResponse>>(`/profile/username/${encodeURIComponent(username)}`);
+    return response.data.data;
+  },
+
   updateProfile: async (data: ProfileFormData, avatarFile?: File, bannerFile?: File) => {
     const formData = new FormData();
     

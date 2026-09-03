@@ -1,9 +1,10 @@
 import PostModel from "../model/post.model.js";
 import type { ICreatePostBody, IPost, IPostUpdateBody } from "../types/Posts/posts.types.js";
 import { escapeRegex } from "../utils/escapeRegex.js";
+import { notifyMentionedUsersService } from "./notification.service.js";
 
 
-export const createPostService = async (userId:string,{title,content,tags,category,coverImage,isPublished}:ICreatePostBody)=>{
+export const createPostService = async (userId:string,{title,content,tags,category,coverImage,mediaUrl,mediaType,isPublished}:ICreatePostBody)=>{
     try {
         
 
@@ -14,10 +15,13 @@ export const createPostService = async (userId:string,{title,content,tags,catego
             ...(tags && { tags }),
             ...(category && { category }),
             ...(coverImage && { coverImage }),
+            ...(mediaUrl && { mediaUrl }),
+            ...(mediaType && { mediaType }),
             ...(isPublished !== undefined && { isPublished }),
         });
 
 
+        await notifyMentionedUsersService(`${title} ${content}`, userId, post._id.toString());
         return post
 
     } catch (error) {
@@ -40,7 +44,7 @@ export const getAllPostsService = async (userId:string,{page=1,limit=10}:{
         const skips = (page-1)*limit
 
         const [posts, totalPosts] = await Promise.all([
-            PostModel.find({user:userId}).sort({createdAt:-1}).skip(skips).limit(limit).lean(),
+            PostModel.find({user:userId}).populate("user", "username fullname avatar isVerified").sort({createdAt:-1}).skip(skips).limit(limit).lean(),
             PostModel.countDocuments({user:userId})  
         ])
 

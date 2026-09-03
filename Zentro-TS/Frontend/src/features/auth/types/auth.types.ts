@@ -13,8 +13,7 @@ export interface LoginResponse {
 
 export interface RegisterResponse {
   user: User;
-  accessToken: string;
-  refreshToken: string;
+  email: string;
 }
 
 export interface AuthState {

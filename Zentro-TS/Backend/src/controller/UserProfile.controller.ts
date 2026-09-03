@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getprofileService } from "../services/user.service.js";
+import { getprofileByUsernameService, getprofileService } from "../services/user.service.js";
 
 
 
@@ -20,3 +20,12 @@ export const getUserProfileController = async (req:Request<{userId:string}>,res:
         return res.status(500).json({message:"Internal server error"});
     }
 }
+
+export const getUserProfileByUsernameController = async (req:Request<{username:string}>,res:Response)=>{
+    try {
+        const profile = await getprofileByUsernameService(req.params.username);
+        return res.status(200).json({ success: true, data: profile });
+    } catch (error) {
+        return res.status(404).json({ success: false, message: error instanceof Error ? error.message : "User not found" });
+    }
+};

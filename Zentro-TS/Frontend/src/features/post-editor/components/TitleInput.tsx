@@ -13,7 +13,7 @@ export const TitleInput: React.FC<TitleInputProps> = ({ value, onChange, placeho
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full text-4xl md:text-5xl font-bold bg-transparent border-none outline-none placeholder:text-zinc-500 text-zinc-900 dark:text-zinc-100 py-4 mb-2"
+      className="mb-2 w-full border-none bg-transparent py-4 text-4xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground md:text-5xl"
     />
   );
 };

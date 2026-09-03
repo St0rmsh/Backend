@@ -20,6 +20,9 @@ import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { fetchFollowStatusThunk } from "@/features/follow/state/followSlice";
 import { ReadingStatsTab } from "@/features/reading/components/ReadingStatsTab";
 import { useState } from "react";
+import { axiosInstance } from "@/shared/lib/axios";
+import { FeedCard } from "@/features/feed/components/FeedCard";
+import type { Post } from "@/features/feed/types/feed.types";
 
 type ProfileParams = {
   username?: string;
@@ -34,13 +37,16 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user: currentUser } = useAuth();
-  const { profile, loading } = useProfile();
+  const profileUserId = username && username !== currentUser?.username ? undefined : currentUser?._id;
+  const { profile, loading } = useProfile(profileUserId, !isOwnProfileProp && username !== currentUser?.username ? username : undefined);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
   
   const [activeTab, setActiveTab] = useState<'posts' | 'stats'>('posts');
 
   // Determine if viewing own profile
   const isOwnProfile = isOwnProfileProp || !username || username === currentUser?.username;
-  const displayUser = isOwnProfile ? currentUser : profile;
+  const displayUser = isOwnProfile ? (profile || currentUser) : profile;
   const targetUser = displayUser || null;
   const targetUserId = String((targetUser as any)?._id ?? (targetUser as any)?.id ?? "");
   const relationship = useAppSelector((state) => state.follow.relationshipByUser[String(targetUserId)]);
@@ -51,6 +57,17 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
       dispatch(fetchFollowStatusThunk(targetUserId));
     }
   }, [dispatch, isOwnProfile, targetUserId]);
+
+  useEffect(() => {
+    if (!targetUserId) return;
+    let active = true;
+    setPostsLoading(true);
+    axiosInstance.get(`/post/user/${targetUserId}`, { params: { page: 1, limit: 20 } })
+      .then((response) => { if (active) setPosts(response.data.posts ?? []); })
+      .catch(() => { if (active) setPosts([]); })
+      .finally(() => { if (active) setPostsLoading(false); });
+    return () => { active = false; };
+  }, [targetUserId]);
 
   if (loading) {
     return (
@@ -83,7 +100,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
 
   const stats = {
     posts: (user as any).postsCount || 0,
-    followers: (user as any).followerCount || 0,
+    followers: (user as any).followersCount || (user as any).followerCount || 0,
     following: (user as any).followingCount || 0,
     bookmarks: isOwnProfile ? 12 : undefined,
   };
@@ -115,7 +132,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
                 isOwnProfile={isOwnProfile}
                 isFollowing={isFollowing}
                 targetUserId={targetUserId}
-                onMessageClick={() => console.log("Message clicked")}
+                targetUsername={user.username}
+                onMessageClick={() => navigate(`/messages?recipient=${encodeURIComponent(targetUserId)}`)}
               />
             </div>
 
@@ -171,9 +189,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="p-8 text-center text-muted-foreground bg-card border border-border/50 rounded-2xl"
+              className="space-y-4"
             >
-              <p>Posts feature coming soon...</p>
+              {postsLoading ? <p className="py-8 text-center text-muted-foreground">Loading posts...</p> : posts.length > 0 ? posts.map((post, index) => <FeedCard key={post._id} post={post} index={index} />) : <p className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No posts yet.</p>}
             </motion.div>
           )}
 

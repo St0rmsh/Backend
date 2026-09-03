@@ -21,14 +21,15 @@ export interface UpdatePostPayload {
 export const postEditorService = {
   createPost: async (payload: CreatePostPayload | FormData) => {
     const response = await axiosInstance.post("/post/create", payload, {
-      headers: payload instanceof FormData ? { "Content-Type": "multipart/form-data" } : undefined
+      // Let the browser add the multipart boundary.
+      headers: undefined
     });
     return response.data;
   },
 
   updatePost: async (postId: string, payload: UpdatePostPayload | FormData) => {
     const response = await axiosInstance.patch(`/post/${postId}`, payload, {
-      headers: payload instanceof FormData ? { "Content-Type": "multipart/form-data" } : undefined
+      headers: undefined
     });
     return response.data;
   },

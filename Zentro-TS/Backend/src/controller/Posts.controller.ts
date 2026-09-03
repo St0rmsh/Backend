@@ -11,7 +11,16 @@ export const createPostController = async (req:Request, res: Response) => {
     try {
 
         const userId = req.user?._id 
-        const {title,content,tags,category,isPublished} = req.body as ICreatePostBody
+        const {title,content,category} = req.body as ICreatePostBody
+        const rawTags = req.body.tags;
+        const tags = Array.isArray(rawTags)
+            ? rawTags
+            : rawTags && typeof rawTags === "object"
+                ? Object.values(rawTags)
+                : rawTags ? [rawTags] : undefined;
+        const isPublished = req.body.isPublished === undefined
+            ? undefined
+            : req.body.isPublished === true || req.body.isPublished === "true";
 
         if (!userId) {
             return res.status(401).json({

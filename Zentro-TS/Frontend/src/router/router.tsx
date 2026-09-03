@@ -207,6 +207,12 @@ const FollowingPage = lazy(() =>
   }))
 );
 
+const MessagesPage = lazy(() =>
+  import("@/features/messages/pages/MessagesPage").then((m) => ({
+    default: m.MessagesPage,
+  }))
+);
+
 // ============================================================================
 // LAZY LOADED POST PAGES
 // ============================================================================
@@ -445,6 +451,26 @@ export const routes: RouteObject[] = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <NotificationsPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+
+      // Messages Route (Protected)
+      {
+        path: "messages",
+        element: (
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <MessagesPage />
               </Suspense>
             ),
           },

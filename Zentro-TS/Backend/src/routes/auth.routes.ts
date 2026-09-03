@@ -2,9 +2,22 @@ import express from "express";
 import { registerValidator, loginValidator, resetPasswordValidator } from "../validation/auth.validation.js";
 import { deactivateAccountController, deleteAccountController, getPrivacyListsController, getSettingsController, getUser, loginController, logoutController, refreshAccessTokenController, registrationController, updatePrivacyListController, updateSettingsController, updateUserController, verifyOtpController, sendOtpController, changePasswordController, resetPasswordController, forgotPasswordController } from "../controller/auth.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
+import passport from "../config/passport.js";
+import { oauthCallbackController } from "../controller/auth.controller.js";
 import uploadFile from "../middleware/multer.js";
 
 const authRouter = express.Router()
+
+authRouter.get("/google", (req, res, next) => {
+	if (!process.env.GOOGLE_CLIENT_ID) return res.redirect(`${process.env.FRONTEND_ORIGIN || "http://localhost:5173"}/auth/login?oauth=unavailable`);
+	passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+});
+authRouter.get("/google/callback", passport.authenticate("google", { session: false, failureRedirect: `${process.env.FRONTEND_ORIGIN || "http://localhost:5173"}/auth/login?oauth=failed` }), oauthCallbackController);
+authRouter.get("/github", (req, res, next) => {
+	if (!process.env.GITHUB_CLIENT_ID) return res.redirect(`${process.env.FRONTEND_ORIGIN || "http://localhost:5173"}/auth/login?oauth=unavailable`);
+	passport.authenticate("github", { scope: ["user:email"] })(req, res, next);
+});
+authRouter.get("/github/callback", passport.authenticate("github", { session: false, failureRedirect: `${process.env.FRONTEND_ORIGIN || "http://localhost:5173"}/auth/login?oauth=failed` }), oauthCallbackController);
 
 
 
@@ -74,7 +87,7 @@ authRouter.patch("/update-profile", authMiddleware, uploadFile.fields([{ name: "
 //@Route          /api/auth/send-otp
 //@Description    Send OTP to user
 //@Access         Private
-authRouter.post("/send-otp", authMiddleware, sendOtpController)
+authRouter.post("/send-otp", sendOtpController)
 
 
 
@@ -83,7 +96,7 @@ authRouter.post("/send-otp", authMiddleware, sendOtpController)
 //@Route          /api/auth/verify-otp
 //@Description    Verify OTP
 //@Access         Private
-authRouter.post("/verify-otp", authMiddleware, verifyOtpController)
+authRouter.post("/verify-otp", verifyOtpController)
 
 
 

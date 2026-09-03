@@ -35,18 +35,24 @@ export const PublishPanel: React.FC<PublishPanelProps> = ({ onPublish, onSaveDra
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 flex flex-col h-full sticky top-4">
-      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-6">Publishing</h3>
+    <div className="sticky top-4 flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card/95 shadow-xl shadow-primary/5 backdrop-blur">
+      <div className="border-b border-border px-5 py-5">
+        <div className="mb-2 h-1 w-10 rounded-full bg-primary" />
+        <h3 className="text-lg font-semibold tracking-tight text-card-foreground">Publishing</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Set the details for your post.</p>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto p-5">
       
       {/* Category */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+        <label className="mb-2 block text-sm font-medium text-card-foreground">
           Category
         </label>
         <select
           value={category}
           onChange={(e) => dispatch(setEditorState({ category: e.target.value }))}
-          className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-zinc-900 dark:text-white"
+          className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="Technology">Technology</option>
           <option value="Programming">Programming</option>
@@ -57,12 +63,12 @@ export const PublishPanel: React.FC<PublishPanelProps> = ({ onPublish, onSaveDra
 
       {/* Tags */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+        <label className="mb-2 block text-sm font-medium text-card-foreground">
           Tags
         </label>
         <div className="flex flex-wrap gap-2 mb-2">
           {tags.map(tag => (
-            <span key={tag} className="inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
               #{tag}
               <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500">×</button>
             </span>
@@ -74,7 +80,7 @@ export const PublishPanel: React.FC<PublishPanelProps> = ({ onPublish, onSaveDra
           onChange={(e) => setTagInput(e.target.value)}
           onKeyDown={handleAddTag}
           placeholder="Type and press Enter to add..."
-          className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-zinc-900 dark:text-white"
+          className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
@@ -91,11 +97,13 @@ export const PublishPanel: React.FC<PublishPanelProps> = ({ onPublish, onSaveDra
       </div>
 
       {/* Actions */}
-      <div className="mt-auto space-y-3">
+      </div>
+
+      <div className="space-y-3 border-t border-border bg-card p-5">
         <button
           onClick={onPublish}
           disabled={isSaving}
-          className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 rounded-md transition-colors flex items-center justify-center gap-2"
+          className="w-full rounded-lg bg-primary py-2.5 font-medium text-primary-foreground transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
         >
           {isSaving && isPublished ? <Loader2 className="animate-spin w-4 h-4" /> : null}
           Publish Post
@@ -103,7 +111,7 @@ export const PublishPanel: React.FC<PublishPanelProps> = ({ onPublish, onSaveDra
         <button
           onClick={onSaveDraft}
           disabled={isSaving}
-          className="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium py-2.5 rounded-md transition-colors flex items-center justify-center gap-2"
+          className="w-full rounded-lg border border-border bg-secondary py-2.5 font-medium text-secondary-foreground transition-colors hover:bg-muted flex items-center justify-center gap-2"
         >
           {isSaving && !isPublished ? <Loader2 className="animate-spin w-4 h-4" /> : null}
           Save Draft
@@ -112,7 +120,7 @@ export const PublishPanel: React.FC<PublishPanelProps> = ({ onPublish, onSaveDra
           <button
             onClick={onDelete}
             disabled={isSaving}
-            className="w-full text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 font-medium py-2 rounded-md transition-colors mt-4"
+            className="mt-4 w-full rounded-lg py-2 font-medium text-destructive transition-colors hover:bg-destructive/10"
           >
             Delete Post
           </button>

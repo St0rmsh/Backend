@@ -27,6 +27,24 @@ interface ContentBlock {
   id?: string; // For headings (anchor)
 }
 
+function normalizeEditorHtml(content: string): string {
+  if (!/<[a-z][\s\S]*>/i.test(content)) return content;
+
+  const document = new DOMParser().parseFromString(content, "text/html");
+  document.querySelectorAll("br").forEach((element) => element.replaceWith("\n"));
+  document.querySelectorAll("p, h1, h2, h3, h4, h5, h6, blockquote, pre, ul, ol").forEach((element) => {
+    element.insertAdjacentText("afterend", "\n");
+  });
+  document.querySelectorAll("li").forEach((element) => {
+    element.insertAdjacentText("afterbegin", "- ");
+  });
+
+  return (document.body.textContent || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /**
  * Parse plain text content into structured blocks
  * Supports basic patterns:
@@ -37,7 +55,7 @@ interface ContentBlock {
  * - Empty lines as paragraph separators
  */
 function parseContent(content: string): ContentBlock[] {
-  const lines = content.split("\n");
+  const lines = normalizeEditorHtml(content).split("\n");
   const blocks: ContentBlock[] = [];
   let currentParagraph: string[] = [];
   let inCodeBlock = false;

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { authService } from "../services/auth.service";
 import { AUTH_MESSAGES } from "../constants/authMessages";
 import { ROUTES } from "@/shared/constants/routes";
@@ -16,6 +16,8 @@ export const VerifyOtpForm = () => {
   const [timer, setTimer] = useState(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const email = searchParams.get("email") || undefined;
 
   useEffect(() => {
     if (timer > 0) {
@@ -70,7 +72,7 @@ export const VerifyOtpForm = () => {
 
     try {
       setLoading(true);
-      await authService.verifyOtp(otpValue);
+      await authService.verifyOtp(otpValue, email);
       toast.success(AUTH_MESSAGES.VERIFY_OTP_SUCCESS);
       navigate(ROUTES.HOME);
     } catch (error) {
@@ -83,7 +85,7 @@ export const VerifyOtpForm = () => {
   const handleResend = async () => {
     try {
       setResending(true);
-      await authService.sendOtp();
+      await authService.sendOtp(email);
       toast.success(AUTH_MESSAGES.SEND_OTP_SUCCESS);
       setTimer(60);
     } catch (error) {

@@ -8,10 +8,10 @@ interface ProfileInfoProps {
 }
 
 export const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
-  const joinDate = new Date(user.createdAt).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-  });
+  const parsedJoinDate = user.createdAt ? new Date(user.createdAt) : null;
+  const joinDate = parsedJoinDate && !Number.isNaN(parsedJoinDate.getTime())
+    ? parsedJoinDate.toLocaleDateString("en-US", { year: "numeric", month: "long" })
+    : "Unknown";
 
   return (
     <motion.div
@@ -48,7 +48,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
           <Calendar className="h-4 w-4" />
           <span>Joined {joinDate}</span>
         </div>
-        {user.isEmailVerified && (
+        {(user.isEmailVerified || user.isVerified) && (
           <div className="flex items-center gap-1.5 text-green-600">
             <BadgeCheck className="h-4 w-4" />
             <span>Email verified</span>

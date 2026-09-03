@@ -37,6 +37,8 @@ export const registerUserService = async (data:RegisterBody) =>{
             username,
         })
 
+        await sendOtpService(email);
+
         const accessToken = jwt.sign({_id: newUser._id , email:newUser.email,roles:newUser.roles},config.ACCESS_TOKEN,{ expiresIn: "15m" })
 
         const refreshToken = jwt.sign({_id: newUser._id , email:newUser.email,roles:newUser.roles},config.REFRESH_TOKEN,{ expiresIn: "7d" })
@@ -723,8 +725,14 @@ export const getprofileService = async (userId:string): Promise<IUserProfileResp
            _id: String(user._id),
            username: user.username,
           fullname: user.fullname,
+          email: user.email,
           bio: user.bio,
           avatar: user.avatar,
+          banner: user.banner,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          role: user.roles?.[0],
         },
         followersCount,
         followingCount,
@@ -739,24 +747,32 @@ export const getprofileService = async (userId:string): Promise<IUserProfileResp
     }
 }
 
-export const getUserSettingsService = async (id: string) => {
-    const user = await UserModel.findById(id).select("privacy settings").lean();
+export const getprofileByUsernameService = async (username: string): Promise<IUserProfileResponse> => {
+    const user = await UserModel.findOne({ username: username.toLowerCase() }).select("-password").lean();
     if (!user) throw new Error("User not found");
-    return { privacy: user.privacy, settings: user.settings };
+    return getprofileService(String(user._id));
+};
+
+export const getUserSettingsService = async (id: string) => {
+    const user = await UserModel.findById(id).select("privacy settings notificationPreferences").lean();
+    if (!user) throw new Error("User not found");
+    return { privacy: user.privacy, settings: user.settings, notificationPreferences: user.notificationPreferences };
 };
 
 export const updateUserSettingsService = async (id: string, data: UserSettingsUpdate) => {
     const privacyKeys = ["privateAccount", "activityStatus", "searchVisibility"] as const;
     const settingsKeys = ["theme", "language", "reducedMotion", "compactMode", "autoPlayMedia"] as const;
+    const notificationKeys = ["likes", "comments", "follows", "mentions", "bookmarks"] as const;
     const privacy = Object.fromEntries(privacyKeys.filter((key) => data[key] !== undefined).map((key) => [key, data[key]]));
     const settings = Object.fromEntries(settingsKeys.filter((key) => data[key] !== undefined).map((key) => [key, data[key]]));
     const updates = Object.fromEntries([
         ...Object.entries(privacy).map(([key, value]) => [`privacy.${key}`, value]),
         ...Object.entries(settings).map(([key, value]) => [`settings.${key}`, value]),
+        ...notificationKeys.filter((key) => data[key] !== undefined).map((key) => [`notificationPreferences.${key}`, data[key]]),
     ]);
-    const user = await UserModel.findByIdAndUpdate(id, { $set: updates }, { new: true, runValidators: true }).select("privacy settings").lean();
+    const user = await UserModel.findByIdAndUpdate(id, { $set: updates }, { new: true, runValidators: true }).select("privacy settings notificationPreferences").lean();
     if (!user) throw new Error("User not found");
-    return { privacy: user.privacy, settings: user.settings };
+    return { privacy: user.privacy, settings: user.settings, notificationPreferences: user.notificationPreferences };
 };
 
 export const updateAccountStatusService = async (id: string, active: boolean) => {

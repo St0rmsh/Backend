@@ -1,8 +1,7 @@
 export const uploadService = {
   validateImage: (file: File): string | null => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      return 'File must be an image (JPEG, PNG, WEBP).';
+    if (!file.type.startsWith('image/')) {
+      return 'Cover must be an image file.';
     }
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {

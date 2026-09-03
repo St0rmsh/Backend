@@ -1,6 +1,7 @@
 import NotificationModel from "../model/notification.model.js";
 import type { CreateNotificationBody } from "../types/Notification/notification.types.js";
 import { emitNotification } from "../utils/emitNotification.js";
+import UserModel from "../model/auth.model.js";
 
 
 
@@ -11,6 +12,10 @@ export const createNotificationService = async (data: CreateNotificationBody) =>
     if (data.recipient.toString() === data.sender.toString()) {
     return null;
     }
+
+    const recipient = await UserModel.findById(data.recipient).select("notificationPreferences").lean();
+    const preferenceKey = data.type === "LIKE" ? "likes" : data.type === "COMMENT" ? "comments" : data.type === "FOLLOW" ? "follows" : data.type === "MENTION" ? "mentions" : data.type === "BOOKMARK" ? "bookmarks" : null;
+    if (preferenceKey && recipient?.notificationPreferences?.[preferenceKey] === false) return null;
 
     const existingNotification = await NotificationModel.findOne({
     recipient: data.recipient.toString(),
@@ -46,6 +51,22 @@ export const createNotificationService = async (data: CreateNotificationBody) =>
         : "Unknown error"
     );
   }
+};
+
+export const notifyMentionedUsersService = async (text: string, sender: string, post?: string, comment?: string) => {
+  const usernames = [...text.matchAll(/@([a-zA-Z0-9_]{3,30})/g)]
+    .map((match) => match[1])
+    .filter((username): username is string => Boolean(username))
+    .map((username) => username.toLowerCase());
+  const users = await UserModel.find({ username: { $in: usernames } }).select("_id").lean();
+  await Promise.all(users.map((user) => createNotificationService({
+    recipient: user._id.toString(),
+    sender,
+    type: "MENTION",
+    ...(post ? { post } : {}),
+    ...(comment ? { comment } : {}),
+    message: "Mentioned you in a post",
+  })));
 };
 
 

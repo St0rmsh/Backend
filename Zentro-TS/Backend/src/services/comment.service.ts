@@ -1,7 +1,7 @@
 import CommentModel from "../model/comment.model.js"
 import PostModel from "../model/post.model.js"
 import { updateUserInterestService } from "./interest.service.js";
-import { createNotificationService } from "./notification.service.js";
+import { createNotificationService, notifyMentionedUsersService } from "./notification.service.js";
 
 
 export const createCommentService = async (postId:string , userId:string , content:string)=>{
@@ -33,6 +33,7 @@ export const createCommentService = async (postId:string , userId:string , conte
             post: postId,
             message: "Commented on your post",
         });
+        await notifyMentionedUsersService(content, userId, postId, comment._id.toString());
 
         await updateUserInterestService(userId,postId,4);
 

@@ -25,6 +25,11 @@ interface FeedCardProps {
   index: number;
 }
 
+function getPreviewText(content: string): string {
+  const document = new DOMParser().parseFromString(content, "text/html");
+  return (document.body.textContent || content).replace(/\s+/g, " ").trim();
+}
+
 export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -37,6 +42,7 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
   const [displayPost, setDisplayPost] = useState<Post>(post);
 
   const resolvedPost = (feedPost ?? bookmarkPost ?? displayPost ?? post) as Post;
+  const safeTags = Array.isArray(resolvedPost.tags) ? resolvedPost.tags : [];
 
   useEffect(() => {
     setDisplayPost((current) => {
@@ -105,15 +111,15 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
       onClick={handleCardClick}
     >
       {/* Top Reading Progress Bar (Obsidian/IDE aesthetic) */}
-      {progress > 0 && <ReadingProgressBar progress={progress} className="absolute top-0 left-0 right-0 z-10 h-[3px]" />}
+      {progress > 0 && <ReadingProgressBar progress={progress} className="absolute top-0 right-0 left-0 z-10 h-0.75" />}
 
       {/* Card Body */}
       <div className="p-4 md:p-5 flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
-          <AuthorCard author={resolvedPost.user} />
+          <AuthorCard author={resolvedPost.user || { _id: "unknown", username: "user", fullname: "User" }} />
           
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs text-muted-foreground/80">{getElapsedTime(resolvedPost.createdAt)}</span>
             <CategoryChip category={resolvedPost.category} />
           </div>
@@ -125,13 +131,13 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
             {resolvedPost.title}
           </h2>
           <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-            {resolvedPost.content}
+            {getPreviewText(resolvedPost.content)}
           </p>
         </div>
 
         {/* Cover Image (if available) */}
         {(resolvedPost.coverImage || (resolvedPost.mediaType === "video" && resolvedPost.mediaUrl)) && (
-          <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-muted/20 border border-border/20">
+          <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-muted/20 border border-border/20">
             {resolvedPost.mediaType === "video" && resolvedPost.mediaUrl ? (
               <video
                 src={resolvedPost.mediaUrl}
@@ -176,9 +182,9 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
         )}
 
         {/* Tags */}
-        {resolvedPost.tags && resolvedPost.tags.length > 0 && (
+        {safeTags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
-            {resolvedPost.tags.map((tag) => (
+            {safeTags.map((tag) => (
               <TagChip key={tag} tag={tag} />
             ))}
           </div>

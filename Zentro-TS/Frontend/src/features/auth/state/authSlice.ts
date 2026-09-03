@@ -59,12 +59,12 @@ const authSlice = createSlice({
       state.loading = true;
       state.error = null;
     });
-    builder.addCase(registerThunk.fulfilled, (state, action) => {
+    builder.addCase(registerThunk.fulfilled, (state) => {
       state.loading = false;
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
-      state.hydrationCompleted = true;
-      state.authChecked = true;
+      state.user = null;
+      state.isAuthenticated = false;
+      state.hydrationCompleted = false;
+      state.authChecked = false;
     });
     builder.addCase(registerThunk.rejected, (state, action) => {
       state.loading = false;

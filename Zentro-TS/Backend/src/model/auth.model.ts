@@ -81,6 +81,13 @@ const userSchema = new mongoose.Schema<UserDocument>({
         compactMode: { type: Boolean, default: false },
         autoPlayMedia: { type: Boolean, default: true },
     },
+    notificationPreferences: {
+        likes: { type: Boolean, default: true },
+        comments: { type: Boolean, default: true },
+        follows: { type: Boolean, default: true },
+        mentions: { type: Boolean, default: true },
+        bookmarks: { type: Boolean, default: true },
+    },
     lastLogin: {
         type: Date,
         default: Date.now

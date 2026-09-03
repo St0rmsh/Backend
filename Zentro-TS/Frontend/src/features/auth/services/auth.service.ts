@@ -10,6 +10,7 @@ import { User } from "@/shared/types/user.types";
 export interface UserSettingsResponse {
   privacy: { privateAccount: boolean; activityStatus: boolean; searchVisibility: boolean };
   settings: { theme: "light" | "dark" | "system"; language: "en" | "es" | "fr" | "de"; reducedMotion: boolean; compactMode: boolean; autoPlayMedia: boolean };
+  notificationPreferences: { likes: boolean; comments: boolean; follows: boolean; mentions: boolean; bookmarks: boolean };
 }
 
 export const authService = {
@@ -34,13 +35,13 @@ export const authService = {
     return response.data;
   },
 
-  sendOtp: async () => {
-    const response = await axiosInstance.post<ApiResponse>("/auth/send-otp");
+  sendOtp: async (email?: string) => {
+    const response = await axiosInstance.post<ApiResponse>("/auth/send-otp", email ? { email } : undefined);
     return response.data;
   },
 
-  verifyOtp: async (otp: string) => {
-    const response = await axiosInstance.post<ApiResponse>("/auth/verify-otp", { otp });
+  verifyOtp: async (otp: string, email?: string) => {
+    const response = await axiosInstance.post<ApiResponse>("/auth/verify-otp", { otp, ...(email ? { email } : {}) });
     return response.data;
   },
 

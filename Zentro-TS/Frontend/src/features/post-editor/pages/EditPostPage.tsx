@@ -93,7 +93,7 @@ export const EditPostPage: React.FC = () => {
         formData.append('coverImage', '');
       }
 
-      await postEditorService.updatePost(id, formData as any);
+      await postEditorService.updatePost(id, formData);
       
       dispatch(setLastSavedAt(new Date().toISOString()));
       
