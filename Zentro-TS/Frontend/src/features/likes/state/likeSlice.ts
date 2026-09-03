@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { likeService } from "../services/like.service";
+import { loginThunk, hydrateAuthThunk } from "../../auth/state/authThunks";
 
 const STORAGE_KEY = "zentro_liked_posts";
 
@@ -86,6 +87,18 @@ const likeSlice = createSlice({
       .addCase(toggleLikeThunk.rejected, (state, action) => {
         state.loading[action.meta.arg] = false;
         // On failure, rollback could be handled here or in the component.
+      })
+      .addCase(loginThunk.fulfilled, (state, action) => {
+        if (action.payload.user?.likedPosts) {
+          state.likedPosts = action.payload.user.likedPosts;
+          saveLikedPosts(state.likedPosts);
+        }
+      })
+      .addCase(hydrateAuthThunk.fulfilled, (state, action) => {
+        if (action.payload?.likedPosts) {
+          state.likedPosts = action.payload.likedPosts;
+          saveLikedPosts(state.likedPosts);
+        }
       });
   },
 });

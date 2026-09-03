@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, FileText, Settings, Compass, Command } from "lucide-react";
+import { Search, FileText, Settings, Compass } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { setGlobalSearchOpen } from "@/store/slices/uiSlice";
 import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";

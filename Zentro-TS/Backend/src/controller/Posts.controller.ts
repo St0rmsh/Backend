@@ -27,21 +27,31 @@ export const createPostController = async (req:Request, res: Response) => {
             })
         }
 
+        const files = req.files as { coverImage?: Express.Multer.File[]; media?: Express.Multer.File[] } | undefined;
         let coverImage :string|undefined
-        if(req.file){
+        let mediaUrl :string|undefined
+        let mediaType: "image" | "video" | undefined
+        if(files?.coverImage?.[0]){
             const uploadImage = await uploadBuffer({
-                buffer:req.file.buffer,
-                fileName:req.file.originalname,
+                buffer:files.coverImage[0].buffer,
+                fileName:files.coverImage[0].originalname,
                 folder:"Zentro/posts"
             })
 
             coverImage = uploadImage.url
+        }
+        if (files?.media?.[0]) {
+            const media = files.media[0];
+            const uploadMedia = await uploadBuffer({ buffer: media.buffer, fileName: media.originalname, folder: "Zentro/posts/media" });
+            mediaUrl = uploadMedia.url;
+            mediaType = media.mimetype.startsWith("video/") ? "video" : "image";
         }
 
         const postData: ICreatePostBody = {title,content,
             ...(tags && { tags }),
             ...(category && { category }),
             ...(coverImage && { coverImage }),
+            ...(mediaUrl ? { mediaUrl, mediaType: mediaType! } : {}),
             ...(isPublished !== undefined && { isPublished }),
         };
 

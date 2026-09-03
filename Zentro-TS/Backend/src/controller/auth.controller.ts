@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { RegisterBody } from "../types/Auth/user.types.js";
-import { changePasswordService, forgotPasswordService, generateAccessTokenService, getMyProfileService, loginUserService, logoutService, registerUserService, resetPasswordService, sendOtpService, updateUserDetailsService, verifyOtpService } from "../services/user.service.js";
+import config from "../config/config.js";
+import { changePasswordService, deleteAccountService, forgotPasswordService, generateAccessTokenService, getMyProfileService, getPrivacyListsService, getUserSettingsService, loginUserService, logoutService, registerUserService, resetPasswordService, sendOtpService, updateAccountStatusService, updatePrivacyListService, updateUserDetailsService, updateUserSettingsService, verifyOtpService } from "../services/user.service.js";
 
 
 // for registration controller
@@ -15,13 +16,13 @@ export const registrationController = async (req: Request<{}, {}, RegisterBody>,
 
         res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true,
+            secure: config.NODE_ENV === "production",
             sameSite: "strict",
             maxAge: 15 * 60 * 1000
         });
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: config.NODE_ENV === "production",
             sameSite: "strict",
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
@@ -61,13 +62,13 @@ export const loginController = async (req: Request<{}, {}, RegisterBody>,
 
         res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true,
+            secure: config.NODE_ENV === "production",
             sameSite: "strict",
             maxAge: 15 * 60 * 1000
         });
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: config.NODE_ENV === "production",
             sameSite: "strict",
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
@@ -143,7 +144,7 @@ export const refreshAccessTokenController = async (req: Request, res: Response) 
 
         res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true,
+            secure: config.NODE_ENV === "production",
             sameSite: "strict",
             maxAge: 15 * 60 * 1000
         });
@@ -173,11 +174,9 @@ export const logoutController = async (req: Request, res: Response) => {
         const refreshToken = req.cookies?.refreshToken;
         const accessToken = req.cookies?.accessToken;
 
-        if (!refreshToken || !accessToken) {
-            throw new Error("Unauthorized")
+        if (refreshToken && accessToken) {
+            await logoutService(refreshToken, accessToken);
         }
-
-        await logoutService(refreshToken, accessToken);
 
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");
@@ -380,3 +379,35 @@ export const resetPasswordController = async (req: Request, res: Response) => {
         });
     }
 }
+
+export const getSettingsController = async (req: Request, res: Response) => {
+    try { return res.status(200).json({ success: true, data: await getUserSettingsService(req.user!._id) }); }
+    catch (error) { return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Unable to load settings" }); }
+};
+
+export const updateSettingsController = async (req: Request, res: Response) => {
+    try { return res.status(200).json({ success: true, data: await updateUserSettingsService(req.user!._id, req.body) }); }
+    catch (error) { return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Unable to update settings" }); }
+};
+
+export const deactivateAccountController = async (req: Request, res: Response) => {
+    try { return res.status(200).json({ success: true, data: await updateAccountStatusService(req.user!._id, false) }); }
+    catch (error) { return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Unable to deactivate account" }); }
+};
+
+export const deleteAccountController = async (req: Request, res: Response) => {
+    try { await deleteAccountService(req.user!._id); return res.status(204).send(); }
+    catch (error) { return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Unable to delete account" }); }
+};
+
+export const getPrivacyListsController = async (req: Request, res: Response) => {
+    try { return res.status(200).json({ success: true, data: await getPrivacyListsService(req.user!._id) }); }
+    catch (error) { return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Unable to load privacy lists" }); }
+};
+
+export const updatePrivacyListController = async (req: Request, res: Response) => {
+    try {
+        const list = req.params.list === "mutedUsers" ? "mutedUsers" : "blockedUsers";
+        return res.status(200).json({ success: true, data: await updatePrivacyListService(req.user!._id, list, req.body.username, req.body.add !== false) });
+    } catch (error) { return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Unable to update privacy list" }); }
+};

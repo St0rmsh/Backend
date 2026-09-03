@@ -7,11 +7,13 @@ import { toggleBookmarkThunk, addBookmark, removeBookmark } from "../state/bookm
 
 interface BookmarkButtonProps {
   postId: string;
+  className?: string;
   isInitiallyBookmarked?: boolean;
 }
 
 export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
   postId,
+  className,
   isInitiallyBookmarked = false,
 }) => {
   const dispatch = useAppDispatch();
@@ -49,7 +51,7 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
     <Button
       variant="ghost"
       size="icon"
-      className="rounded-full hover:bg-muted group transition-all"
+      className={`rounded-full hover:bg-muted group transition-all ${className ?? ""}`}
       onClick={handleToggleBookmark}
       disabled={isLoading}
       aria-label={isBookmarked ? "Remove bookmark" : "Bookmark post"}

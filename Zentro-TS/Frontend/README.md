@@ -1,5 +1,13 @@
 # React + TypeScript + Vite
 
+## Production checks
+
+Run `npm ci`, then `npm run lint`, `npm test`, `npm run test:e2e`, and `npm run build`.
+The E2E suite requires Chromium: `npx playwright install chromium`.
+
+The production build generates the PWA manifest and Workbox service worker. Configure only
+`VITE_*` variables in deployment environments; secrets belong on the backend.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

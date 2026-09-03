@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { setLanguage, updatePreferences } from "../state/settingsSlice";
@@ -5,10 +6,22 @@ import { Language } from "../types";
 import { SettingsHeader } from "../components/SettingsHeader";
 import { SettingsCard } from "../components/SettingsCard";
 import { PreferenceToggle } from "../components/PreferenceToggle";
+import { authService } from "@/features/auth/services/auth.service";
 
 export const PreferencesSettingsPage = () => {
   const dispatch = useAppDispatch();
   const { language, preferences } = useAppSelector((state) => state.settings);
+
+  useEffect(() => {
+    authService.getSettings().then((data) => {
+      if (data?.settings.language) dispatch(setLanguage(data.settings.language));
+      if (data?.settings) dispatch(updatePreferences({
+        reducedMotion: data.settings.reducedMotion,
+        compactMode: data.settings.compactMode,
+        autoPlayMedia: data.settings.autoPlayMedia,
+      }));
+    }).catch(() => undefined);
+  }, [dispatch]);
 
   return (
     <motion.div
@@ -26,7 +39,7 @@ export const PreferencesSettingsPage = () => {
         <div className="max-w-md">
           <select 
             value={language}
-            onChange={(e) => dispatch(setLanguage(e.target.value as Language))}
+            onChange={(e) => { const value = e.target.value as Language; dispatch(setLanguage(value)); void authService.updateSettings({ language: value }); }}
             className="w-full flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
             <option value="en">English</option>
@@ -44,21 +57,21 @@ export const PreferencesSettingsPage = () => {
             title="Reduced Motion"
             description="Disable non-essential animations and transitions throughout the app."
             checked={preferences.reducedMotion}
-            onCheckedChange={(checked) => dispatch(updatePreferences({ reducedMotion: checked }))}
+            onCheckedChange={(checked) => { dispatch(updatePreferences({ reducedMotion: checked })); void authService.updateSettings({ reducedMotion: checked }); }}
           />
           <PreferenceToggle 
             id="compactMode"
             title="Compact Mode"
             description="Reduce spacing in lists and tables to show more content."
             checked={preferences.compactMode}
-            onCheckedChange={(checked) => dispatch(updatePreferences({ compactMode: checked }))}
+            onCheckedChange={(checked) => { dispatch(updatePreferences({ compactMode: checked })); void authService.updateSettings({ compactMode: checked }); }}
           />
           <PreferenceToggle 
             id="autoPlayMedia"
             title="Auto-play Media"
             description="Automatically play videos and animated GIFs as you scroll."
             checked={preferences.autoPlayMedia}
-            onCheckedChange={(checked) => dispatch(updatePreferences({ autoPlayMedia: checked }))}
+            onCheckedChange={(checked) => { dispatch(updatePreferences({ autoPlayMedia: checked })); void authService.updateSettings({ autoPlayMedia: checked }); }}
           />
         </div>
       </SettingsCard>

@@ -9,6 +9,7 @@ import LenisProvider from './styles/lenis/LenisProvider'
 import { ErrorBoundary } from './shared/components/ErrorBoundary'
 import { analytics } from './shared/services/analytics.service'
 import { errorMonitor } from './shared/services/error.service'
+import './pwa/register'
 
 // Initialize services
 analytics.init();

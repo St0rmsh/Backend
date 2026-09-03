@@ -1,13 +1,33 @@
 import { motion } from "framer-motion";
 import { useAppSelector } from "@/shared/hooks";
+import { useAppDispatch } from "@/shared/hooks";
+import { useNavigate } from "react-router-dom";
 import { SettingsHeader } from "../components/SettingsHeader";
 import { SettingsCard } from "../components/SettingsCard";
 import { Button } from "@/shared/ui/button";
+import { authService } from "@/features/auth/services/auth.service";
+import { logoutThunk } from "@/features/auth/state/authThunks";
 
 export const AccountSettingsPage = () => {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
 
   if (!user) return null;
+
+  const deactivate = async () => {
+    if (!window.confirm("Deactivate your account?")) return;
+    await authService.deactivateAccount();
+    await dispatch(logoutThunk());
+    navigate("/auth/login", { replace: true });
+  };
+
+  const removeAccount = async () => {
+    if (!window.confirm("Delete your account permanently?")) return;
+    await authService.deleteAccount();
+    await dispatch(logoutThunk());
+    navigate("/auth/login", { replace: true });
+  };
 
   return (
     <motion.div
@@ -53,7 +73,7 @@ export const AccountSettingsPage = () => {
               <h4 className="font-medium text-destructive">Deactivate Account</h4>
               <p className="text-sm text-muted-foreground">Temporarily hide your profile, posts, and comments.</p>
             </div>
-            <Button variant="outline" className="text-destructive border-destructive/50 hover:bg-destructive/10">
+            <Button onClick={deactivate} variant="outline" className="text-destructive border-destructive/50 hover:bg-destructive/10">
               Deactivate
             </Button>
           </div>
@@ -63,7 +83,7 @@ export const AccountSettingsPage = () => {
               <h4 className="font-medium text-destructive">Delete Account</h4>
               <p className="text-sm text-muted-foreground">Permanently remove your account and all associated data.</p>
             </div>
-            <Button variant="destructive">
+            <Button onClick={removeAccount} variant="destructive">
               Delete Account
             </Button>
           </div>

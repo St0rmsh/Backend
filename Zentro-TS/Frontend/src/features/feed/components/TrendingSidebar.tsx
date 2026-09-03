@@ -49,9 +49,9 @@ export function TrendingSidebar() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Reading Streak Widget (Premium feature) */}
-      <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 shadow-sm">
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 shadow-sm">
         <div className="flex items-center gap-2 text-amber-500 mb-2">
           <Flame className="w-5 h-5 fill-amber-500 animate-pulse" />
           <h4 className="font-bold text-sm tracking-tight">Reading Streak</h4>

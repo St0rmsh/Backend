@@ -6,7 +6,7 @@ const mockReports: AdminReport[] = [
 ];
 
 export const reportsService = {
-  getReports: async (page = 1, limit = 10): Promise<{ reports: AdminReport[]; total: number }> => {
+  getReports: async (_page = 1, _limit = 10): Promise<{ reports: AdminReport[]; total: number }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({ reports: mockReports, total: mockReports.length });

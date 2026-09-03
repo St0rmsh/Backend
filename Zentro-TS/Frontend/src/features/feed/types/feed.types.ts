@@ -11,6 +11,8 @@ export interface Post {
   title: string;
   content: string;
   coverImage?: string;
+  mediaUrl?: string;
+  mediaType?: "image" | "video" | "none";
   category: string;
   tags: string[];
   likesCount: number;
@@ -45,5 +47,6 @@ export interface FeedState {
   totalPages: number;
   hasNextPage: boolean;
   activeTab: FeedTab;
+  feedMode: "list" | "reels";
   readingProgress: Record<string, number>; // Maps postId to scroll progress (0 to 100)
 }

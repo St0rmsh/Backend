@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { Search, TrendingUp, Hash, Loader2, Sparkles } from "lucide-react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { TrendingUp, Hash, Sparkles } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
-import { setGlobalSearchOpen } from "@/store/slices/uiSlice";
+
 import { fetchDiscoverData, addRecentSearch, setSearchQuery } from "@/features/search/state/searchSlice";
 import type { Tag } from "@/features/search/types";
+import { SearchBar } from "@/features/search/components/SearchBar";
 
 export const RightSidebar = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
   const { rightSidebarOpen } = useAppSelector((state) => state.ui);
   const { trendingTags, topUsers, discoverLoading } = useAppSelector((state) => state.search);
   const [hasFetched, setHasFetched] = useState(false);
@@ -33,19 +33,10 @@ export const RightSidebar = () => {
   return (
     <aside className="hidden lg:block w-[320px] sticky top-0 h-screen border-l border-border bg-background overflow-y-auto z-30">
       <div className="p-5 space-y-6">
-        {/* Search Trigger — Full-width search bar style */}
-        <button
-          onClick={() => dispatch(setGlobalSearchOpen(true))}
-          className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:border-primary/30 transition-all shadow-sm group"
-        >
-          <Search className="h-4 w-4 group-hover:text-primary transition-colors" />
-          <span className="flex-1 text-left">Search Zentro...</span>
-          <div className="flex items-center gap-0.5 opacity-50 group-hover:opacity-80 transition-opacity">
-            <kbd className="inline-flex h-5 items-center gap-0.5 rounded-md border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-              <span className="text-xs">⌘</span>K
-            </kbd>
-          </div>
-        </button>
+        {/* Actual Search Bar Component */}
+        <div className="w-full rounded-2xl border border-border/60 bg-muted/30 overflow-hidden shadow-sm hover:border-primary/30 transition-all focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20">
+          <SearchBar />
+        </div>
 
         {/* Trending Tags — Real data from backend */}
         <div>

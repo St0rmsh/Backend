@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { searchService } from "../services/search.service";
-import type { Post } from "@/features/post/types";
-import type { User } from "@/features/profile/types";
+import type { Post } from "@/features/feed/types/feed.types";
+import type { User } from "@/shared/types/user.types";
 import type { Tag, PaginationData } from "../types";
 
 export const MAX_RECENT_SEARCHES = 10;
@@ -38,7 +38,7 @@ const loadRecentSearches = (): string[] => {
   try {
     const saved = localStorage.getItem("zentro_recent_searches");
     return saved ? JSON.parse(saved) : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };

@@ -11,7 +11,7 @@ const PostRouter = Router()
 // @route: POST /api/posts/create
 // @desc: Create a new post
 // @access: Private
-PostRouter.post("/create",authMiddleware,uploadFile.single("coverImage"),createPostController)
+PostRouter.post("/create",authMiddleware,uploadFile.fields([{ name: "coverImage", maxCount: 1 }, { name: "media", maxCount: 1 }]),createPostController)
 
 
 // @route: GET /api/posts

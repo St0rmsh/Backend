@@ -6,6 +6,8 @@ export interface IPost {
     title: string,
     content: string,
     coverImage?: string,
+    mediaUrl?: string,
+    mediaType?: "image" | "video" | "none",
     tags: string[],
     category: string,
 
@@ -23,6 +25,8 @@ export interface ICreatePostBody {
     title: string,
     content: string,
     coverImage?: string | undefined,
+    mediaUrl?: string | undefined,
+    mediaType?: "image" | "video" | "none",
     tags?: string[] | undefined,
     category?: string | undefined,
     isPublished?: boolean,

@@ -7,7 +7,7 @@ const mockPosts: AdminPost[] = [
 ];
 
 export const postsService = {
-  getPosts: async (page = 1, limit = 10): Promise<{ posts: AdminPost[]; total: number }> => {
+  getPosts: async (_page = 1, _limit = 10): Promise<{ posts: AdminPost[]; total: number }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({ posts: mockPosts, total: mockPosts.length });

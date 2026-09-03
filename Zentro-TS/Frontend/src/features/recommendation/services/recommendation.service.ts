@@ -1,4 +1,4 @@
-import { RecommendedPost, RecommendedUser, TrendingTag, TrendingCategory, ReadingProgressData } from '../types';
+import { RecommendedPost, RecommendedUser, TrendingTag, TrendingCategory } from '../types';
 
 const mockFeed: RecommendedPost[] = [
   { id: '1', title: 'The Future of AI in Web Development', excerpt: 'How AI is changing the way we build the web...', author: { id: '1', username: 'ai_expert' }, category: 'Technology', readingTime: 5, publishedAt: new Date().toISOString(), reason: 'Trending Today' },

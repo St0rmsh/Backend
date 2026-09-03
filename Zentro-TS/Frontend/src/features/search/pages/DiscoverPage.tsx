@@ -39,7 +39,7 @@ export const DiscoverPage = () => {
               <Compass className="h-6 w-6 text-primary" />
               <h2 className="text-2xl font-semibold">Trending Posts</h2>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="w-full space-y-6">
               {trendingPosts.map((post, index) => (
                 <motion.div
                   key={post._id}
@@ -47,7 +47,7 @@ export const DiscoverPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <FeedCard post={post} />
+                  <FeedCard key={post._id} post={post} index={index} />
                 </motion.div>
               ))}
               {trendingPosts.length === 0 && !discoverLoading && (
@@ -70,7 +70,7 @@ export const DiscoverPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <FollowCard user={user as any} isFollowing={false} />
+                  <FollowCard user={user} />
                 </motion.div>
               ))}
               {topUsers.length === 0 && !discoverLoading && (

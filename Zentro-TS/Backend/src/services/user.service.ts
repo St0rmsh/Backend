@@ -1,5 +1,5 @@
 import UserModel from "../model/auth.model.js";
-import type { LoginBody, RegisterBody, UpdateUserBody } from "../types/Auth/user.types.js";
+import type { LoginBody, RegisterBody, UpdateUserBody, UserSettingsUpdate } from "../types/Auth/user.types.js";
 import jwt from "jsonwebtoken"
 import config from "../config/config.js"
 import type { JwtPayload } from "../types/Jwt/payload.types.js";
@@ -12,6 +12,8 @@ import { forgotPasswordTemplate } from "../template/forgotPassword.js";
 import { verifyEmail } from "../template/verifyEmail.js";
 import FollowerModel from "../model/Follower.model.js";
 import PostModel from "../model/post.model.js";
+import LikeModel from "../model/like.model.js";
+import bookmarkmodel from "../model/bookmark.model.js";
 import type { IUserProfileResponse } from "../types/Profile/userProfile.types.js";
 
 // Register user service
@@ -89,6 +91,14 @@ export const loginUserService = async (data:LoginBody) =>{
 
         await user.save()
 
+        const [likedRecords, bookmarkedRecords] = await Promise.all([
+            LikeModel.find({ user: user._id }).select("postId").lean(),
+            bookmarkmodel.find({ user: user._id }).select("post").lean()
+        ]);
+
+        const likedPosts = likedRecords.map(r => r.postId.toString());
+        const bookmarkedPosts = bookmarkedRecords.map(r => r.post.toString());
+
         const accessToken = jwt.sign({_id: user._id , email:user.email,roles:user.roles},config.ACCESS_TOKEN,{ expiresIn: "15m" })
         const refreshToken = jwt.sign({_id: user._id , email:user.email,roles:user.roles},config.REFRESH_TOKEN,{ expiresIn: "7d" })
 
@@ -98,7 +108,9 @@ export const loginUserService = async (data:LoginBody) =>{
                 username: user.username,
                 email: user.email,
                 fullname: user.fullname,
-                isVerified: user.isVerified
+                isVerified: user.isVerified,
+                likedPosts,
+                bookmarkedPosts
             },
             accessToken,
             refreshToken
@@ -131,13 +143,23 @@ export const getMyProfileService = async (id:string) =>{
             throw new Error("User not found")
         }
 
+        const [likedRecords, bookmarkedRecords] = await Promise.all([
+            LikeModel.find({ user: id }).select("postId").lean(),
+            bookmarkmodel.find({ user: id }).select("post").lean()
+        ]);
+
+        const likedPosts = likedRecords.map(r => r.postId.toString());
+        const bookmarkedPosts = bookmarkedRecords.map(r => r.post.toString());
+
         return {
             user: {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
                 fullname: user.fullname,
-                isVerified: user.isVerified
+                isVerified: user.isVerified,
+                likedPosts,
+                bookmarkedPosts
             }
         }
         
@@ -716,3 +738,49 @@ export const getprofileService = async (userId:string): Promise<IUserProfileResp
         );
     }
 }
+
+export const getUserSettingsService = async (id: string) => {
+    const user = await UserModel.findById(id).select("privacy settings").lean();
+    if (!user) throw new Error("User not found");
+    return { privacy: user.privacy, settings: user.settings };
+};
+
+export const updateUserSettingsService = async (id: string, data: UserSettingsUpdate) => {
+    const privacyKeys = ["privateAccount", "activityStatus", "searchVisibility"] as const;
+    const settingsKeys = ["theme", "language", "reducedMotion", "compactMode", "autoPlayMedia"] as const;
+    const privacy = Object.fromEntries(privacyKeys.filter((key) => data[key] !== undefined).map((key) => [key, data[key]]));
+    const settings = Object.fromEntries(settingsKeys.filter((key) => data[key] !== undefined).map((key) => [key, data[key]]));
+    const updates = Object.fromEntries([
+        ...Object.entries(privacy).map(([key, value]) => [`privacy.${key}`, value]),
+        ...Object.entries(settings).map(([key, value]) => [`settings.${key}`, value]),
+    ]);
+    const user = await UserModel.findByIdAndUpdate(id, { $set: updates }, { new: true, runValidators: true }).select("privacy settings").lean();
+    if (!user) throw new Error("User not found");
+    return { privacy: user.privacy, settings: user.settings };
+};
+
+export const updateAccountStatusService = async (id: string, active: boolean) => {
+    const user = await UserModel.findByIdAndUpdate(id, { isActive: active }, { new: true }).select("isActive").lean();
+    if (!user) throw new Error("User not found");
+    return { isActive: user.isActive };
+};
+
+export const deleteAccountService = async (id: string) => {
+    const user = await UserModel.findByIdAndDelete(id);
+    if (!user) throw new Error("User not found");
+};
+
+    export const getPrivacyListsService = async (id: string) => {
+        const user = await UserModel.findById(id).populate("blockedUsers", "username fullname").populate("mutedUsers", "username fullname").lean();
+        if (!user) throw new Error("User not found");
+        return { blockedUsers: user.blockedUsers ?? [], mutedUsers: user.mutedUsers ?? [] };
+    };
+
+    export const updatePrivacyListService = async (id: string, list: "blockedUsers" | "mutedUsers", username: string, add: boolean) => {
+        const target = await UserModel.findOne({ username: username.toLowerCase().trim() }).select("_id").lean();
+        if (!target) throw new Error("User not found");
+        if (target._id.toString() === id) throw new Error("You cannot add yourself");
+        const user = await UserModel.findByIdAndUpdate(id, { [add ? "$addToSet" : "$pull"]: { [list]: target._id } }, { new: true }).populate(list, "username fullname").lean();
+        if (!user) throw new Error("User not found");
+        return user[list] ?? [];
+    };

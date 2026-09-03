@@ -124,6 +124,8 @@ const buildFeedPipeline = (
         title: 1,
         content: 1,
         coverImage: 1,
+        mediaUrl: 1,
+        mediaType: 1,
         category: 1,
         tags: 1,
         likesCount: 1,

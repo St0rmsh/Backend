@@ -7,6 +7,10 @@ import { ChangePasswordFormData } from "../schemas/changePassword.schema";
 import { LoginResponse, RegisterResponse } from "../types/auth.types";
 import { ApiResponse } from "@/shared/types/api.types";
 import { User } from "@/shared/types/user.types";
+export interface UserSettingsResponse {
+  privacy: { privateAccount: boolean; activityStatus: boolean; searchVisibility: boolean };
+  settings: { theme: "light" | "dark" | "system"; language: "en" | "es" | "fr" | "de"; reducedMotion: boolean; compactMode: boolean; autoPlayMedia: boolean };
+}
 
 export const authService = {
   login: async (data: LoginFormData) => {
@@ -53,5 +57,33 @@ export const authService = {
   resetPassword: async (data: ResetPasswordFormData) => {
     const response = await axiosInstance.post<ApiResponse>("/auth/reset-password", data);
     return response.data;
+  },
+
+  getSettings: async () => {
+    const response = await axiosInstance.get<ApiResponse<UserSettingsResponse>>("/auth/settings");
+    return response.data.data;
+  },
+
+  updateSettings: async (data: Record<string, string | boolean>) => {
+    const response = await axiosInstance.patch<ApiResponse<unknown>>("/auth/settings", data);
+    return response.data;
+  },
+
+  deactivateAccount: async () => {
+    await axiosInstance.patch("/auth/deactivate");
+  },
+
+  deleteAccount: async () => {
+    await axiosInstance.delete("/auth/account");
+  },
+
+  getPrivacyLists: async () => {
+    const response = await axiosInstance.get<ApiResponse<{ blockedUsers: User[]; mutedUsers: User[] }>>("/auth/privacy-lists");
+    return response.data.data;
+  },
+
+  updatePrivacyList: async (list: "blockedUsers" | "mutedUsers", username: string, add: boolean) => {
+    const response = await axiosInstance.patch<ApiResponse<User[]>>(`/auth/privacy-lists/${list}`, { username, add });
+    return response.data.data;
   },
 };

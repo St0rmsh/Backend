@@ -3,15 +3,25 @@ import { SettingsState, Theme, Language, SettingsPreferences } from "../types";
 
 const getInitialTheme = (): Theme => {
   const savedTheme = localStorage.getItem("theme") as Theme;
-  return savedTheme || "system";
+  const theme = savedTheme || "system";
+  applyTheme(theme);
+  return theme;
+};
+
+const applyTheme = (theme: Theme) => {
+  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.classList.toggle("light", !isDark);
 };
 
 const getInitialPreferences = (): SettingsPreferences => {
   const savedPrefs = localStorage.getItem("preferences");
   if (savedPrefs) {
     try {
-      return JSON.parse(savedPrefs);
-    } catch (e) {
+      const preferences = JSON.parse(savedPrefs) as SettingsPreferences;
+      applyPreferences(preferences);
+      return preferences;
+    } catch {
       // Ignore
     }
   }
@@ -20,6 +30,11 @@ const getInitialPreferences = (): SettingsPreferences => {
     compactMode: false,
     autoPlayMedia: true,
   };
+};
+
+const applyPreferences = (preferences: SettingsPreferences) => {
+  document.documentElement.classList.toggle("compact-mode", preferences.compactMode);
+  document.documentElement.classList.toggle("reduced-motion", preferences.reducedMotion);
 };
 
 const initialState: SettingsState = {
@@ -39,12 +54,7 @@ const settingsSlice = createSlice({
       state.theme = action.payload;
       localStorage.setItem("theme", action.payload);
       
-      // Update DOM for theme
-      if (action.payload === "dark" || (action.payload === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
+      applyTheme(action.payload);
     },
     setLanguage: (state, action: PayloadAction<Language>) => {
       state.language = action.payload;
@@ -53,6 +63,7 @@ const settingsSlice = createSlice({
     updatePreferences: (state, action: PayloadAction<Partial<SettingsPreferences>>) => {
       state.preferences = { ...state.preferences, ...action.payload };
       localStorage.setItem("preferences", JSON.stringify(state.preferences));
+      applyPreferences(state.preferences);
     },
     clearSettingsMessages: (state) => {
       state.error = null;

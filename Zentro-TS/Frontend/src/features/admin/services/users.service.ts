@@ -8,7 +8,7 @@ const mockUsers: AdminUser[] = [
 ];
 
 export const usersService = {
-  getUsers: async (page = 1, limit = 10): Promise<{ users: AdminUser[]; total: number }> => {
+  getUsers: async (_page = 1, _limit = 10): Promise<{ users: AdminUser[]; total: number }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({ users: mockUsers, total: mockUsers.length });

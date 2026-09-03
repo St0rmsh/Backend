@@ -67,6 +67,20 @@ const userSchema = new mongoose.Schema<UserDocument>({
         type: Boolean,
         default: true
     },
+        blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        mutedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    privacy: {
+        privateAccount: { type: Boolean, default: false },
+        activityStatus: { type: Boolean, default: true },
+        searchVisibility: { type: Boolean, default: true },
+    },
+    settings: {
+        theme: { type: String, enum: ["light", "dark", "system"], default: "system" },
+        language: { type: String, enum: ["en", "es", "fr", "de"], default: "en" },
+        reducedMotion: { type: Boolean, default: false },
+        compactMode: { type: Boolean, default: false },
+        autoPlayMedia: { type: Boolean, default: true },
+    },
     lastLogin: {
         type: Date,
         default: Date.now

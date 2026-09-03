@@ -13,6 +13,7 @@ import { SettingsLayout } from "@/layouts/SettingsLayout";
 import { ErrorLayout } from "@/layouts/ErrorLayout";
 import { AdminLayout } from "@/features/admin/components/AdminLayout";
 import { AdminRoute } from "./AdminRoute";
+import { OfflinePage } from "@/pwa/OfflinePage";
 
 // ============================================================================
 // LAZY LOADED AUTH PAGES
@@ -255,6 +256,10 @@ export const routes: RouteObject[] = [
     element: <RootLayout />,
     children: [
       {
+        path: "offline",
+        element: <OfflinePage />,
+      },
+      {
         index: true,
         element: <Navigate to={ROUTES.FEED} replace />,
       },
@@ -386,6 +391,26 @@ export const routes: RouteObject[] = [
         ],
       },
 
+      // Explore is the public navigation name for discovery.
+      {
+        path: "explore",
+        element: (
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <DiscoverPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+
       // Bookmarks Route (Protected)
       {
         path: "bookmarks",
@@ -485,6 +510,22 @@ export const routes: RouteObject[] = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <ProfilePage isOwnProfile />
+              </Suspense>
+            ),
+          },
+          {
+            path: "profile/followers",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <FollowersPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "profile/following",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <FollowingPage />
               </Suspense>
             ),
           },

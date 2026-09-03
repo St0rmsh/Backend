@@ -18,6 +18,20 @@ export interface IUser {
     postCount: number,
     roles: UserRole[],
     isActive: boolean,
+        blockedUsers: string[],
+        mutedUsers: string[],
+    privacy: {
+        privateAccount: boolean,
+        activityStatus: boolean,
+        searchVisibility: boolean,
+    },
+    settings: {
+        theme: "light" | "dark" | "system",
+        language: "en" | "es" | "fr" | "de",
+        reducedMotion: boolean,
+        compactMode: boolean,
+        autoPlayMedia: boolean,
+    },
     lastLogin?: Date,
     createdAt?: Date,
     updatedAt?: Date
@@ -54,3 +68,5 @@ export interface EmailOptions {
     text?: string;
     html?: string;
 }
+
+export type UserSettingsUpdate = Partial<IUser["privacy"]> & Partial<IUser["settings"]>;

@@ -39,7 +39,7 @@ export const readingService = {
     });
   },
 
-  syncProgress: async (postId: string, percentage: number): Promise<void> => {
+  syncProgress: async (_postId: string, _percentage: number): Promise<void> => {
     // In a real app, this would ping the backend to update reading history / progress
     return new Promise((resolve) => setTimeout(resolve, 300));
   }

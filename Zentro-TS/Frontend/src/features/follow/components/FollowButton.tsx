@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
 import { Button } from "@/shared/ui/button";
-import { toggleFollowThunk } from "../state/followSlice";
+import { toggleFollowThunk, fetchFollowStatusThunk } from "../state/followSlice";
 
 interface FollowButtonProps {
   userId: string;
@@ -17,6 +17,12 @@ export const FollowButton: React.FC<FollowButtonProps> = ({ userId, initialFollo
   const relationship = useAppSelector((state) => state.follow.relationshipByUser[userId]);
   const isFollowing = relationship?.isFollowing ?? initialFollowing;
   const loading = relationship?.loading ?? false;
+
+  React.useEffect(() => {
+    if (userId && relationship === undefined) {
+      dispatch(fetchFollowStatusThunk(userId));
+    }
+  }, [dispatch, userId, relationship]);
 
   const handleToggle = async () => {
     if (!userId || loading) return;

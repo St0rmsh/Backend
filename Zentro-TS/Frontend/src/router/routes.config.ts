@@ -58,6 +58,7 @@ export const ROUTES = {
   UNAUTHORIZED: "/401",
   FORBIDDEN: "/403",
   ERROR: "/error",
+  OFFLINE: "/offline",
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

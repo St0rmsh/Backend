@@ -169,6 +169,7 @@ const initialState: FeedState = {
   totalPages: 1,
   hasNextPage: false,
   activeTab: "home",
+  feedMode: "list",
   readingProgress: {},
 };
 
@@ -183,6 +184,9 @@ const feedSlice = createSlice({
       state.totalPages = 1;
       state.hasNextPage = false;
       state.error = null;
+    },
+    setFeedMode: (state, action: PayloadAction<"list" | "reels">) => {
+      state.feedMode = action.payload;
     },
     updateReadingProgress: (
       state,
@@ -260,5 +264,5 @@ const feedSlice = createSlice({
   },
 });
 
-export const { setTab, updateReadingProgress, updatePostLikesCount, updatePostCommentsCount, setPostCommentsCount, clearFeedError } = feedSlice.actions;
+export const { setTab, setFeedMode, updateReadingProgress, updatePostLikesCount, updatePostCommentsCount, setPostCommentsCount, clearFeedError } = feedSlice.actions;
 export default feedSlice.reducer;

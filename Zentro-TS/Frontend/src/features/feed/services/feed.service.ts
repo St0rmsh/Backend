@@ -8,4 +8,8 @@ export const feedService = {
     });
     return response.data;
   },
+  trackViewTime: async (postId: string, durationMs: number) => {
+    const response = await axiosInstance.post("/view-time", { postId, durationMs });
+    return response.data;
+  }
 };

@@ -32,6 +32,7 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
   const likedPosts = useAppSelector((state) => state.likes.likedPosts);
   const feedPost = useAppSelector((state) => state.feed.posts.find((item) => item._id === post._id));
   const bookmarkPost = useAppSelector((state) => state.bookmarks.bookmarksList.find((item) => (item.post?._id ?? item.post) === post._id)?.post);
+  const autoPlayMedia = useAppSelector((state) => state.settings.preferences.autoPlayMedia);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [displayPost, setDisplayPost] = useState<Post>(post);
 
@@ -100,14 +101,14 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3), ease: "easeOut" }}
-      className="group relative flex flex-col bg-card/60 backdrop-blur-md border border-border/40 hover:border-primary/30 rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md"
+      className="group relative mx-auto flex w-full max-w-2xl flex-col bg-card/60 backdrop-blur-md border border-border/40 hover:border-primary/30 rounded-xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md"
       onClick={handleCardClick}
     >
       {/* Top Reading Progress Bar (Obsidian/IDE aesthetic) */}
       {progress > 0 && <ReadingProgressBar progress={progress} className="absolute top-0 left-0 right-0 z-10 h-[3px]" />}
 
       {/* Card Body */}
-      <div className="p-5 flex flex-col gap-4">
+      <div className="p-4 md:p-5 flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <AuthorCard author={resolvedPost.user} />
@@ -119,8 +120,8 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
         </div>
 
         {/* Title & Preview */}
-        <div className="flex flex-col gap-2">
-          <h2 className="text-lg md:text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
+        <div className="flex flex-col gap-3">
+          <h2 className="text-lg md:text-xl font-bold leading-tight tracking-tight text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
             {resolvedPost.title}
           </h2>
           <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
@@ -129,20 +130,32 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
         </div>
 
         {/* Cover Image (if available) */}
-        {resolvedPost.coverImage && (
+        {(resolvedPost.coverImage || (resolvedPost.mediaType === "video" && resolvedPost.mediaUrl)) && (
           <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-muted/20 border border-border/20">
-            <motion.img
-              src={resolvedPost.coverImage}
-              alt={resolvedPost.title}
-              loading="lazy"
-              onLoad={() => setImageLoaded(true)}
-              animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 1.03 }}
-              transition={{ duration: 0.4 }}
-              className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
-            />
+            {resolvedPost.mediaType === "video" && resolvedPost.mediaUrl ? (
+              <video
+                src={resolvedPost.mediaUrl}
+                poster={resolvedPost.coverImage}
+                autoPlay={autoPlayMedia}
+                muted
+                loop
+                controls
+                playsInline
+                className="w-full h-full object-cover"
+                aria-label={resolvedPost.title}
+              />
+            ) : <motion.img
+                src={resolvedPost.coverImage}
+                alt={resolvedPost.title}
+                loading="lazy"
+                onLoad={() => setImageLoaded(true)}
+                animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 1.03 }}
+                transition={{ duration: 0.4 }}
+                className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
+              />}
             
             {/* Image Loading Skeleton */}
-            {!imageLoaded && (
+            {resolvedPost.mediaType !== "video" && !imageLoaded && (
               <div className="absolute inset-0 bg-muted/30 animate-pulse" />
             )}
 
@@ -164,7 +177,7 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
 
         {/* Tags */}
         {resolvedPost.tags && resolvedPost.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1">
+          <div className="flex flex-wrap gap-2 mt-2">
             {resolvedPost.tags.map((tag) => (
               <TagChip key={tag} tag={tag} />
             ))}
@@ -173,8 +186,8 @@ export const FeedCard = memo(function FeedCard({ post, index }: FeedCardProps) {
       </div>
 
       {/* Footer / Interaction Bar */}
-      <div className="px-5 py-3.5 bg-muted/10 border-t border-border/30 flex items-center justify-between text-muted-foreground text-xs">
-        <div className="flex items-center gap-4">
+      <div className="px-4 md:px-5 py-3 bg-muted/10 border-t border-border/30 flex items-center justify-between text-muted-foreground text-xs">
+        <div className="flex items-center gap-5">
           {/* Views count */}
           <span className="flex items-center gap-1.5 opacity-80" title={`${resolvedPost.viewsCount} views`}>
             <Eye className="w-4 h-4" />

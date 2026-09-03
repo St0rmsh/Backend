@@ -1,6 +1,6 @@
 import express from "express";
 import { registerValidator, loginValidator, resetPasswordValidator } from "../validation/auth.validation.js";
-import { getUser, loginController, logoutController, refreshAccessTokenController, registrationController, updateUserController, verifyOtpController, sendOtpController, changePasswordController, resetPasswordController, forgotPasswordController } from "../controller/auth.controller.js";
+import { deactivateAccountController, deleteAccountController, getPrivacyListsController, getSettingsController, getUser, loginController, logoutController, refreshAccessTokenController, registrationController, updatePrivacyListController, updateSettingsController, updateUserController, verifyOtpController, sendOtpController, changePasswordController, resetPasswordController, forgotPasswordController } from "../controller/auth.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import uploadFile from "../middleware/multer.js";
 
@@ -31,6 +31,13 @@ authRouter.post("/login", loginValidator, loginController)
 //@Description    Get current user profile
 //@Access         Private
 authRouter.get("/me", authMiddleware, getUser)
+
+authRouter.get("/settings", authMiddleware, getSettingsController)
+authRouter.patch("/settings", authMiddleware, updateSettingsController)
+authRouter.patch("/deactivate", authMiddleware, deactivateAccountController)
+authRouter.delete("/account", authMiddleware, deleteAccountController)
+authRouter.get("/privacy-lists", authMiddleware, getPrivacyListsController)
+authRouter.patch("/privacy-lists/:list", authMiddleware, updatePrivacyListController)
 
 
 

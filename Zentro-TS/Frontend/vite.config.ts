@@ -11,26 +11,35 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['Zentro-logo.png'],
       manifest: {
         name: 'Zentro',
         short_name: 'Zentro',
         description: 'AI-Powered Blog Platform',
-        theme_color: '#000000',
+        theme_color: '#0f172a',
+        background_color: '#0f172a',
+        display: 'standalone',
+        start_url: '/feed',
+        scope: '/',
+        orientation: 'portrait-primary',
+        categories: ['social', 'news'],
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'Zentro-logo.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'Zentro-logo.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       },
       workbox: {
+        navigateFallback: '/offline',
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/api/feed'),
@@ -54,6 +63,20 @@ export default defineConfig({
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: ({ request }) => request.destination === 'image',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'zentro-images-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 30 * 24 * 60 * 60
               },
               cacheableResponse: {
                 statuses: [0, 200]

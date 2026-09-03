@@ -45,7 +45,7 @@ export const RecommendationList = () => {
     <div className="w-full">
       <h2 className="text-2xl font-bold mb-8 text-foreground tracking-tight">More from Zentro</h2>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="max-w-2xl mx-auto space-y-8">
         {MOCK_RECOMMENDATIONS.map((post) => (
           <RecommendationCard key={post.id} {...post} />
         ))}

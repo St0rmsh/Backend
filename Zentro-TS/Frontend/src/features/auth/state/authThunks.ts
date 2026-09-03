@@ -60,15 +60,16 @@ export const hydrateAuthThunk = createAsyncThunk(
 
 export const logoutThunk = createAsyncThunk(
   "auth/logout",
-  async (_, { rejectWithValue }) => {
+  async () => {
     try {
       await authService.logout();
-      socketService.disconnect();
-      return true;
     } catch (error) {
+      // Local logout must still complete if the session has already expired.
+      console.warn("Remote logout failed; clearing the local session.", error);
+    } finally {
       socketService.disconnect();
-      return rejectWithValue(handleApiError(error));
     }
+    return true;
   }
 );
 

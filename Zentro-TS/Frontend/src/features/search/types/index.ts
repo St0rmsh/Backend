@@ -1,5 +1,5 @@
-import type { Post } from "@/features/post/types";
-import type { User } from "@/features/profile/types";
+import type { Post } from "@/features/feed/types/feed.types";
+import type { User } from "@/shared/types/user.types";
 
 export interface PaginationData {
   currentPage: number;

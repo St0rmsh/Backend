@@ -9,12 +9,14 @@ import { toggleLikeThunk, addLike, removeLike } from "../state/likeSlice";
 
 interface LikeButtonProps {
   postId: string;
+  className?: string;
   initialLikeCount?: number;
   isInitiallyLiked?: boolean;
 }
 
 export const LikeButton: React.FC<LikeButtonProps> = ({
   postId,
+  className,
   initialLikeCount = 0,
   isInitiallyLiked = false,
 }) => {
@@ -75,7 +77,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
     <Button
       variant="ghost"
       size="sm"
-      className="gap-2 rounded-full hover:bg-muted group transition-all"
+      className={`gap-2 rounded-full hover:bg-muted group transition-all ${className ?? ""}`}
       onClick={handleToggleLike}
       disabled={isLoading}
       aria-label={visualIsLiked ? "Unlike post" : "Like post"}

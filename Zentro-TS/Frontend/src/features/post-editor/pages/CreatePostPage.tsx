@@ -12,6 +12,7 @@ import {
 import { postEditorService } from '../services/postEditor.service';
 import { TitleInput } from '../components/TitleInput';
 import { CoverUploader } from '../components/CoverUploader';
+import { MediaUploader } from '../components/MediaUploader';
 import { EditorContent } from '../components/EditorContent';
 import { PublishPanel } from '../components/PublishPanel';
 import { DraftStatus } from '../components/DraftStatus';
@@ -22,6 +23,8 @@ export const CreatePostPage: React.FC = () => {
   const dispatch = useDispatch();
   const editorState = useSelector((state: RootState) => state.postEditor);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<{ url: string; type: "image" | "video" } | null>(null);
 
   useEffect(() => {
     dispatch(resetEditor());
@@ -53,8 +56,9 @@ export const CreatePostPage: React.FC = () => {
       if (coverFile) {
         formData.append('coverImage', coverFile);
       }
+      if (mediaFile) formData.append('media', mediaFile);
 
-      const response = await postEditorService.createPost(formData as any);
+      const response = await postEditorService.createPost(formData);
       
       dispatch(setLastSavedAt(new Date().toISOString()));
       
@@ -100,6 +104,16 @@ export const CreatePostPage: React.FC = () => {
                 setCoverFile(null);
                 dispatch(setEditorState({ coverImage: undefined }));
               }}
+            />
+
+            <MediaUploader
+              mediaUrl={mediaPreview?.url}
+              mediaType={mediaPreview?.type}
+              onUpload={(file) => {
+                setMediaFile(file);
+                setMediaPreview({ url: URL.createObjectURL(file), type: file.type.startsWith('video/') ? 'video' : 'image' });
+              }}
+              onRemove={() => { setMediaFile(null); setMediaPreview(null); }}
             />
 
             <TitleInput 

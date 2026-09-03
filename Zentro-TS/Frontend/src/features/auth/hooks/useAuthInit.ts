@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks';
 import { hydrateAuthThunk, logoutThunk } from '../state/authThunks';
+import { setLikedPosts } from '../../likes/state/likeSlice';
+import { setBookmarkedPosts } from '../../bookmarks/state/bookmarkSlice';
 import { registerLogoutCallback } from '@/shared/lib/axios';
 import { socketService } from '@/shared/lib/socket';
 import { setHydrationComplete } from '../state/authSlice';
@@ -51,7 +53,9 @@ export const useAuthInit = () => {
 
     const initializeAuth = async () => {
       try {
-        await dispatch(hydrateAuthThunk()).unwrap();
+        const result = await dispatch(hydrateAuthThunk()).unwrap();
+        if (result?.likedPosts) dispatch(setLikedPosts(result.likedPosts));
+        if (result?.bookmarkedPosts) dispatch(setBookmarkedPosts(result.bookmarkedPosts));
         // If successful, user is authenticated, connect socket
         socketService.connect();
         

@@ -7,7 +7,7 @@ const mockTags: AdminTag[] = [
 ];
 
 export const tagsService = {
-  getTags: async (page = 1, limit = 10): Promise<{ tags: AdminTag[]; total: number }> => {
+  getTags: async (_page = 1, _limit = 10): Promise<{ tags: AdminTag[]; total: number }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({ tags: mockTags, total: mockTags.length });

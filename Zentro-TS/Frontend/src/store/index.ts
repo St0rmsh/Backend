@@ -25,6 +25,7 @@ import adminTagsReducer from "@/features/admin/state/adminTagsSlice";
 import adminAnalyticsReducer from "@/features/admin/state/adminAnalyticsSlice";
 import recommendationReducer from "@/features/recommendation/state/recommendationSlice";
 import readingReducer from "@/features/reading/state/readingSlice";
+import pwaReducer from "@/pwa/pwaSlice";
 
 export const store = configureStore({
   reducer: {
@@ -53,6 +54,7 @@ export const store = configureStore({
     adminAnalytics: adminAnalyticsReducer,
     recommendation: recommendationReducer,
     reading: readingReducer,
+    pwa: pwaReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
 });

@@ -65,6 +65,8 @@ const config = {
     REDIS_PORT: process.env.REDIS_PORT,
     IMAGEKIT_PUBLIC_KEY: process.env.IMAGEKIT_PUBLIC_KEY,
     IMAGEKIT_PRIVATE_KEY: process.env.IMAGEKIT_PRIVATE_KEY,
+    FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+    TRUST_PROXY: process.env.TRUST_PROXY === "true",
 }
 
 export default config

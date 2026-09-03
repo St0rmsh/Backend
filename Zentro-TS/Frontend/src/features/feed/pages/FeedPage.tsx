@@ -13,20 +13,12 @@ import { RefreshButton } from "../components/RefreshButton";
 import { AnimatePresence } from "framer-motion";
 import { SEO } from "@/shared/components/SEO";
 
-import { RecommendationSection, RecommendationGrid } from "@/features/recommendation/components/RecommendationSection";
-import { RecommendationCard } from "@/features/recommendation/components/RecommendationCard";
-import { TrendingTags, TrendingCategories } from "@/features/recommendation/components/TrendingSidebar";
-import { RecommendedAuthor } from "@/features/recommendation/components/RecommendedAuthor";
-import { RecommendationSkeleton } from "@/features/recommendation/components/RecommendationSkeleton";
 
 export function FeedPage() {
   const dispatch = useAppDispatch();
-  const { posts, loading, error, currentPage, hasNextPage, activeTab } =
-    useAppSelector((state) => state.feed);
+  const { posts, loading, error, currentPage, hasNextPage } = useAppSelector((state) => state.feed);
+  const activeTab = useAppSelector((state) => state.feed.activeTab);
     
-  const { trendingPosts, trendingTags, trendingCategories, recommendedUsers, isLoading: isRecLoading } = 
-    useAppSelector((state) => state.recommendation);
-
   // Fetch feed and recommendations on mount or when tab changes
   useEffect(() => {
     dispatch(fetchFeedThunk(1));
@@ -68,30 +60,17 @@ export function FeedPage() {
       <SEO title={`Zentro — ${activeTab === "home" ? "Smart Home" : "Following"} Feed`} />
       <FeedHeader />
 
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* Main Feed Content Area */}
-          <div className="flex-1 max-w-3xl space-y-6">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-8">
+          <div className="flex flex-col gap-10">
+            
+            {/* Main Feed Content Area */}
+          <div className="w-full space-y-8">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold tracking-tight text-foreground capitalize">
                 {activeTab === "home" ? "For You" : `${activeTab} Feed`}
               </h1>
               <RefreshButton />
             </div>
-
-            {/* Smart Feed Injection: Trending Posts (only on home tab) */}
-            {activeTab === "home" && !isRecLoading && trendingPosts.length > 0 && (
-              <RecommendationSection title="Trending Today">
-                <RecommendationGrid>
-                  {trendingPosts.map(post => (
-                    <RecommendationCard key={post.id} post={post} />
-                  ))}
-                </RecommendationGrid>
-              </RecommendationSection>
-            )}
-            
-            {activeTab === "home" && isRecLoading && <RecommendationSkeleton />}
 
             {/* Initial Loading Skeletons */}
             {isInitialLoad && (
@@ -113,7 +92,7 @@ export function FeedPage() {
 
             {/* Standard Feed List */}
             {!isInitialLoad && posts.length > 0 && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <AnimatePresence mode="popLayout">
                   {posts.map((post, index) => (
                     <FeedCard key={post._id} post={post} index={index} />
@@ -129,21 +108,6 @@ export function FeedPage() {
             )}
           </div>
 
-          {/* Right Sidebar for Recommendations */}
-          <aside className="hidden lg:block w-80 space-y-8 sticky top-24 h-fit">
-            <TrendingTags tags={trendingTags} />
-            
-            <div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
-              <h3 className="font-bold text-lg mb-4">Who to follow</h3>
-              <div className="space-y-1 divide-y divide-border/30">
-                {recommendedUsers.map(user => (
-                  <RecommendedAuthor key={user.id} user={user} />
-                ))}
-              </div>
-            </div>
-
-            <TrendingCategories categories={trendingCategories} />
-          </aside>
           
         </div>
       </div>

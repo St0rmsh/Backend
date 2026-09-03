@@ -1,9 +1,21 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { useAppDispatch } from "@/shared/hooks";
+import { setTheme } from "@/store/slices/themeSlice";
+import { authService } from "@/features/auth/services/auth.service";
 import { SettingsHeader } from "../components/SettingsHeader";
 import { SettingsCard } from "../components/SettingsCard";
 import { ThemeSwitcher } from "../components/ThemeSwitcher";
 
 export const AppearanceSettingsPage = () => {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    authService.getSettings().then((data) => {
+      if (data?.settings.theme) dispatch(setTheme(data.settings.theme));
+    }).catch(() => undefined);
+  }, [dispatch]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}

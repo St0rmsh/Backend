@@ -8,7 +8,7 @@ import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
 import { VerifyOtpPage } from '../features/auth/pages/VerifyOtpPage'
 import { ChangePasswordPage } from '../features/auth/pages/ChangePasswordPage'
-import { ProfileSettingsPage } from '../features/auth/pages/ProfileSettingsPage'
+import { ProfileSettingsPage } from '../features/settings/pages/ProfileSettingsPage'
 
 function App() {
   return (

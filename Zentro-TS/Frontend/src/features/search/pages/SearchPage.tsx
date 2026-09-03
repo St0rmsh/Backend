@@ -21,7 +21,7 @@ const tabs: { key: TabType; label: string; icon: typeof FileText }[] = [
 
 export const SearchPage = () => {
   const dispatch = useAppDispatch();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   
   const [activeTab, setActiveTab] = useState<TabType>("posts");
@@ -83,27 +83,35 @@ export const SearchPage = () => {
             </p>
           </div>
 
-          {/* Tabs */}
-          <div className="mb-6 max-w-3xl mx-auto">
-            <div className="flex gap-1 p-1 bg-muted/30 rounded-xl border border-border/40 w-fit">
+          {/* Tabs — FeedHeader Style */}
+          <div className="mb-8 w-full border-b border-border/40 pb-2">
+            <nav className="flex space-x-2 overflow-x-auto no-scrollbar">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
+                const isActive = activeTab === tab.key;
                 return (
                   <button
                     key={tab.key}
                     onClick={() => handleTabChange(tab.key)}
-                    className={`relative flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      activeTab === tab.key
-                        ? "bg-background text-foreground shadow-sm border border-border/50"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    className={`relative px-5 py-2.5 text-sm font-semibold rounded-lg transition-colors duration-200 cursor-pointer select-none flex items-center gap-2 ${
+                      isActive
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    {tab.label}
+                    <Icon className="h-4 w-4 relative z-10" />
+                    <span className="relative z-10">{tab.label}</span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="searchActiveTabIndicator"
+                        className="absolute inset-0 bg-secondary/50 border-b-2 border-primary rounded-lg z-0"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
                   </button>
                 );
               })}
-            </div>
+            </nav>
           </div>
 
           {/* Results content — full width */}
@@ -123,9 +131,9 @@ export const SearchPage = () => {
                   >
                     {posts.length > 0 ? (
                       <>
-                        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                        <div className="max-w-2xl mx-auto space-y-8">
                           {posts.map((post) => (
-                            <FeedCard key={post._id} post={post} />
+                            <FeedCard key={post._id} post={post} index={0} />
                           ))}
                         </div>
                         {postsPagination?.hasNextPage && (
@@ -162,9 +170,9 @@ export const SearchPage = () => {
                   >
                     {users.length > 0 ? (
                       <>
-                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="max-w-2xl mx-auto flex flex-col gap-4">
                           {users.map((user) => (
-                            <FollowCard key={user._id} user={user as any} isFollowing={false} />
+                            <FollowCard key={user._id} user={user} />
                           ))}
                         </div>
                         {usersPagination?.hasNextPage && (

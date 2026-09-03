@@ -138,8 +138,6 @@ export const SearchBar = () => {
     }
   };
 
-  const suggestionItems = getSuggestionItems();
-
   return (
     <div ref={containerRef} className="relative w-full">
       <form onSubmit={handleSubmit} className="relative w-full group">
@@ -150,6 +148,7 @@ export const SearchBar = () => {
             <Search className="h-5 w-5" />
           )}
         </div>
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-border/40 group-focus-within:bg-primary/50 transition-colors pointer-events-none" />
         <Input
           ref={inputRef}
           type="text"
@@ -161,7 +160,7 @@ export const SearchBar = () => {
           onFocus={() => setIsFocused(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search posts, users, tags..."
-          className="w-full pl-12 pr-12 h-[52px] rounded-2xl border-border/60 bg-muted/30 hover:bg-muted/50 focus:bg-background focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 shadow-sm transition-all text-base"
+          className="w-full pl-12 pr-12 h-14 rounded-none border-b-2 border-transparent bg-transparent hover:bg-muted/10 focus:bg-transparent focus-visible:ring-0 focus-visible:border-primary shadow-none transition-all text-lg"
           autoComplete="off"
         />
         {localQuery && (

@@ -12,28 +12,70 @@ import feedRouter from "./routes/feed.route.js";
 import notificationRouter from "./routes/notification.routes.js";
 import searchRouter from "./routes/search.route.js";
 import adminRouter from "./routes/admin.routes.js";
+import viewTimeRouter from "./routes/viewTime.route.js";
 import cors from "cors"
+import helmet from "helmet";
+import compression from "compression";
+import { rateLimit } from "express-rate-limit";
+import crypto from "node:crypto";
+import mongoose from "mongoose";
+import config from "./config/config.js";
 const app = express()
 
+app.set("trust proxy", config.TRUST_PROXY);
 
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_ORIGINS?.split(",").map((origin) => origin.trim()) || [config.FRONTEND_ORIGIN],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
 }))
 
-app.use(express.json())
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(compression());
+app.use((req, res, next) => {
+    const requestId = req.header("X-Request-ID") || crypto.randomUUID();
+    res.setHeader("X-Request-ID", requestId);
+    res.locals.requestId = requestId;
+    next();
+});
+app.use(express.json({ limit: "1mb" }))
+app.use(express.urlencoded({ extended: true, limit: "1mb" }))
 
 app.use(cookieParser())
 
-app.use(morgan("dev"))
+app.use(morgan(":method :url :status :response-time ms requestId=:req[x-request-id]"))
+
+app.use("/api", rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 300,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: { success: false, message: "Too many requests. Please try again later." },
+}));
 
 app.get("/", (req, res) => {
     return res.status(200).json({
         message: 'Health Check route'
     })
 })
+
+app.get("/health/live", (_req, res) => {
+    res.status(200).json({ success: true, status: "ok", uptime: process.uptime() });
+});
+
+app.get("/health", (_req, res) => {
+    res.status(200).json({ success: true, status: "ok" });
+});
+
+app.get("/health/ready", (_req, res) => {
+    const mongoReady = mongoose.connection.readyState === 1;
+    res.status(mongoReady ? 200 : 503).json({
+        success: mongoReady,
+        status: mongoReady ? "ready" : "not_ready",
+        checks: { mongo: mongoReady },
+    });
+});
 
 
 // Auth routes
@@ -76,5 +118,19 @@ app.use("/api/search", searchRouter)
 
 // Admin route
 app.use("/api/admin", adminRouter)
+
+// View time route
+app.use("/api/view-time", viewTimeRouter)
+
+app.use((_req, res) => {
+    res.status(404).json({ success: false, message: "Route not found" });
+});
+
+app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    const status = typeof error === "object" && error !== null && "statusCode" in error && typeof error.statusCode === "number" ? error.statusCode : 500;
+    const message = status >= 500 ? "Internal server error" : error instanceof Error ? error.message : "Request failed";
+    console.error("Request failed", { requestId: res.locals.requestId, method: req.method, path: req.path, error });
+    res.status(status).json({ success: false, message, requestId: res.locals.requestId });
+});
 
 export default app

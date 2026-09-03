@@ -6,7 +6,7 @@ const mockComments: AdminComment[] = [
 ];
 
 export const commentsService = {
-  getComments: async (page = 1, limit = 10): Promise<{ comments: AdminComment[]; total: number }> => {
+  getComments: async (_page = 1, _limit = 10): Promise<{ comments: AdminComment[]; total: number }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({ comments: mockComments, total: mockComments.length });

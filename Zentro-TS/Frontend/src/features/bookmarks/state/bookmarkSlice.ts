@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { bookmarkService, Bookmark } from "../services/bookmark.service";
+import { loginThunk, hydrateAuthThunk } from "../../auth/state/authThunks";
 
 interface ToggleBookmarkPayload {
   postId: string;
@@ -185,6 +186,16 @@ const bookmarkSlice = createSlice({
       .addCase(fetchMyBookmarksThunk.rejected, (state, action) => {
         state.isFetchingBookmarks = false;
         state.fetchError = action.payload || "Error fetching bookmarks";
+      })
+      .addCase(loginThunk.fulfilled, (state, action) => {
+        if (action.payload.user?.bookmarkedPosts) {
+          state.bookmarkedPosts = action.payload.user.bookmarkedPosts;
+        }
+      })
+      .addCase(hydrateAuthThunk.fulfilled, (state, action) => {
+        if (action.payload?.bookmarkedPosts) {
+          state.bookmarkedPosts = action.payload.bookmarkedPosts;
+        }
       });
   },
 });

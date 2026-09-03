@@ -25,6 +25,14 @@ const postSchema = new mongoose.Schema<IPost>(
         coverImage: {
             type: String,
         },
+        mediaUrl: {
+            type: String,
+        },
+        mediaType: {
+            type: String,
+            enum: ["image", "video", "none"],
+            default: "none",
+        },
         likesCount: {
             type: Number,
             default: 0,

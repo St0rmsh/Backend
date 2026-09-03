@@ -14,6 +14,14 @@ const initialState: ThemeState = {
     : "light",
 };
 
+const applyTheme = (theme: Theme, systemPreference: "light" | "dark") => {
+  const isDark = theme === "dark" || (theme === "system" && systemPreference === "dark");
+  document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.classList.toggle("light", !isDark);
+};
+
+applyTheme(initialState.mode, initialState.systemPreference);
+
 const themeSlice = createSlice({
   name: "theme",
   initialState,
@@ -22,14 +30,7 @@ const themeSlice = createSlice({
       state.mode = action.payload;
       localStorage.setItem("theme", action.payload);
 
-      // Apply theme to document
-      const root = document.documentElement;
-      if (action.payload === "system") {
-        const isDark = state.systemPreference === "dark";
-        root.classList.toggle("dark", isDark);
-      } else {
-        root.classList.toggle("dark", action.payload === "dark");
-      }
+      applyTheme(action.payload, state.systemPreference);
     },
 
     setSystemPreference: (state, action: PayloadAction<"light" | "dark">) => {
@@ -37,7 +38,7 @@ const themeSlice = createSlice({
 
       // If in system mode, apply the new preference
       if (state.mode === "system") {
-        document.documentElement.classList.toggle("dark", action.payload === "dark");
+        applyTheme(state.mode, action.payload);
       }
     },
 
@@ -46,12 +47,12 @@ const themeSlice = createSlice({
         const newMode = state.systemPreference === "dark" ? "light" : "dark";
         state.mode = newMode;
         localStorage.setItem("theme", newMode);
-        document.documentElement.classList.toggle("dark", newMode === "dark");
+        applyTheme(newMode, state.systemPreference);
       } else {
         const newMode = state.mode === "dark" ? "light" : "dark";
         state.mode = newMode;
         localStorage.setItem("theme", newMode);
-        document.documentElement.classList.toggle("dark", newMode === "dark");
+        applyTheme(newMode, state.systemPreference);
       }
     },
   },
