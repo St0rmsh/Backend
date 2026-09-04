@@ -39,7 +39,7 @@ export const followUserService = async (followerId:string,followingId:string) =>
 
     await createNotificationService({
         type: "FOLLOW",
-        recipient: followingUser.toString(),
+        recipient: followingUser._id.toString(),
         sender: followerId,
         message: "Started following you",
     });
