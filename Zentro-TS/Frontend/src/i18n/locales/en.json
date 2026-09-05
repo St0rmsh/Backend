@@ -83,6 +83,14 @@
         "add": "Add",
         "remove": "Remove"
       }
-    }
+    },
+  "security": {
+  "title": "Security Settings",
+  "description": "Manage your password and security preferences.",
+  "changePassword": {
+    "title": "Change Password",
+    "description": "Ensure your account is using a long, random password to stay secure."
+  }
+}
   }
 }

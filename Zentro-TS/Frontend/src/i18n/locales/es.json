@@ -83,6 +83,14 @@
         "add": "Agregar",
         "remove": "Quitar"
       }
-    }
+    },
+    "security": {
+  "title": "Configuración de seguridad",
+  "description": "Gestiona tu contraseña y preferencias de seguridad.",
+  "changePassword": {
+    "title": "Cambiar contraseña",
+    "description": "Asegúrate de que tu cuenta use una contraseña larga y aleatoria para mantenerse segura."
+  }
+}
   }
 }

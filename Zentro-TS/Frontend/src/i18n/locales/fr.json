@@ -83,6 +83,14 @@
         "add": "Ajouter",
         "remove": "Retirer"
       }
-    }
+    },
+    "security": {
+  "title": "Paramètres de sécurité",
+  "description": "Gérez votre mot de passe et vos préférences de sécurité.",
+  "changePassword": {
+    "title": "Changer le mot de passe",
+    "description": "Assurez-vous que votre compte utilise un mot de passe long et aléatoire pour rester sécurisé."
+  }
+}
   }
 }

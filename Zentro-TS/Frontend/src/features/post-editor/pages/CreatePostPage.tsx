@@ -6,7 +6,6 @@ import {
   FileText,
   Loader2,
   Save,
-  Sparkles,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -81,11 +80,7 @@ export default function CreatePostPage() {
         response?.data?._id ||
         response?._id;
 
-      if (postId) {
-        navigate(`/posts/${postId}`);
-      } else {
-        navigate("/posts");
-      }
+      navigate(postId ? `/posts/${postId}` : "/posts");
     } catch (error: any) {
       console.error("Create post error:", error);
 
@@ -98,137 +93,148 @@ export default function CreatePostPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-950/90">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          {/* Left */}
+          <div className="flex min-w-0 items-center gap-3">
             <Link
               to="/posts"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white dark:focus:ring-slate-600"
               aria-label="Back to posts"
+              className="
+                flex h-9 w-9 shrink-0 items-center justify-center
+                rounded-md border border-border
+                bg-card text-muted-foreground
+                transition-colors
+                hover:bg-muted hover:text-foreground
+                focus:outline-none focus:ring-2 focus:ring-ring
+              "
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft className="h-4 w-4" />
             </Link>
 
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <FileText
-                  size={18}
-                  className="text-slate-700 dark:text-slate-300"
-                />
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
 
-                <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h1 className="truncate text-sm font-semibold text-foreground sm:text-base">
                   Create Post
                 </h1>
               </div>
 
-              <p className="mt-0.5 hidden text-xs text-slate-500 dark:text-slate-400 sm:block">
+              <p className="mt-0.5 hidden text-xs text-muted-foreground sm:block">
                 Create and publish a new investigation post
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="hidden items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 sm:inline-flex">
-              <Sparkles size={13} />
-              Post Editor
-            </span>
-
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Saving...
-                </>
-              ) : isPublished ? (
-                <>
-                  <CheckCircle2 size={16} />
-                  Publish
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  Save Draft
-                </>
-              )}
-            </button>
-          </div>
+          {/* Right */}
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={loading}
+            className="
+              inline-flex h-9 shrink-0 items-center gap-2
+              rounded-md bg-primary px-3.5
+              text-sm font-medium text-primary-foreground
+              transition-colors hover:bg-primary/90
+              disabled:pointer-events-none disabled:opacity-50
+            "
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="hidden sm:inline">Saving...</span>
+              </>
+            ) : isPublished ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Publish</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">Save Draft</span>
+                <span className="sm:hidden">Save</span>
+              </>
+            )}
+          </button>
         </div>
       </header>
 
       {/* Main */}
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          {/* Main editor */}
-          <section className="min-w-0 space-y-6">
-            {/* Title */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-              <TitleInput value={title} onChange={setTitle} />
-            </div>
-
-            {/* Cover */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-              <div className="mb-4">
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Cover Image
-                </h2>
-
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Add a visual cover for your post.
-                </p>
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          {/* Editor */}
+          <section className="min-w-0">
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              {/* Title */}
+              <div className="border-b border-border px-5 py-6 sm:px-8 sm:py-8">
+                <TitleInput
+                  value={title}
+                  onChange={setTitle}
+                />
               </div>
 
-              <CoverUploader
-                value={coverImage}
-                onChange={setCoverImage}
-              />
-            </div>
+              {/* Content */}
+              <div className="px-5 py-6 sm:px-8 sm:py-7">
+                <div className="mb-4">
+                  <h2 className="text-sm font-medium text-foreground">
+                    Content
+                  </h2>
 
-            {/* Content */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-              <div className="mb-4">
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Content
-                </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Write your investigation, analysis, or report.
+                  </p>
+                </div>
 
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Write your investigation, analysis, or report.
-                </p>
+                <EditorContent
+                  value={content}
+                  onChange={setContent}
+                />
               </div>
 
-              <EditorContent
-                value={content}
-                onChange={setContent}
-              />
-            </div>
+              {/* Cover */}
+              <div className="border-t border-border px-5 py-6 sm:px-8 sm:py-7">
+                <div className="mb-4">
+                  <h2 className="text-sm font-medium text-foreground">
+                    Cover Image
+                  </h2>
 
-            {/* Media */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-              <div className="mb-4">
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Attachments
-                </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Add a visual cover for your post.
+                  </p>
+                </div>
 
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Add supporting images or videos to your post.
-                </p>
+                <CoverUploader
+                  value={coverImage}
+                  onChange={setCoverImage}
+                />
               </div>
 
-              <MediaUploader
-                value={media}
-                onChange={setMedia}
-              />
+              {/* Attachments */}
+              <div className="border-t border-border px-5 py-6 sm:px-8 sm:py-7">
+                <div className="mb-4">
+                  <h2 className="text-sm font-medium text-foreground">
+                    Attachments
+                  </h2>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Add supporting images or videos to your post.
+                  </p>
+                </div>
+
+                <MediaUploader
+                  value={media}
+                  onChange={setMedia}
+                />
+              </div>
             </div>
           </section>
 
           {/* Sidebar */}
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          <aside className="lg:sticky lg:top-24">
             <PublishPanel
               isPublished={isPublished}
               setIsPublished={setIsPublished}

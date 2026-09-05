@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { SettingsHeader } from "../components/SettingsHeader";
 import { SettingsCard } from "../components/SettingsCard";
 import { PreferenceToggle } from "../components/PreferenceToggle";
@@ -8,6 +9,7 @@ import { authService } from "@/features/auth/services/auth.service";
 import { Button } from "@/shared/ui/button";
 
 export const PrivacySettingsPage = () => {
+  const { t } = useTranslation();
   const [privateAccount, setPrivateAccount] = useState(false);
   const [activityStatus, setActivityStatus] = useState(true);
   const [searchVisibility, setSearchVisibility] = useState(true);
@@ -53,31 +55,31 @@ export const PrivacySettingsPage = () => {
       transition={{ duration: 0.3 }}
       className="space-y-6 max-w-3xl"
     >
-      <SettingsHeader 
-        title="Privacy Settings" 
-        description="Control who can see your content and activity." 
+      <SettingsHeader
+        title={t("settings.privacy.title")}
+        description={t("settings.privacy.description")}
       />
-      
-      <SettingsCard title="Account Visibility" description="Manage who can interact with you.">
+
+      <SettingsCard title={t("settings.privacy.accountVisibility.title")} description={t("settings.privacy.accountVisibility.description")}>
         <div className="space-y-2 divide-y divide-border/50">
-          <PreferenceToggle 
+          <PreferenceToggle
             id="privateAccount"
-            title="Private Account"
-            description="When your account is private, only people you approve can see your posts and followers."
+            title={t("settings.privacy.accountVisibility.privateAccount.title")}
+            description={t("settings.privacy.accountVisibility.privateAccount.description")}
             checked={privateAccount}
             onCheckedChange={(value) => { setPrivateAccount(value); updatePrivacy("privateAccount", value); }}
           />
-          <PreferenceToggle 
+          <PreferenceToggle
             id="activityStatus"
-            title="Activity Status"
-            description="Allow accounts you follow and anyone you message to see when you were last active."
+            title={t("settings.privacy.accountVisibility.activityStatus.title")}
+            description={t("settings.privacy.accountVisibility.activityStatus.description")}
             checked={activityStatus}
             onCheckedChange={(value) => { setActivityStatus(value); updatePrivacy("activityStatus", value); }}
           />
-          <PreferenceToggle 
+          <PreferenceToggle
             id="searchVisibility"
-            title="Search Visibility"
-            description="Allow your profile to be discovered in search results and recommendations."
+            title={t("settings.privacy.accountVisibility.searchVisibility.title")}
+            description={t("settings.privacy.accountVisibility.searchVisibility.description")}
             checked={searchVisibility}
             onCheckedChange={(value) => { setSearchVisibility(value); updatePrivacy("searchVisibility", value); }}
           />
@@ -90,29 +92,29 @@ export const PrivacySettingsPage = () => {
             <Shield className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <h4 className="font-medium text-sm">Blocked Users</h4>
-            <p className="text-xs text-muted-foreground">Manage blocked accounts</p>
+            <h4 className="font-medium text-sm">{t("settings.privacy.blockedUsers.title")}</h4>
+            <p className="text-xs text-muted-foreground">{t("settings.privacy.blockedUsers.description")}</p>
           </div>
           <div className="flex gap-2">
-            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Username" aria-label="Username to block" className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-sm" />
-            <Button size="sm" onClick={() => void updateList("blockedUsers", true)}>Add</Button>
+            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder={t("settings.privacy.blockedUsers.placeholder")} aria-label={t("settings.privacy.blockedUsers.placeholder")} className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-sm" />
+            <Button size="sm" onClick={() => void updateList("blockedUsers", true)}>{t("settings.privacy.blockedUsers.add")}</Button>
           </div>
-          {blockedUsers.map((user) => <div key={user._id} className="flex items-center justify-between text-sm"><span>@{user.username}</span><Button size="sm" variant="ghost" onClick={() => void updateList("blockedUsers", false, user.username)}>Remove</Button></div>)}
+          {blockedUsers.map((user) => <div key={user._id} className="flex items-center justify-between text-sm"><span>@{user.username}</span><Button size="sm" variant="ghost" onClick={() => void updateList("blockedUsers", false, user.username)}>{t("settings.privacy.blockedUsers.remove")}</Button></div>)}
         </div>
-        
+
         <div className="border border-border/50 rounded-xl p-4 space-y-4">
           <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
             <EyeOff className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <h4 className="font-medium text-sm">Muted Users</h4>
-            <p className="text-xs text-muted-foreground">Manage muted accounts</p>
+            <h4 className="font-medium text-sm">{t("settings.privacy.mutedUsers.title")}</h4>
+            <p className="text-xs text-muted-foreground">{t("settings.privacy.mutedUsers.description")}</p>
           </div>
           <div className="flex gap-2">
-            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Username" aria-label="Username to mute" className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-sm" />
-            <Button size="sm" onClick={() => void updateList("mutedUsers", true)}>Add</Button>
+            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder={t("settings.privacy.mutedUsers.placeholder")} aria-label={t("settings.privacy.mutedUsers.placeholder")} className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-sm" />
+            <Button size="sm" onClick={() => void updateList("mutedUsers", true)}>{t("settings.privacy.mutedUsers.add")}</Button>
           </div>
-          {mutedUsers.map((user) => <div key={user._id} className="flex items-center justify-between text-sm"><span>@{user.username}</span><Button size="sm" variant="ghost" onClick={() => void updateList("mutedUsers", false, user.username)}>Remove</Button></div>)}
+          {mutedUsers.map((user) => <div key={user._id} className="flex items-center justify-between text-sm"><span>@{user.username}</span><Button size="sm" variant="ghost" onClick={() => void updateList("mutedUsers", false, user.username)}>{t("settings.privacy.mutedUsers.remove")}</Button></div>)}
         </div>
       </div>
     </motion.div>

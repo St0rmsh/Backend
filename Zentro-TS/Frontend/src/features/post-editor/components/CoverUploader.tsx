@@ -15,11 +15,9 @@ export default function CoverUploader({
   value,
   onChange,
 }: CoverUploaderProps) {
-  const inputRef =
-    useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const [uploading, setUploading] =
-    useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -28,8 +26,7 @@ export default function CoverUploader({
 
     if (!file) return;
 
-    const validation =
-      uploadService.validateImage(file);
+    const validation = uploadService.validateImage(file);
 
     if (validation) {
       alert(validation);
@@ -44,26 +41,17 @@ export default function CoverUploader({
     try {
       setUploading(true);
 
-      const previewUrl =
-        URL.createObjectURL(file);
+      const previewUrl = URL.createObjectURL(file);
 
-      if (
-        value &&
-        value.startsWith("blob:")
-      ) {
+      if (value && value.startsWith("blob:")) {
         URL.revokeObjectURL(value);
       }
 
       onChange(previewUrl);
     } catch (error) {
-      console.error(
-        "Cover upload error:",
-        error
-      );
+      console.error("Cover upload error:", error);
 
-      alert(
-        "Failed to prepare cover image."
-      );
+      alert("Failed to prepare cover image.");
     } finally {
       setUploading(false);
 
@@ -74,10 +62,7 @@ export default function CoverUploader({
   };
 
   const removeCover = () => {
-    if (
-      value &&
-      value.startsWith("blob:")
-    ) {
+    if (value && value.startsWith("blob:")) {
       URL.revokeObjectURL(value);
     }
 
@@ -87,7 +72,7 @@ export default function CoverUploader({
   return (
     <div>
       {value ? (
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-950">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-muted">
           <img
             src={value}
             alt="Post cover preview"
@@ -102,7 +87,16 @@ export default function CoverUploader({
             <button
               type="button"
               onClick={removeCover}
-              className="inline-flex items-center gap-2 rounded-lg bg-white/90 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-white"
+              className="
+                inline-flex items-center gap-2
+                rounded-md
+                bg-white/90
+                px-3 py-2
+                text-xs font-semibold
+                text-destructive
+                transition-colors
+                hover:bg-white
+              "
             >
               <Trash2 size={14} />
               Remove
@@ -113,12 +107,35 @@ export default function CoverUploader({
         <button
           type="button"
           disabled={uploading}
-          onClick={() =>
-            inputRef.current?.click()
-          }
-          className="group flex min-h-[190px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 text-center transition hover:border-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600 dark:hover:bg-slate-900"
+          onClick={() => inputRef.current?.click()}
+          className="
+            group flex min-h-[190px] w-full
+            flex-col items-center justify-center
+            rounded-xl
+            border-2 border-dashed border-border
+            bg-muted/30
+            px-6
+            text-center
+            transition-colors
+            hover:border-foreground/30
+            hover:bg-muted/50
+            focus:outline-none
+            focus:ring-2
+            focus:ring-ring
+          "
         >
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm transition group-hover:scale-105 dark:bg-slate-900 dark:text-slate-400">
+          <div
+            className="
+              mb-4 flex h-12 w-12
+              items-center justify-center
+              rounded-xl
+              border border-border
+              bg-background
+              text-muted-foreground
+              transition-colors
+              group-hover:text-foreground
+            "
+          >
             {uploading ? (
               <UploadCloud
                 size={22}
@@ -129,13 +146,13 @@ export default function CoverUploader({
             )}
           </div>
 
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <p className="text-sm font-semibold text-foreground">
             {uploading
               ? "Preparing image..."
               : "Upload cover image"}
           </p>
 
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             PNG, JPG, WEBP up to 5MB
           </p>
         </button>

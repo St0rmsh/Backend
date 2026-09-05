@@ -6,23 +6,58 @@ interface SettingsCardProps {
   description?: string;
   children: ReactNode;
   className?: string;
+  overflow?: "hidden" | "visible";
 }
 
-export const SettingsCard = ({ title, description, children, className = "" }: SettingsCardProps) => {
+export const SettingsCard = ({
+  title,
+  description,
+  children,
+  className = "",
+  overflow = "hidden",
+}: SettingsCardProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm ${className}`}
+      transition={{
+        duration: 0.25,
+        ease: "easeOut",
+      }}
+      className={[
+        "rounded-xl",
+        "border border-border",
+        "bg-card",
+        "shadow-sm",
+        overflow === "visible" ? "overflow-visible" : "overflow-hidden",
+        className,
+      ].join(" ")}
     >
       {(title || description) && (
-        <div className="px-6 py-5 border-b border-border/50 bg-muted/20">
-          {title && <h3 className="text-lg font-semibold tracking-tight">{title}</h3>}
-          {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+        <div className="relative border-b border-border px-5 py-5 sm:px-6">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-primary/70" />
+
+            <div className="min-w-0">
+              {title && (
+                <h3 className="text-[15px] font-semibold leading-6 tracking-tight text-foreground">
+                  {title}
+                </h3>
+              )}
+
+              {description && (
+                <p className="mt-1 max-w-2xl text-sm leading-5 text-muted-foreground">
+                  {description}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
-      <div className="p-6">{children}</div>
-    </motion.div>
+
+      <div className="px-5 py-5 sm:px-6 sm:py-6">
+        {children}
+      </div>
+    </motion.section>
   );
 };

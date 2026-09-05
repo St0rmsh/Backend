@@ -83,6 +83,14 @@
         "add": "Hinzufügen",
         "remove": "Entfernen"
       }
-    }
+    },
+    "security": {
+      "title": "Sicherheitseinstellungen",
+      "description": "Verwalten Sie Ihr Passwort und Ihre Sicherheitseinstellungen.",
+      "changePassword": {
+      "title": "Passwort ändern",
+      "description": "Stellen Sie sicher, dass Ihr Konto ein langes, zufälliges Passwort verwendet, um sicher zu bleiben."
+  }
+}
   }
 }

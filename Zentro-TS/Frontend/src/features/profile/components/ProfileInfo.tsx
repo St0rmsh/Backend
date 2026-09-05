@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Mail, Calendar, BadgeCheck } from "lucide-react";
 import { ProfileUser } from "../types/profile.types";
+import { VerificationBadge } from "./VerificationBadge";
 
 interface ProfileInfoProps {
   user: ProfileUser;
@@ -24,9 +25,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl md:text-3xl font-bold">{user.fullname}</h1>
-          {user.isVerified && (
-            <BadgeCheck className="h-5 w-5 text-blue-500" fill="currentColor" />
-          )}
+          <VerificationBadge verified={Boolean(user.isVerified)} />
         </div>
         <p className="text-muted-foreground">@{user.username}</p>
       </div>

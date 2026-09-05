@@ -80,9 +80,7 @@ const AppearanceSettingsPage = lazy(() =>
 );
 
 const PreferencesSettingsPage = lazy(() =>
-  import("@/features/settings/pages/PreferencesSettingsPage").then((m) => ({
-    default: m.PreferencesSettingsPage,
-  }))
+  import("@/features/settings/pages/PreferencesSettingsPage")
 );
 
 const PrivacySettingsPage = lazy(() =>

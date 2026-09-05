@@ -13,7 +13,11 @@ export default function TitleInput({
     <div>
       <label
         htmlFor="post-title"
-        className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
+        className="
+          mb-3 flex items-center gap-2
+          text-sm font-semibold
+          text-foreground
+        "
       >
         <FileText size={16} />
         Post Title
@@ -25,10 +29,21 @@ export default function TitleInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder="Enter a compelling title..."
-        className="w-full border-0 bg-transparent text-2xl font-bold text-slate-900 outline-none placeholder:text-slate-300 dark:text-white dark:placeholder:text-slate-600 sm:text-3xl"
+        className="
+          w-full
+          border-0
+          bg-transparent
+          text-2xl
+          font-bold
+          text-foreground
+          outline-none
+          placeholder:text-muted-foreground
+          focus:ring-0
+          sm:text-3xl
+        "
       />
 
-      <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+      <p className="mt-3 text-xs text-muted-foreground">
         Keep your title clear, specific, and easy to understand.
       </p>
     </div>

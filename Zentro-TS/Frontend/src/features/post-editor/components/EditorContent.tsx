@@ -62,51 +62,44 @@ export default function EditorContent({
     {
       label: "Bold",
       icon: Bold,
-      action: () =>
-        insertMarkdown("**", "**"),
+      action: () => insertMarkdown("**", "**"),
     },
     {
       label: "Italic",
       icon: Italic,
-      action: () =>
-        insertMarkdown("*", "*"),
+      action: () => insertMarkdown("*", "*"),
     },
     {
       label: "Heading",
       icon: Heading2,
-      action: () =>
-        insertMarkdown("## "),
+      action: () => insertMarkdown("## "),
     },
     {
       label: "Quote",
       icon: Quote,
-      action: () =>
-        insertMarkdown("> "),
+      action: () => insertMarkdown("> "),
     },
     {
       label: "Bullet list",
       icon: List,
-      action: () =>
-        insertMarkdown("- "),
+      action: () => insertMarkdown("- "),
     },
     {
       label: "Numbered list",
       icon: ListOrdered,
-      action: () =>
-        insertMarkdown("1. "),
+      action: () => insertMarkdown("1. "),
     },
     {
       label: "Code",
       icon: Code2,
-      action: () =>
-        insertMarkdown("`", "`"),
+      action: () => insertMarkdown("`", "`"),
     },
   ];
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors dark:border-slate-700 dark:bg-slate-950">
+    <div className="overflow-hidden rounded-xl border border-border bg-background transition-colors">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-wrap items-center gap-1 border-b border-border bg-muted/40 p-2">
         {toolbar.map(
           ({
             label,
@@ -118,7 +111,18 @@ export default function EditorContent({
               type="button"
               onClick={action}
               title={label}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white hover:text-slate-900 hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+              aria-label={label}
+              className="
+                inline-flex h-9 w-9 items-center justify-center
+                rounded-md
+                text-muted-foreground
+                transition-colors
+                hover:bg-background
+                hover:text-foreground
+                focus:outline-none
+                focus:ring-2
+                focus:ring-ring
+              "
             >
               <Icon size={16} />
             </button>
@@ -134,11 +138,34 @@ export default function EditorContent({
           onChange(event.target.value)
         }
         placeholder="Start writing your post..."
-        className="min-h-[420px] w-full resize-y border-0 bg-white p-5 text-sm leading-7 text-slate-800 outline-none placeholder:text-slate-400 dark:bg-slate-950 dark:text-slate-200 dark:placeholder:text-slate-600 sm:p-6"
+        spellCheck
+        className="
+          min-h-[420px]
+          w-full
+          resize-y
+          border-0
+          bg-background
+          p-5
+          text-sm
+          leading-7
+          text-foreground
+          outline-none
+          placeholder:text-muted-foreground
+          focus:ring-0
+          sm:p-6
+        "
       />
 
       {/* Footer */}
-      <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">
+      <div
+        className="
+          border-t border-border
+          bg-muted/40
+          px-4 py-2
+          text-xs
+          text-muted-foreground
+        "
+      >
         Markdown formatting is supported.
       </div>
     </div>
