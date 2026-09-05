@@ -1,68 +1,146 @@
-import React from 'react';
-import { useEditor, EditorContent as TiptapEditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Underline from '@tiptap/extension-underline';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
-import { EditorToolbar } from './EditorToolbar';
-import { useDispatch } from 'react-redux';
-import { setEditorState } from '../state/postEditorSlice';
+import {
+  Bold,
+  Code2,
+  Heading2,
+  Italic,
+  List,
+  ListOrdered,
+  Quote,
+} from "lucide-react";
 
 interface EditorContentProps {
-  initialContent?: string;
-  onChange?: (content: string) => void;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export const EditorContent: React.FC<EditorContentProps> = ({ initialContent = '', onChange }) => {
-  const dispatch = useDispatch();
+export default function EditorContent({
+  value,
+  onChange,
+}: EditorContentProps) {
+  const insertMarkdown = (
+    prefix: string,
+    suffix = ""
+  ) => {
+    const textarea = document.getElementById(
+      "post-content"
+    ) as HTMLTextAreaElement | null;
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
-      }),
-      Placeholder.configure({
-        placeholder: 'Write your story...',
-        emptyEditorClass: 'is-editor-empty',
-      }),
-      Underline,
-      Image.configure({
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'rounded-xl my-4 max-w-full',
-        },
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-primary-500 hover:underline cursor-pointer',
-        },
-      }),
-    ],
-    content: initialContent,
-    editorProps: {
-      attributes: {
-        class: 'prose prose-zinc dark:prose-invert max-w-none focus:outline-none min-h-[400px] pb-32 text-lg leading-relaxed',
-      },
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const selectedText = value.slice(start, end);
+
+    const replacement =
+      prefix + selectedText + suffix;
+
+    const newValue =
+      value.slice(0, start) +
+      replacement +
+      value.slice(end);
+
+    onChange(newValue);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+
+      const cursorPosition =
+        start +
+        prefix.length +
+        selectedText.length +
+        suffix.length;
+
+      textarea.setSelectionRange(
+        cursorPosition,
+        cursorPosition
+      );
+    });
+  };
+
+  const toolbar = [
+    {
+      label: "Bold",
+      icon: Bold,
+      action: () =>
+        insertMarkdown("**", "**"),
     },
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      if (onChange) {
-        onChange(html);
-      }
-      dispatch(setEditorState({ content: html }));
+    {
+      label: "Italic",
+      icon: Italic,
+      action: () =>
+        insertMarkdown("*", "*"),
     },
-  });
+    {
+      label: "Heading",
+      icon: Heading2,
+      action: () =>
+        insertMarkdown("## "),
+    },
+    {
+      label: "Quote",
+      icon: Quote,
+      action: () =>
+        insertMarkdown("> "),
+    },
+    {
+      label: "Bullet list",
+      icon: List,
+      action: () =>
+        insertMarkdown("- "),
+    },
+    {
+      label: "Numbered list",
+      icon: ListOrdered,
+      action: () =>
+        insertMarkdown("1. "),
+    },
+    {
+      label: "Code",
+      icon: Code2,
+      action: () =>
+        insertMarkdown("`", "`"),
+    },
+  ];
 
   return (
-    <div className="w-full flex flex-col relative">
-      <EditorToolbar editor={editor} />
-      <div className="w-full relative">
-        <TiptapEditorContent editor={editor} className="w-full" />
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors dark:border-slate-700 dark:bg-slate-950">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-900">
+        {toolbar.map(
+          ({
+            label,
+            icon: Icon,
+            action,
+          }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={action}
+              title={label}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white hover:text-slate-900 hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <Icon size={16} />
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Editor */}
+      <textarea
+        id="post-content"
+        value={value}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        placeholder="Start writing your post..."
+        className="min-h-[420px] w-full resize-y border-0 bg-white p-5 text-sm leading-7 text-slate-800 outline-none placeholder:text-slate-400 dark:bg-slate-950 dark:text-slate-200 dark:placeholder:text-slate-600 sm:p-6"
+      />
+
+      {/* Footer */}
+      <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">
+        Markdown formatting is supported.
       </div>
     </div>
   );
-};
+}

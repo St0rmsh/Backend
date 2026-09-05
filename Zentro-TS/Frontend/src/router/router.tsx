@@ -224,15 +224,11 @@ const PostDetailsPage = lazy(() =>
 );
 
 const CreatePostPage = lazy(() =>
-  import("@/features/post-editor/pages/CreatePostPage").then((m) => ({
-    default: m.CreatePostPage,
-  }))
+  import("@/features/post-editor/pages/CreatePostPage")
 );
 
 const EditPostPage = lazy(() =>
-  import("@/features/post-editor/pages/EditPostPage").then((m) => ({
-    default: m.EditPostPage,
-  }))
+  import("@/features/post-editor/pages/EditPostPage")
 );
 
 // ============================================================================

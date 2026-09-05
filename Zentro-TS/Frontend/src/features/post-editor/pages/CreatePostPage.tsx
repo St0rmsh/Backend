@@ -1,161 +1,245 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import { 
-  setEditorState, 
-  resetEditor, 
-  setSavingStatus, 
-  setLastSavedAt,
-  setValidationErrors
-} from '../state/postEditorSlice';
-import { postEditorService } from '../services/postEditor.service';
-import { TitleInput } from '../components/TitleInput';
-import { CoverUploader } from '../components/CoverUploader';
-import { MediaUploader } from '../components/MediaUploader';
-import { EditorContent } from '../components/EditorContent';
-import { PublishPanel } from '../components/PublishPanel';
-import { DraftStatus } from '../components/DraftStatus';
-import { ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
-import { handleApiError } from '@/shared/utils/errorHandler';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  Save,
+  Sparkles,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
 
-export const CreatePostPage: React.FC = () => {
+import TitleInput from "../components/TitleInput";
+import CoverUploader from "../components/CoverUploader";
+import MediaUploader from "../components/MediaUploader";
+import EditorContent from "../components/EditorContent";
+import PublishPanel from "../components/PublishPanel";
+
+import { postEditorService } from "../services/postEditor.service";
+
+export default function CreatePostPage() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const editorState = useSelector((state: RootState) => state.postEditor);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<{ url: string; type: "image" | "video" } | null>(null);
-  const previewUrls = useRef<string[]>([]);
 
-  useEffect(() => {
-    dispatch(resetEditor());
-    return () => {
-      previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [dispatch]);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [coverImage, setCoverImage] = useState("");
+  const [media, setMedia] = useState<File[]>([]);
+  const [isPublished, setIsPublished] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handlePublish = async (isPublished: boolean = true) => {
-    if (!editorState.title.trim()) {
-      dispatch(setValidationErrors({ title: 'Title is required' }));
+  const handleCreate = async () => {
+    if (!title.trim()) {
+      toast.error("Please add a title.");
       return;
     }
-    if (!editorState.content.trim() || editorState.content === '<p></p>') {
-      dispatch(setValidationErrors({ content: 'Content is required' }));
+
+    if (!content.trim()) {
+      toast.error("Please add some content.");
       return;
     }
 
     try {
-      dispatch(setSavingStatus(true));
-      dispatch(setEditorState({ isPublished })); // optimistically update local state
+      setLoading(true);
 
       const formData = new FormData();
-      formData.append('title', editorState.title);
-      formData.append('content', editorState.content);
-      formData.append('category', editorState.category);
-      if (editorState.tags.length > 0) {
-        editorState.tags.forEach((tag, i) => formData.append(`tags[${i}]`, tag));
-      }
-      formData.append('isPublished', String(isPublished));
 
-      if (coverFile) {
-        formData.append('coverImage', coverFile);
+      formData.append("title", title.trim());
+      formData.append("content", content);
+
+      if (category.trim()) {
+        formData.append("category", category.trim());
       }
-      if (mediaFile) formData.append('media', mediaFile);
+
+      tags.forEach((tag) => {
+        formData.append("tags", tag);
+      });
+
+      if (coverImage) {
+        formData.append("coverImage", coverImage);
+      }
+
+      formData.append("isPublished", String(isPublished));
+
+      media.forEach((file) => {
+        formData.append("media", file);
+      });
 
       const response = await postEditorService.createPost(formData);
-      
-      dispatch(setLastSavedAt(new Date().toISOString()));
-      
-      // Navigate to edit page to avoid creating new posts on subsequent saves
-      if (response.data && response.data._id) {
-        navigate(`/posts/edit/${response.data._id}`, { replace: true });
+
+      toast.success(
+        isPublished
+          ? "Post published successfully."
+          : "Draft saved successfully."
+      );
+
+      const postId =
+        response?.data?.post?._id ||
+        response?.post?._id ||
+        response?.data?._id ||
+        response?._id;
+
+      if (postId) {
+        navigate(`/posts/${postId}`);
       } else {
-        navigate('/');
+        navigate("/posts");
       }
-    } catch (error) {
-      console.error('Failed to create post', error);
-      toast.error(handleApiError(error, 'Unable to create post. Check your media and try again.'));
+    } catch (error: any) {
+      console.error("Create post error:", error);
+
+      toast.error(
+        error?.response?.data?.message || "Failed to create post."
+      );
     } finally {
-      dispatch(setSavingStatus(false));
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background/80 pt-20 pb-12 text-foreground">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Top Bar */}
-        <div className="flex items-center justify-between mb-8">
-          <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="w-5 h-5" /> Back
-          </button>
-          <DraftStatus />
-        </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-950/90">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/posts"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white dark:focus:ring-slate-600"
+              aria-label="Back to posts"
+            >
+              <ArrowLeft size={18} />
+            </Link>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Editor Area */}
-          <div className="flex-1 max-w-4xl">
-            <CoverUploader 
-              coverImage={editorState.coverImage}
-              onUpload={(file) => {
-                setCoverFile(file);
-                const objectUrl = URL.createObjectURL(file);
-                previewUrls.current.push(objectUrl);
-                dispatch(setEditorState({ coverImage: objectUrl }));
-              }}
-              onRemove={() => {
-                if (editorState.coverImage?.startsWith('blob:')) URL.revokeObjectURL(editorState.coverImage);
-                setCoverFile(null);
-                dispatch(setEditorState({ coverImage: undefined }));
-              }}
-            />
+            <div>
+              <div className="flex items-center gap-2">
+                <FileText
+                  size={18}
+                  className="text-slate-700 dark:text-slate-300"
+                />
 
-            <MediaUploader
-              mediaUrl={mediaPreview?.url}
-              mediaType={mediaPreview?.type}
-              onUpload={(file) => {
-                if (mediaPreview?.url) URL.revokeObjectURL(mediaPreview.url);
-                setMediaFile(file);
-                const objectUrl = URL.createObjectURL(file);
-                previewUrls.current.push(objectUrl);
-                setMediaPreview({ url: objectUrl, type: file.type.startsWith('video/') ? 'video' : 'image' });
-              }}
-              onRemove={() => {
-                if (mediaPreview?.url) URL.revokeObjectURL(mediaPreview.url);
-                setMediaFile(null);
-                setMediaPreview(null);
-              }}
-            />
+                <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Create Post
+                </h1>
+              </div>
 
-            <TitleInput 
-              value={editorState.title} 
-              onChange={(title) => dispatch(setEditorState({ title }))} 
-            />
-            {editorState.validationErrors.title && (
-              <p className="text-red-500 text-sm mb-4">{editorState.validationErrors.title}</p>
-            )}
-
-            <EditorContent />
-            {editorState.validationErrors.content && (
-              <p className="text-red-500 text-sm mt-2">{editorState.validationErrors.content}</p>
-            )}
+              <p className="mt-0.5 hidden text-xs text-slate-500 dark:text-slate-400 sm:block">
+                Create and publish a new investigation post
+              </p>
+            </div>
           </div>
+
+          <div className="flex items-center gap-2">
+            <span className="hidden items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 sm:inline-flex">
+              <Sparkles size={13} />
+              Post Editor
+            </span>
+
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Saving...
+                </>
+              ) : isPublished ? (
+                <>
+                  <CheckCircle2 size={16} />
+                  Publish
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  Save Draft
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main */}
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          {/* Main editor */}
+          <section className="min-w-0 space-y-6">
+            {/* Title */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+              <TitleInput value={title} onChange={setTitle} />
+            </div>
+
+            {/* Cover */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Cover Image
+                </h2>
+
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Add a visual cover for your post.
+                </p>
+              </div>
+
+              <CoverUploader
+                value={coverImage}
+                onChange={setCoverImage}
+              />
+            </div>
+
+            {/* Content */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Content
+                </h2>
+
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Write your investigation, analysis, or report.
+                </p>
+              </div>
+
+              <EditorContent
+                value={content}
+                onChange={setContent}
+              />
+            </div>
+
+            {/* Media */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Attachments
+                </h2>
+
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Add supporting images or videos to your post.
+                </p>
+              </div>
+
+              <MediaUploader
+                value={media}
+                onChange={setMedia}
+              />
+            </div>
+          </section>
 
           {/* Sidebar */}
-          <div className="w-full lg:w-80 shrink-0">
-            <PublishPanel 
-              onPublish={() => handlePublish(true)}
-              onSaveDraft={() => handlePublish(false)}
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <PublishPanel
+              isPublished={isPublished}
+              setIsPublished={setIsPublished}
+              tags={tags}
+              setTags={setTags}
+              onPublish={handleCreate}
+              loading={loading}
             />
-          </div>
+          </aside>
         </div>
-
-      </div>
+      </main>
     </div>
   );
-};
+}

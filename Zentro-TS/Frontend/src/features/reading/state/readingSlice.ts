@@ -28,6 +28,7 @@ const initialState: ReadingState = {
     currentStreak: 0,
     longestStreak: 0,
     lastReadDate: '',
+    weeklyActivity: [false, false, false, false, false, false, false],
   },
   achievements: [],
   history: [],
@@ -77,12 +78,12 @@ const readingSlice = createSlice({
   },
 });
 
-export const { 
-  setReadingData, 
-  updateCurrentSession, 
-  toggleFocusMode, 
-  updatePreferences, 
-  addHistoryItem 
+export const {
+  setReadingData,
+  updateCurrentSession,
+  toggleFocusMode,
+  updatePreferences,
+  addHistoryItem
 } = readingSlice.actions;
 
 export default readingSlice.reducer;

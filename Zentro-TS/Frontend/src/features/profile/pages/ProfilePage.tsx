@@ -41,7 +41,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
   const { profile, loading } = useProfile(profileUserId, !isOwnProfileProp && username !== currentUser?.username ? username : undefined);
   const [posts, setPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
-  
+  const [bookmarksCount, setBookmarksCount] = useState<number | undefined>(undefined);
+
   const [activeTab, setActiveTab] = useState<'posts' | 'stats'>('posts');
 
   // Determine if viewing own profile
@@ -68,6 +69,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
       .finally(() => { if (active) setPostsLoading(false); });
     return () => { active = false; };
   }, [targetUserId]);
+
+  // Bookmarks are private to the owner, so only fetch this on your own profile.
+  useEffect(() => {
+    if (!isOwnProfile) {
+      setBookmarksCount(undefined);
+      return;
+    }
+    let active = true;
+    axiosInstance.get("/bookmark", { params: { page: 1, limit: 1 } })
+      .then((response) => { if (active) setBookmarksCount(response.data.totalBookmarks ?? 0); })
+      .catch(() => { if (active) setBookmarksCount(0); });
+    return () => { active = false; };
+  }, [isOwnProfile]);
 
   if (loading) {
     return (
@@ -102,7 +116,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ isOwnProfile: isOwnPro
     posts: (user as any).postsCount || 0,
     followers: (user as any).followersCount || (user as any).followerCount || 0,
     following: (user as any).followingCount || 0,
-    bookmarks: isOwnProfile ? 12 : undefined,
+    bookmarks: isOwnProfile ? bookmarksCount : undefined,
   };
   return (
     <motion.div

@@ -10,6 +10,9 @@ import { ErrorBoundary } from './shared/components/ErrorBoundary'
 import { analytics } from './shared/services/analytics.service'
 import { errorMonitor } from './shared/services/error.service'
 import './pwa/register'
+import "./i18n"
+
+
 
 // Initialize services
 analytics.init();

@@ -10,6 +10,7 @@ export interface ReadingStreak {
   currentStreak: number;
   longestStreak: number;
   lastReadDate: string;
+  weeklyActivity: boolean[];
 }
 
 export interface Achievement {

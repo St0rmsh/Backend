@@ -29,3 +29,66 @@ export const createMessageService = async (sender: string, recipient: string, co
 export const markConversationReadService = async (userId: string, senderId: string) => {
   await MessageModel.updateMany({ sender: senderId, recipient: userId, readAt: { $exists: false } }, { $set: { readAt: new Date() } });
 };
+
+// Returns one row per conversation partner: last message + unread count + partner's public info,
+// sorted by most recent activity — this is what powers the Instagram/LinkedIn-style inbox list.
+export const getInboxService = async (userId: string) => {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  const conversations = await MessageModel.aggregate([
+    { $match: { $or: [{ sender: userObjectId }, { recipient: userObjectId }] } },
+    { $sort: { createdAt: -1 } },
+    {
+      $group: {
+        _id: {
+          $cond: [{ $eq: ["$sender", userObjectId] }, "$recipient", "$sender"],
+        },
+        lastMessage: { $first: "$$ROOT" },
+        unreadCount: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $eq: ["$recipient", userObjectId] },
+                  { $eq: [{ $ifNull: ["$readAt", null] }, null] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+      },
+    },
+    { $sort: { "lastMessage.createdAt": -1 } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "partner",
+      },
+    },
+    { $unwind: "$partner" },
+    {
+      $project: {
+        _id: 0,
+        partnerId: "$_id",
+        username: "$partner.username",
+        fullname: "$partner.fullname",
+        avatar: "$partner.avatar",
+        lastMessage: {
+          _id: "$lastMessage._id",
+          content: "$lastMessage.content",
+          mediaType: "$lastMessage.mediaType",
+          sender: "$lastMessage.sender",
+          createdAt: "$lastMessage.createdAt",
+          readAt: "$lastMessage.readAt",
+        },
+        unreadCount: 1,
+      },
+    },
+  ]);
+
+  return conversations;
+};

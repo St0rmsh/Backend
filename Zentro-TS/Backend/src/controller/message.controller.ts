@@ -1,7 +1,16 @@
 import type { Request, Response } from "express";
-import { createMessageService, getConversationService, markConversationReadService } from "../services/message.service.js";
+import { createMessageService, getConversationService, getInboxService, markConversationReadService } from "../services/message.service.js";
 import { getIO } from "../Socket/socket.js";
 import { getSocketId } from "../Socket/userSocketMap.js";
+
+export const getInboxController = async (req: Request, res: Response) => {
+  try {
+    const inbox = await getInboxService(req.user!._id.toString());
+    return res.status(200).json({ success: true, data: inbox });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Unable to load inbox" });
+  }
+};
 
 export const getConversationController = async (req: Request<{ userId: string }>, res: Response) => {
   try {

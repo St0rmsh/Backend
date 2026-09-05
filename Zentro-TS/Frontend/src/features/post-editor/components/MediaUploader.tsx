@@ -1,58 +1,154 @@
-import React, { useCallback, useState } from "react";
-import { Film, ImagePlus, X } from "lucide-react";
-import { useDropzone } from "react-dropzone";
+import {
+  FileImage,
+  ImagePlus,
+  Trash2,
+  UploadCloud,
+  Video,
+} from "lucide-react";
+import { useRef } from "react";
 import { uploadService } from "../services/upload.service";
 
 interface MediaUploaderProps {
-  mediaUrl?: string;
-  mediaType?: "image" | "video";
-  onUpload: (file: File) => void;
-  onRemove: () => void;
+  value: File[];
+  onChange: (value: File[]) => void;
 }
 
-export const MediaUploader: React.FC<MediaUploaderProps> = ({ mediaUrl, mediaType, onUpload, onRemove }) => {
-  const [error, setError] = useState<string | null>(null);
-  const onDrop = useCallback((files: File[]) => {
-    const file = files[0];
-    if (!file) return;
-    const validationError = uploadService.validateMedia(file);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    setError(null);
-    onUpload(file);
-  }, [onUpload]);
+export default function MediaUploader({
+  value,
+  onChange,
+}: MediaUploaderProps) {
+  const inputRef =
+    useRef<HTMLInputElement>(null);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { "image/*": [], "video/*": [] },
-    maxFiles: 1,
-  });
-
-  if (mediaUrl && mediaType) {
-    return (
-      <div className="relative mb-8 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-black">
-        {mediaType === "video" ? <video src={mediaUrl} controls className="max-h-[420px] w-full object-contain" /> : <img src={mediaUrl} alt="Post media preview" className="max-h-[420px] w-full object-contain" />}
-        <button type="button" onClick={onRemove} aria-label="Remove post media" className="absolute right-3 top-3 rounded-full bg-black/70 p-2 text-white hover:bg-black">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
+  const handleFiles = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(
+      event.target.files || []
     );
-  }
+
+    if (!files.length) return;
+
+    const validFiles: File[] = [];
+
+    for (const file of files) {
+      const validation =
+        uploadService.validateMedia(file);
+
+      if (validation) {
+        alert(
+          `${file.name}\n\n${validation}`
+        );
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    if (validFiles.length > 0) {
+      onChange([
+        ...value,
+        ...validFiles,
+      ]);
+    }
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  };
+
+  const removeMedia = (
+    index: number
+  ) => {
+    onChange(
+      value.filter(
+        (_, itemIndex) =>
+          itemIndex !== index
+      )
+    );
+  };
 
   return (
-    <div className="mb-8">
-      <div {...getRootProps()} className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${isDragActive ? "border-primary bg-primary/5" : "border-zinc-300 hover:border-zinc-400 dark:border-zinc-700"}`}>
-        <input {...getInputProps()} />
-        <div className="mb-4 flex gap-2 rounded-full bg-zinc-100 p-3 dark:bg-zinc-800">
-          <ImagePlus className="h-5 w-5 text-zinc-500" aria-hidden="true" />
-          <Film className="h-5 w-5 text-zinc-500" aria-hidden="true" />
+    <div className="space-y-4">
+      {/* Upload button */}
+      <button
+        type="button"
+        onClick={() =>
+          inputRef.current?.click()
+        }
+        className="flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600 dark:hover:bg-slate-900"
+      >
+        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-400">
+          <UploadCloud size={21} />
         </div>
-        <p className="font-medium text-zinc-700 dark:text-zinc-300">{isDragActive ? "Drop media here..." : "Add post media"}</p>
-        <p className="mt-1 text-center text-sm text-zinc-500 dark:text-zinc-400">Images and videos up to 50MB</p>
-      </div>
-      {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Add media
+        </p>
+
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          Images or videos up to 50MB each
+        </p>
+      </button>
+
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={handleFiles}
+      />
+
+      {/* Files */}
+      {value.length > 0 && (
+        <div className="space-y-2">
+          {value.map((file, index) => (
+            <div
+              key={`${file.name}-${file.lastModified}-${index}`}
+              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                  {file.type.startsWith(
+                    "video/"
+                  ) ? (
+                    <Video size={18} />
+                  ) : (
+                    <FileImage size={18} />
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                    {file.name}
+                  </p>
+
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    {(
+                      file.size /
+                      1024 /
+                      1024
+                    ).toFixed(2)}{" "}
+                    MB
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  removeMedia(index)
+                }
+                className="ml-3 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                aria-label={`Remove ${file.name}`}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
-};
+}

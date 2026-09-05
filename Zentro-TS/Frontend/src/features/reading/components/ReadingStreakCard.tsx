@@ -7,9 +7,8 @@ interface ReadingStreakCardProps {
 }
 
 export const ReadingStreakCard = ({ streak }: ReadingStreakCardProps) => {
-  // Mock weekly activity for visual representation
   const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const activeDays = [true, true, true, false, true, true, true]; // Just for UI mockup
+  const activeDays = streak.weeklyActivity ?? [false, false, false, false, false, false, false];
 
   return (
     <motion.div 
