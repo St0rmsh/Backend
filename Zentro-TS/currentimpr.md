@@ -1,1 +1,0 @@
-18 PWA_OFFLINE

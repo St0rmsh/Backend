@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import { createMessageService, getConversationService, getInboxService, markConversationReadService } from "../services/message.service.js";
 import { getIO } from "../Socket/socket.js";
-import { getSocketId } from "../Socket/userSocketMap.js";
 
 export const getInboxController = async (req: Request, res: Response) => {
   try {
@@ -25,8 +24,10 @@ export const sendMessageController = async (req: Request<{ userId: string }>, re
   try {
     const message = await createMessageService(req.user!._id.toString(), req.params.userId, String(req.body.content || ""));
     const populated = await message.populate("sender", "username fullname avatar");
-    const socketId = getSocketId(req.params.userId);
-    if (socketId) getIO().to(socketId).emit("message:new", populated);
+    // Room-based emit: reaches the recipient's connection(s) regardless of
+    // which pod they're on, via the Redis adapter wired in Socket/socket.ts.
+    // A no-op if the recipient isn't currently connected anywhere.
+    getIO().to(req.params.userId).emit("message:new", populated);
     return res.status(201).json({ success: true, data: populated });
   } catch (error) {
     return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Unable to send message" });

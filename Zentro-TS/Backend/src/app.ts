@@ -53,7 +53,9 @@ app.use(morgan(":method :url :status :response-time ms requestId=:req[x-request-
 
 app.use("/api", rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 300,
+    // Configurable so a load-testing environment can raise this without
+    // weakening the real production default. Keep this LOW in production.
+    limit: Number(process.env.RATE_LIMIT_MAX) || 300,
     standardHeaders: "draft-8",
     legacyHeaders: false,
     message: { success: false, message: "Too many requests. Please try again later." },

@@ -4,9 +4,9 @@ import { escapeRegex } from "../utils/escapeRegex.js";
 import { notifyMentionedUsersService } from "./notification.service.js";
 
 
-export const createPostService = async (userId:string,{title,content,tags,category,coverImage,mediaUrl,mediaType,isPublished}:ICreatePostBody)=>{
+export const createPostService = async (userId: string, { title, content, tags, category, coverImage, mediaUrl, mediaType, isPublished }: ICreatePostBody) => {
     try {
-        
+
 
         const post = await PostModel.create({
             user: userId,
@@ -35,24 +35,24 @@ export const createPostService = async (userId:string,{title,content,tags,catego
 
 
 
-export const getAllPostsService = async (userId:string,{page=1,limit=10}:{
-    page?:number
-    limit?:number
-})=>{
+export const getAllPostsService = async (userId: string, { page = 1, limit = 10 }: {
+    page?: number
+    limit?: number
+}) => {
 
     try {
-        const skips = (page-1)*limit
+        const skips = (page - 1) * limit
 
         const [posts, totalPosts] = await Promise.all([
-            PostModel.find({user:userId}).populate("user", "username fullname avatar isVerified").sort({createdAt:-1}).skip(skips).limit(limit).lean(),
-            PostModel.countDocuments({user:userId})  
+            PostModel.find({ user: userId }).populate("user", "username fullname avatar isVerified").sort({ createdAt: -1 }).skip(skips).limit(limit).lean(),
+            PostModel.countDocuments({ user: userId })
         ])
 
         return {
             posts,
             totalPosts,
-            currentPage:page,
-            totalPages:Math.ceil(totalPosts/limit),
+            currentPage: page,
+            totalPages: Math.ceil(totalPosts / limit),
             hasNextPage: page < Math.ceil(totalPosts / limit)
         }
 
@@ -66,23 +66,23 @@ export const getAllPostsService = async (userId:string,{page=1,limit=10}:{
 
 
 
-export const getUserPostsService = async (userId:string,{page=1,limit=10}:{
-    page?:number
-    limit?:number
-})=>{
+export const getUserPostsService = async (userId: string, { page = 1, limit = 10 }: {
+    page?: number
+    limit?: number
+}) => {
     try {
-        const skips = (page-1)*limit
+        const skips = (page - 1) * limit
 
         const [posts, totalPosts] = await Promise.all([
-            PostModel.find({user:userId}).sort({createdAt:-1}).skip(skips).limit(limit).lean(),
-            PostModel.countDocuments({user:userId})  
+            PostModel.find({ user: userId }).sort({ createdAt: -1 }).skip(skips).limit(limit).lean(),
+            PostModel.countDocuments({ user: userId })
         ])
 
         return {
             posts,
             totalPosts,
-            currentPage:page,
-            totalPages:Math.ceil(totalPosts/limit),
+            currentPage: page,
+            totalPages: Math.ceil(totalPosts / limit),
             hasNextPage: page < Math.ceil(totalPosts / limit)
         }
 
@@ -96,17 +96,17 @@ export const getUserPostsService = async (userId:string,{page=1,limit=10}:{
 
 
 
-export const getSinglePostService = async (postId:string)=>{
+export const getSinglePostService = async (postId: string) => {
 
     try {
 
-    const post = await PostModel.findByIdAndUpdate(postId,{$inc:{viewsCount:1}},{new:true}).populate("user", "fullname , username , avatar").lean()
+        const post = await PostModel.findByIdAndUpdate(postId, { $inc: { viewsCount: 1 } }, { new: true }).populate("user", "fullname , username , avatar").lean()
 
-    if(!post){
-        throw new Error("Post not found")
-    }
+        if (!post) {
+            throw new Error("Post not found")
+        }
 
-    return post
+        return post
 
     } catch (error) {
         console.error("Error in get single post service:", error);
@@ -117,35 +117,35 @@ export const getSinglePostService = async (postId:string)=>{
 }
 
 
-export const updatePostService = async (postId:string,userId:string,updatedData:IPostUpdateBody)=>{
+export const updatePostService = async (postId: string, userId: string, updatedData: IPostUpdateBody) => {
     try {
-        
+
         const post = await PostModel.findById(postId)
 
-        if(!post){
+        if (!post) {
             throw new Error("Post not found")
         }
 
-        if(post.user.toString() !== userId){
+        if (post.user.toString() !== userId) {
             throw new Error("Unauthorized")
         }
 
         const updateFields = {
-    ...(updatedData.title && { title: updatedData.title }),
-    ...(updatedData.content && { content: updatedData.content }),
-    ...(updatedData.tags && { tags: updatedData.tags }),
-    ...(updatedData.category && { category: updatedData.category }),
-    ...(typeof updatedData.isPublished !== "undefined" && {
-        isPublished: updatedData.isPublished
-    }),
-    ...(updatedData.coverImage && {
-        coverImage: updatedData.coverImage
-    }),
-};
+            ...(updatedData.title && { title: updatedData.title }),
+            ...(updatedData.content && { content: updatedData.content }),
+            ...(updatedData.tags && { tags: updatedData.tags }),
+            ...(updatedData.category && { category: updatedData.category }),
+            ...(typeof updatedData.isPublished !== "undefined" && {
+                isPublished: updatedData.isPublished
+            }),
+            ...(updatedData.coverImage && {
+                coverImage: updatedData.coverImage
+            }),
+        };
 
-        const UpdatePost = await PostModel.findByIdAndUpdate(postId,{...updateFields},{new:true, runValidators:true})
+        const UpdatePost = await PostModel.findByIdAndUpdate(postId, { ...updateFields }, { new: true, runValidators: true })
 
-        if(!UpdatePost){
+        if (!UpdatePost) {
             throw new Error("Post not found")
         }
 
@@ -160,11 +160,11 @@ export const updatePostService = async (postId:string,userId:string,updatedData:
 }
 
 
-export const deletePostService = async (postId:string,userId:string)=>{
-    
+export const deletePostService = async (postId: string, userId: string) => {
+
     try {
 
-          const deletedPost = await PostModel.findOneAndDelete({
+        const deletedPost = await PostModel.findOneAndDelete({
             _id: postId,
             user: userId
         });
@@ -184,51 +184,51 @@ export const deletePostService = async (postId:string,userId:string)=>{
 }
 
 
-export const searchPostService = async (query:string,{page=1,limit=10, category, tag}:{
-    page?:number
-    limit?:number
-    category?:string
-    tag?:string
-})=>{
+export const searchPostService = async (query: string, { page = 1, limit = 10, category, tag }: {
+    page?: number
+    limit?: number
+    category?: string
+    tag?: string
+}) => {
     try {
         const safeLimit = Math.max(1, limit);
         const skip = (page - 1) * safeLimit;
-        
-        const filter: Record<string, unknown> = {isPublished: true};
 
-     if (query) {
-        filter.$text = {
-        $search: query
-    };
-}
+        const filter: Record<string, unknown> = { isPublished: true };
 
-if (category) {
-      filter.category = {
-        $regex: `^${escapeRegex(category)}$`,
-        $options: "i"
-    };
+        if (query) {
+            filter.$text = {
+                $search: query
+            };
+        }
 
-}
+        if (category) {
+            filter.category = {
+                $regex: `^${escapeRegex(category)}$`,
+                $options: "i"
+            };
 
-if (tag) {
-    const safeTag = escapeRegex(tag);
+        }
 
-  filter.tags = {
-    $regex: `^${safeTag}$`,
-    $options: "i"
-};
-}
+        if (tag) {
+            const safeTag = escapeRegex(tag);
 
-          const [posts, totalPosts] = await Promise.all([
+            filter.tags = {
+                $regex: `^${safeTag}$`,
+                $options: "i"
+            };
+        }
+
+        const [posts, totalPosts] = await Promise.all([
             PostModel.find(
                 filter,
-               query
-        ? {
-              score: {
-                  $meta: "textScore"
-              }
-          }
-        : {}
+                query
+                    ? {
+                        score: {
+                            $meta: "textScore"
+                        }
+                    }
+                    : {}
             )
                 .populate({
                     path: "user",
@@ -245,14 +245,14 @@ if (tag) {
 
             PostModel.countDocuments(filter)
         ]);
-        
-const totalPages = Math.max(
-    1,
-    Math.ceil(totalPosts / safeLimit)
-);
+
+        const totalPages = Math.max(
+            1,
+            Math.ceil(totalPosts / safeLimit)
+        );
 
         return {
-             posts,
+            posts,
             totalPosts,
             results: posts.length,
             searchQuery: query,
@@ -260,11 +260,11 @@ const totalPages = Math.max(
             tag,
             currentPage: page,
             totalPages,
-            limit:safeLimit,
+            limit: safeLimit,
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1
         }
-        
+
 
 
     } catch (error) {

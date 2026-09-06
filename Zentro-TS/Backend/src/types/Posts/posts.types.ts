@@ -44,10 +44,10 @@ export interface IPostUpdateBody {
 
 
 export interface ISearchQuery {
-    q?:string,
-    category?:string,
-    tag?:string,
-    page?:number,
-    limit?:number
+    q?: string,
+    category?: string,
+    tag?: string,
+    page?: number,
+    limit?: number
 
 }

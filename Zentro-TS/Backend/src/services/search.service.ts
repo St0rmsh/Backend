@@ -6,13 +6,13 @@ export const searchService = {
     const skip = (page - 1) * limit;
     const filter = searchQuery
       ? {
-          $or: [
-            { title: { $regex: searchQuery, $options: "i" } },
-            { content: { $regex: searchQuery, $options: "i" } },
-            { tags: { $regex: searchQuery, $options: "i" } },
-          ],
-          isPublished: true,
-        }
+        $or: [
+          { title: { $regex: searchQuery, $options: "i" } },
+          { content: { $regex: searchQuery, $options: "i" } },
+          { tags: { $regex: searchQuery, $options: "i" } },
+        ],
+        isPublished: true,
+      }
       : { isPublished: true };
 
     const [posts, total] = await Promise.all([
@@ -38,12 +38,12 @@ export const searchService = {
     const skip = (page - 1) * limit;
     const filter = searchQuery
       ? {
-          $or: [
-            { username: { $regex: searchQuery, $options: "i" } },
-            { fullname: { $regex: searchQuery, $options: "i" } },
-          ],
-          isActive: true,
-        }
+        $or: [
+          { username: { $regex: searchQuery, $options: "i" } },
+          { fullname: { $regex: searchQuery, $options: "i" } },
+        ],
+        isActive: true,
+      }
       : { isActive: true };
 
     const [users, total] = await Promise.all([
