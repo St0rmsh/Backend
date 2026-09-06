@@ -106,7 +106,7 @@ export const ProfileForm = () => {
                 Profile picture
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                This will appear next to your name across SignalHunt.
+                This will appear next to your name across Zentro.
               </p>
             </div>
           </div>

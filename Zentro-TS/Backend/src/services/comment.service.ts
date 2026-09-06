@@ -2,6 +2,8 @@ import CommentModel from "../model/comment.model.js"
 import PostModel from "../model/post.model.js"
 import { updateUserInterestService } from "./interest.service.js";
 import { createNotificationService, notifyMentionedUsersService } from "./notification.service.js";
+import UserModel from "../model/auth.model.js";
+import { handleAICommentEngagement } from "./ai-engagement.service.js";
 
 
 export const createCommentService = async (postId:string , userId:string , content:string)=>{
@@ -38,6 +40,11 @@ export const createCommentService = async (postId:string , userId:string , conte
         await updateUserInterestService(userId,postId,4);
 
        await comment.populate("user", "fullname username avatar")
+
+       const author = await UserModel.findById(post.user);
+       if (author && author.email === "ai.system@zentro.com" && userId !== author._id.toString()) {
+           handleAICommentEngagement(postId, content, post.content).catch(console.error);
+       }
 
         const updatedPost = await PostModel.findById(postId).select("commentsCount")
         

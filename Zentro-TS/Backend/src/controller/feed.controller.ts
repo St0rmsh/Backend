@@ -18,14 +18,15 @@ export const getFeedController = async (req: Request, res: Response) => {
 
       const userId = req.user._id.toString();
 
-       const { page, limit } =
+       const { page, limit, tab } =
         req.query;
 
       const result =
         await getFeedService(
           userId,
           Number(page) || 1,
-          Number(limit) || 10
+          Number(limit) || 10,
+          (tab as string) || "home"
         );
 
 

@@ -23,6 +23,7 @@ import crypto from "node:crypto";
 import mongoose from "mongoose";
 import config from "./config/config.js";
 import passport from "./config/passport.js";
+import redisClient from "./config/cache.js";
 const app = express()
 
 app.set("trust proxy", config.TRUST_PROXY);
@@ -74,10 +75,14 @@ app.get("/health", (_req, res) => {
 
 app.get("/health/ready", (_req, res) => {
     const mongoReady = mongoose.connection.readyState === 1;
-    res.status(mongoReady ? 200 : 503).json({
-        success: mongoReady,
-        status: mongoReady ? "ready" : "not_ready",
-        checks: { mongo: mongoReady },
+    // ioredis exposes a `status` string; "ready" means the connection is live and usable
+    const redisReady = redisClient.status === "ready";
+    const isReady = mongoReady && redisReady;
+
+    res.status(isReady ? 200 : 503).json({
+        success: isReady,
+        status: isReady ? "ready" : "not_ready",
+        checks: { mongo: mongoReady, redis: redisReady },
     });
 });
 

@@ -144,7 +144,7 @@ const buildFeedPipeline = (
   ];
 
 
-export const getFeedService = async (userId: string, page: number, limit: number) => {
+export const getFeedService = async (userId: string, page: number, limit: number, tab: string = "home") => {
 
   try {
 
@@ -156,10 +156,6 @@ export const getFeedService = async (userId: string, page: number, limit: number
     const userInterest = await UserInterestModel.findOne({
       user: userId
     }).lean();
-
-
-
-
 
     const topCategories = userInterest?.categories
       ?.sort((a, b) => b.score - a.score)
@@ -188,55 +184,41 @@ export const getFeedService = async (userId: string, page: number, limit: number
       topCategories.length > 0 ||
       topTags.length > 0;
 
-
-
-
-    const matchStage = hasPersonalization
-      ? {
-        isPublished: true,
-        user: {
-          $ne: new Types.ObjectId(userId)
-        },
-        createdAt: {
-          $gte: new Date(
-            Date.now() - 30 * 24 * 60 * 60 * 1000
-          )
-        },
-        $or: [
-          {
-            category: {
-              $in: topCategories
-            }
-          },
-          {
-            tags: {
-              $in: topTags
-            }
-          },
-          ...(followingIds.length
-            ? [
-              {
-                user: {
-                  $in: followingIds
-                }
-              }
-            ]
-            : [])
-        ]
+    let matchStage: any = {
+      isPublished: true,
+      user: {
+        $ne: new Types.ObjectId(userId)
+      },
+      createdAt: {
+        $gte: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        )
       }
-      : {
-        isPublished: true,
-        user: {
-          $ne: new Types.ObjectId(userId)
-        },
-        createdAt: {
-          $gte: new Date(
-            Date.now() -
-            30 * 24 * 60 * 60 * 1000
-          )
-        }
-      };
+    };
 
+    if (tab === "following") {
+      matchStage.user = { $in: followingIds };
+    } else if (tab === "recommended") {
+      const excludeUsers = [...followingIds, new Types.ObjectId(userId)];
+      matchStage.user = { $nin: excludeUsers };
+      if (topCategories.length > 0 || topTags.length > 0) {
+        matchStage.$or = [
+          ...(topCategories.length > 0 ? [{ category: { $in: topCategories } }] : []),
+          ...(topTags.length > 0 ? [{ tags: { $in: topTags } }] : [])
+        ];
+      }
+    } else if (tab === "trending") {
+      // Base matchStage applies (all published recent posts, not self)
+    } else {
+      // Default "home"
+      if (hasPersonalization) {
+        matchStage.$or = [
+          ...(topCategories.length > 0 ? [{ category: { $in: topCategories } }] : []),
+          ...(topTags.length > 0 ? [{ tags: { $in: topTags } }] : []),
+          ...(followingIds.length > 0 ? [{ user: { $in: followingIds } }] : [])
+        ];
+      }
+    }
 
     const [posts, totalPosts] =
       await Promise.all([
@@ -246,13 +228,10 @@ export const getFeedService = async (userId: string, page: number, limit: number
         PostModel.countDocuments(matchStage)
       ]);
 
-
-
-
     let finalPosts = posts;
     let finalTotalPosts = totalPosts;
 
-    if (hasPersonalization && posts.length === 0) {
+    if (tab === "home" && hasPersonalization && posts.length === 0) {
       const fallbackMatch = {
         isPublished: true,
         user: {

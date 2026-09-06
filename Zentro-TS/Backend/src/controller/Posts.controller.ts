@@ -3,6 +3,7 @@ import type { ICreatePostBody, IPostUpdateBody, ISearchQuery } from "../types/Po
 import { createPostService, deletePostService, getAllPostsService, getSinglePostService, getUserPostsService, searchPostService, updatePostService } from "../services/Posts.service.js";
 import { uploadBuffer } from "../config/storage.js";
 import mongoose from "mongoose";
+import { moderateContent } from "../services/ai-moderation.service.js";
 
 
 export const createPostController = async (req:Request, res: Response) => {
@@ -34,6 +35,14 @@ export const createPostController = async (req:Request, res: Response) => {
                 success:false,
                 message:"Title and content are required"
             })
+        }
+
+        const moderationResult = await moderateContent(`${title} ${content}`);
+        if (!moderationResult.isSafe) {
+            return res.status(400).json({
+                success: false,
+                message: `Content violates community guidelines: ${moderationResult.reason}`
+            });
         }
 
         const files = req.files as { coverImage?: Express.Multer.File[]; media?: Express.Multer.File[] } | undefined;

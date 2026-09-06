@@ -1,18 +1,24 @@
 FROM node:20-alpine
 
-WORKDIR  /app
+WORKDIR /app
 
-
-COPY  package*.json ./
-
-
-RUN npm install
+# Install deps first for better layer caching. Note: dev deps are kept
+# (not --omit=dev) because tsx and typescript run the TS source directly
+# in this setup — there's no separate `tsc` build step yet. Once one
+# exists, switch to a proper build stage for a leaner image.
+COPY package*.json ./
+RUN npm ci
 
 COPY . .
 
+ENV NODE_ENV=production
+
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD node -e "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+# Kubernetes liveness/readiness probes hit these HTTP endpoints directly,
+# but this Docker-level HEALTHCHECK also lets `docker ps` / docker-compose
+# report container health during local testing.
+HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -qO- http://localhost:3000/health/live || exit 1
 
-
-CMD [ "npm", "run", "dev" ]
+CMD ["npm", "start"]

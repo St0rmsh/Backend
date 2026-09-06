@@ -1,5 +1,6 @@
 import type { Request, Response } from "express"
 import { createCommentService, deleteCommentService, getCommentService, getSingleCommentService, updateCommentService } from "../services/comment.service.js"
+import { moderateContent } from "../services/ai-moderation.service.js";
 
 
 export const commentController = async (req:Request<{postId:string}>,res:Response)=>{
@@ -27,6 +28,14 @@ export const commentController = async (req:Request<{postId:string}>,res:Respons
              return res.status(400).json({
             success: false,
            message: "Comment content is required"
+            });
+        }
+        
+        const moderationResult = await moderateContent(content);
+        if (!moderationResult.isSafe) {
+            return res.status(400).json({
+                success: false,
+                message: `Comment violates community guidelines: ${moderationResult.reason}`
             });
         }
         

@@ -115,7 +115,7 @@ export const ProfileSettingsPage = () => {
 
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 Keep your profile information up to date. This information
-                may be displayed across SignalHunt.
+                may be displayed across Zentro.
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export const ProfileSettingsPage = () => {
 
           <p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">
             Your profile information may be visible to other users across
-            SignalHunt. Only add information that you are comfortable sharing.
+            Zentro. Only add information that you are comfortable sharing.
           </p>
         </div>
       </div>

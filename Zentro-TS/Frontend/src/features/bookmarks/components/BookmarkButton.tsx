@@ -3,7 +3,11 @@ import { Bookmark as BookmarkIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/shared/ui/button";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks";
-import { toggleBookmarkThunk, addBookmark, removeBookmark } from "../state/bookmarkSlice";
+import {
+  toggleBookmarkThunk,
+  addBookmark,
+  removeBookmark,
+} from "../state/bookmarkSlice";
 
 interface BookmarkButtonProps {
   postId: string;
@@ -17,32 +21,69 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
   isInitiallyBookmarked = false,
 }) => {
   const dispatch = useAppDispatch();
-  const { bookmarkedPosts, loading } = useAppSelector((state) => state.bookmarks);
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  const isBookmarked = bookmarkedPosts.includes(postId) || isInitiallyBookmarked;
-  const isLoading = loading[postId];
+  const bookmarkedPosts = useAppSelector(
+    (state) => state.bookmarks.bookmarkedPosts
+  );
+
+  const loading = useAppSelector(
+    (state) => state.bookmarks.loading
+  );
+
+  const isAuthenticated = useAppSelector(
+    (state) => state.auth.isAuthenticated
+  );
+
+  /*
+   * Redux is the source of truth once this post has been
+   * registered in the bookmark state.
+   *
+   * The initial prop is only used to hydrate Redux when
+   * the parent already knows the bookmark state.
+   */
+  const isInRedux = bookmarkedPosts.includes(postId);
+
+  const isBookmarked = isInRedux || isInitiallyBookmarked;
+  const isLoading = loading[postId] ?? false;
 
   const handleToggleBookmark = async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || isLoading) {
       return;
     }
 
-    // Optimistic UI
-    if (isBookmarked) {
-      dispatch(removeBookmark(postId));
-    } else {
+    const willBookmark = !isBookmarked;
+
+    // Optimistic Redux update
+    if (willBookmark) {
       dispatch(addBookmark(postId));
+    } else {
+      dispatch(removeBookmark(postId));
     }
 
     try {
-      await dispatch(toggleBookmarkThunk(postId)).unwrap();
-    } catch (err) {
-      // Revert on failure
-      if (isBookmarked) {
+      const result = await dispatch(
+        toggleBookmarkThunk(postId)
+      ).unwrap();
+
+      /*
+       * Always reconcile Redux with the actual backend result.
+       */
+      const serverBookmarked =
+        result.bookmark?.bookmarked ?? willBookmark;
+
+      if (serverBookmarked) {
         dispatch(addBookmark(postId));
       } else {
         dispatch(removeBookmark(postId));
+      }
+    } catch {
+      /*
+       * Roll back optimistic update if API request fails.
+       */
+      if (willBookmark) {
+        dispatch(removeBookmark(postId));
+      } else {
+        dispatch(addBookmark(postId));
       }
     }
   };
@@ -51,14 +92,24 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
     <Button
       variant="ghost"
       size="icon"
-      className={`rounded-full hover:bg-muted group transition-all ${className ?? ""}`}
+      className={`rounded-full hover:bg-muted group transition-all ${
+        className ?? ""
+      }`}
       onClick={handleToggleBookmark}
       disabled={isLoading}
-      aria-label={isBookmarked ? "Remove bookmark" : "Bookmark post"}
+      aria-label={
+        isBookmarked
+          ? "Remove bookmark"
+          : "Bookmark post"
+      }
     >
       <motion.div
         whileTap={{ scale: 0.8 }}
-        animate={isBookmarked ? { scale: [1, 1.15, 1] } : {}}
+        animate={
+          isBookmarked
+            ? { scale: [1, 1.15, 1] }
+            : {}
+        }
         transition={{ duration: 0.3 }}
       >
         <BookmarkIcon
